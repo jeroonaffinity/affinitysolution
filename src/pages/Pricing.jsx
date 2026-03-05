@@ -148,10 +148,8 @@ export default function Pricing() {
           <p className="text-muted-foreground text-sm mb-5">A typical small business taking core services:</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
             {[
-              { label: "Support (10 users × £20)", val: "£200/mo" },
-              { label: "Endpoint Monitoring (10 × £22)", val: "£220/mo" },
-              { label: "Office 365 (10 × £10)", val: "£100/mo" },
-              { label: "Security Awareness (10 × £5)", val: "£50/mo" },
+              { label: "Support (5 users × £20)", val: "£100/mo" },
+              { label: "Endpoint Monitoring (5 × £22)", val: "£110/mo" },
             ].map((row) => (
               <div key={row.label} className="flex items-center gap-2 text-sm">
                 <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />
@@ -162,7 +160,7 @@ export default function Pricing() {
           </div>
           <div className="flex items-center justify-between border-t border-border/50 pt-4">
             <span className="font-bold">Monthly Total</span>
-            <span className="text-2xl font-extrabold text-gradient">£570 / mo</span>
+            <span className="text-2xl font-extrabold text-gradient">£210 / mo</span>
           </div>
         </div>
       </section>

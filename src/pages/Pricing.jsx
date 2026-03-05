@@ -47,7 +47,7 @@ const faqs = [
 function ServiceTable({ icon: Icon, title, services, unit }) {
   return (
     <div className="rounded-2xl border border-border/60 bg-card/60 overflow-hidden">
-      <div className={`px-6 py-4 border-b border-border/60 flex items-center gap-3 ${color}`}>
+      <div className="px-6 py-4 border-b border-border/60 flex items-center gap-3">
         <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center">
           <Icon className="w-5 h-5 text-primary" />
         </div>

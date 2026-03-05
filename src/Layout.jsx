@@ -101,7 +101,7 @@ export default function Layout({ children, currentPageName }) {
             <span className="text-sm font-bold">Affinity<span className="text-gradient">Solution</span></span>
           </div>
           <p className="text-muted-foreground text-sm">
-            © {new Date().getFullYear()} ApexMSP. All rights reserved.
+            © {new Date().getFullYear()} AffinitySolution. All rights reserved.
           </p>
           <div className="flex gap-6">
             {navLinks.map((link) => (

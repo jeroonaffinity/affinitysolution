@@ -72,7 +72,7 @@ export default function Home() {
         <div className="relative max-w-5xl mx-auto px-6 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-primary text-sm font-medium mb-8">
             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse-slow" />
-            Fully Managed IT Services
+            AffinitySolution – Managed IT Services
           </div>
 
           <h1 className="text-5xl md:text-7xl font-extrabold leading-tight mb-6 tracking-tight">

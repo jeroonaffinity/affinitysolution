@@ -23,7 +23,7 @@ export default function Layout({ children, currentPageName }) {
               <Zap className="w-4 h-4 text-primary-foreground" />
             </div>
             <span className="text-xl font-bold tracking-tight text-foreground">
-              Apex<span className="text-gradient">MSP</span>
+              Affinity<span className="text-gradient">Solution</span>
             </span>
           </Link>
 
@@ -98,7 +98,7 @@ export default function Layout({ children, currentPageName }) {
             <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
               <Zap className="w-3.5 h-3.5 text-primary-foreground" />
             </div>
-            <span className="text-sm font-bold">Apex<span className="text-gradient">MSP</span></span>
+            <span className="text-sm font-bold">Affinity<span className="text-gradient">Solution</span></span>
           </div>
           <p className="text-muted-foreground text-sm">
             © {new Date().getFullYear()} ApexMSP. All rights reserved.

@@ -1,167 +1,169 @@
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { CheckCircle2, ArrowRight, Zap } from "lucide-react";
-import { useState } from "react";
+import { ArrowRight, CheckCircle2, User, Monitor, Globe, Zap } from "lucide-react";
 
-const plans = [
-  {
-    name: "Essentials",
-    price: { monthly: 49, annual: 39 },
-    unit: "/ user / mo",
-    tagline: "For small teams getting started with managed IT.",
-    highlight: false,
-    features: [
-      "Helpdesk support (business hours)",
-      "Endpoint monitoring & management",
-      "Patch management",
-      "Microsoft 365 management",
-      "Basic antivirus & EDR",
-      "Monthly reporting",
-    ],
-  },
-  {
-    name: "Business",
-    price: { monthly: 89, annual: 72 },
-    unit: "/ user / mo",
-    tagline: "The most popular choice for growing businesses.",
-    highlight: true,
-    features: [
-      "Everything in Essentials",
-      "24/7 helpdesk support",
-      "Advanced EDR & SIEM",
-      "Cloud backup & DR planning",
-      "Firewall & network management",
-      "Quarterly vCIO review",
-      "Compliance readiness",
-      "Dedicated account manager",
-    ],
-  },
-  {
-    name: "Enterprise",
-    price: null,
-    unit: null,
-    tagline: "Custom plans for complex, multi-site environments.",
-    highlight: false,
-    features: [
-      "Everything in Business",
-      "Multi-site management",
-      "Custom SLAs & RTO/RPO",
-      "On-site support included",
-      "Full compliance management",
-      "24/7 SOC monitoring",
-      "Executive reporting & vCISO",
-      "Dedicated engineering team",
-    ],
-  },
+const perUserServices = [
+  { name: "Unlimited On-site & Remote Support", price: 20, note: "Unlimited tickets, remote & on-site" },
+  { name: "Office 365 Desktop Apps License", price: 10, note: "Word, Excel, PowerPoint, Outlook & more" },
+  { name: "Email Management + Google Workspace Basic", price: 12, note: "Mailbox + admin support included" },
+  { name: "Cloud File Sync & Share Management", price: 5, note: "Secure cloud storage management" },
+  { name: "Security Awareness Training", price: 5, note: "Regular training & phishing simulations" },
+];
+
+const perEndpointServices = [
+  { name: "Endpoint Monitoring + Antivirus (RMM)", price: 22, note: "24/7 monitoring & AV protection" },
+  { name: "Endpoint Security Assessment", price: 5, note: "Regular vulnerability assessments" },
+  { name: "Security Threat Detection & Remediation", price: 8, note: "Active threat hunting & remediation" },
+];
+
+const perDomainServices = [
+  { name: "Domain Management", price: 10, note: "DNS management + renewal monitoring" },
+  { name: "Website Handling", price: 20, note: "Uptime monitoring + basic support" },
+];
+
+const oneTimeServices = [
+  { name: "Onboarding & Initial Setup", price: 80, note: "Per user, one-time fee" },
 ];
 
 const faqs = [
   {
-    q: "Is there a long-term contract?",
-    a: "We offer month-to-month and annual agreements. Annual plans come with a discount and price lock.",
+    q: "How does per-user vs per-endpoint pricing work?",
+    a: "Per-user services are billed based on the number of staff in your organisation. Per-endpoint services are billed per device (laptops, desktops, servers). You only pay for what you need.",
   },
   {
-    q: "What does onboarding look like?",
-    a: "Our team handles the full onboarding process — discovery, documentation, tool deployment, and a kickoff call — in under 2 weeks.",
+    q: "Is there a minimum contract length?",
+    a: "We offer flexible monthly rolling agreements and discounted annual contracts. Get in touch to discuss what suits your business.",
   },
   {
-    q: "Can I add services à la carte?",
-    a: "Yes. Each plan can be customized with add-on services such as advanced backup, compliance packages, and more.",
+    q: "Can I mix and match services?",
+    a: "Absolutely. Every service is available à la carte. We'll build a tailored package that fits your exact needs and budget.",
   },
   {
-    q: "Do you offer hardware procurement?",
-    a: "Yes — hardware sourcing, configuration, and deployment are available as an add-on across all plans.",
+    q: "What does onboarding involve?",
+    a: "Our team handles full discovery, tool deployment, documentation, and a kickoff call — typically completed within 1–2 weeks.",
   },
 ];
 
-export default function Pricing() {
-  const [annual, setAnnual] = useState(false);
+function ServiceTable({ icon: Icon, title, color, services, unit }) {
+  return (
+    <div className="rounded-2xl border border-border/60 bg-card/60 overflow-hidden">
+      <div className={`px-6 py-4 border-b border-border/60 flex items-center gap-3 ${color}`}>
+        <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center">
+          <Icon className="w-5 h-5 text-primary" />
+        </div>
+        <div>
+          <h3 className="font-bold text-base">{title}</h3>
+          <p className="text-xs text-muted-foreground">{unit}</p>
+        </div>
+      </div>
+      <div className="divide-y divide-border/40">
+        {services.map((s) => (
+          <div key={s.name} className="flex items-center justify-between px-6 py-4 hover:bg-primary/5 transition-colors">
+            <div>
+              <div className="text-sm font-medium">{s.name}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">{s.note}</div>
+            </div>
+            <div className="text-right flex-shrink-0 ml-6">
+              <span className="text-xl font-extrabold text-gradient">£{s.price}</span>
+              <div className="text-xs text-muted-foreground">{unit}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
+export default function Pricing() {
   return (
     <div className="bg-background min-h-screen">
       {/* Header */}
       <section className="relative py-24 px-6 text-center overflow-hidden bg-grid">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-primary/10 blur-[100px] pointer-events-none rounded-full" />
         <div className="relative max-w-2xl mx-auto">
-          <h1 className="text-5xl md:text-6xl font-extrabold mb-5 tracking-tight">
-            Simple, <span className="text-gradient">Transparent</span> Pricing
-          </h1>
-          <p className="text-lg text-muted-foreground mb-8">
-            No hidden fees. No surprises. Just predictable IT costs that scale with you.
-          </p>
-          {/* Toggle */}
-          <div className="inline-flex items-center gap-3 bg-card/60 border border-border/60 rounded-xl px-4 py-2">
-            <span className={`text-sm font-medium ${!annual ? "text-foreground" : "text-muted-foreground"}`}>Monthly</span>
-            <button
-              onClick={() => setAnnual(!annual)}
-              className={`w-12 h-6 rounded-full transition-colors relative ${annual ? "bg-primary" : "bg-muted"}`}
-            >
-              <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${annual ? "translate-x-7" : "translate-x-1"}`} />
-            </button>
-            <span className={`text-sm font-medium ${annual ? "text-foreground" : "text-muted-foreground"}`}>
-              Annual <span className="text-primary text-xs font-bold ml-1">Save 20%</span>
-            </span>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-primary text-sm font-medium mb-6">
+            Transparent Pricing
           </div>
+          <h1 className="text-5xl md:text-6xl font-extrabold mb-5 tracking-tight">
+            Simple, <span className="text-gradient">Pay-As-You-Need</span> Pricing
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+            No bundles, no bloat. Mix and match exactly the services your business needs — and only pay for those.
+          </p>
         </div>
       </section>
 
-      {/* Plans */}
-      <section className="px-6 pb-16 max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {plans.map((plan) => (
-            <div
-              key={plan.name}
-              className={`relative rounded-2xl p-8 flex flex-col border transition-all card-hover ${
-                plan.highlight
-                  ? "border-primary bg-primary/10 glow-blue"
-                  : "border-border/60 bg-card/60"
-              }`}
-            >
-              {plan.highlight && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center gap-1">
-                  <Zap className="w-3 h-3" /> Most Popular
-                </div>
-              )}
-              <div className="mb-6">
-                <h3 className="text-xl font-bold mb-1">{plan.name}</h3>
-                <p className="text-muted-foreground text-sm">{plan.tagline}</p>
+      {/* Tables */}
+      <section className="px-6 pb-16 max-w-5xl mx-auto flex flex-col gap-8">
+        <ServiceTable
+          icon={User}
+          title="Per User Services"
+          unit="/ user / month"
+          color=""
+          services={perUserServices}
+        />
+        <ServiceTable
+          icon={Monitor}
+          title="Per Endpoint Services"
+          unit="/ endpoint / month"
+          color=""
+          services={perEndpointServices}
+        />
+        <ServiceTable
+          icon={Globe}
+          title="Per Domain / Website Services"
+          unit="/ month"
+          color=""
+          services={perDomainServices}
+        />
+
+        {/* One-time */}
+        <div className="rounded-2xl border border-primary/40 bg-primary/10 overflow-hidden glow-blue">
+          <div className="px-6 py-4 border-b border-primary/30 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center">
+              <Zap className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-bold text-base">One-Time Fees</h3>
+              <p className="text-xs text-muted-foreground">Charged once at the start</p>
+            </div>
+          </div>
+          {oneTimeServices.map((s) => (
+            <div key={s.name} className="flex items-center justify-between px-6 py-5">
+              <div>
+                <div className="text-sm font-medium">{s.name}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{s.note}</div>
               </div>
-
-              <div className="mb-8">
-                {plan.price ? (
-                  <div className="flex items-end gap-1">
-                    <span className="text-5xl font-extrabold text-gradient">
-                      ${annual ? plan.price.annual : plan.price.monthly}
-                    </span>
-                    <span className="text-muted-foreground text-sm mb-2">{plan.unit}</span>
-                  </div>
-                ) : (
-                  <div className="text-4xl font-extrabold text-foreground">Custom</div>
-                )}
+              <div className="text-right ml-6">
+                <span className="text-2xl font-extrabold text-gradient">£{oneTimeServices[0].price}</span>
+                <div className="text-xs text-muted-foreground">one-time / user</div>
               </div>
-
-              <ul className="flex flex-col gap-3 mb-8 flex-1">
-                {plan.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-sm">
-                    <CheckCircle2 className={`w-4 h-4 mt-0.5 flex-shrink-0 ${plan.highlight ? "text-primary" : "text-primary/70"}`} />
-                    <span className="text-foreground/80">{f}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <Link
-                to={createPageUrl("Contact")}
-                className={`flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-semibold text-sm transition-all ${
-                  plan.highlight
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90 glow-blue"
-                    : "border border-border hover:border-primary/50 hover:bg-primary/5 text-foreground"
-                }`}
-              >
-                {plan.price ? "Get Started" : "Contact Us"}
-                <ArrowRight className="w-4 h-4" />
-              </Link>
             </div>
           ))}
+        </div>
+
+        {/* Example estimate banner */}
+        <div className="rounded-2xl border border-border/60 bg-card/40 p-6 md:p-8">
+          <h3 className="font-bold text-lg mb-2">Example: 10-User Business</h3>
+          <p className="text-muted-foreground text-sm mb-5">A typical small business taking core services:</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+            {[
+              { label: "Support (10 users × £20)", val: "£200/mo" },
+              { label: "Endpoint Monitoring (10 × £22)", val: "£220/mo" },
+              { label: "Office 365 (10 × £10)", val: "£100/mo" },
+              { label: "Security Awareness (10 × £5)", val: "£50/mo" },
+            ].map((row) => (
+              <div key={row.label} className="flex items-center gap-2 text-sm">
+                <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />
+                <span className="text-foreground/80 flex-1">{row.label}</span>
+                <span className="font-semibold">{row.val}</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center justify-between border-t border-border/50 pt-4">
+            <span className="font-bold">Monthly Total</span>
+            <span className="text-2xl font-extrabold text-gradient">£570 / mo</span>
+          </div>
         </div>
       </section>
 
@@ -177,6 +179,20 @@ export default function Pricing() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-20 px-6 text-center">
+        <div className="max-w-2xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Want a Custom Quote?</h2>
+          <p className="text-muted-foreground mb-8">Tell us about your team and we'll put together a tailored proposal — free, no obligation.</p>
+          <Link
+            to={createPageUrl("Contact")}
+            className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground font-semibold rounded-xl hover:bg-primary/90 transition-all glow-blue text-base"
+          >
+            Get a Free Quote <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
       </section>
     </div>

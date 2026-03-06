@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Mail, Phone, MapPin, Clock, CheckCircle2, Send } from "lucide-react";
 
 const contactInfo = [
-  { icon: Phone, label: "Phone", value: "+1 (800) 555-0199" },
+  { icon: Phone, label: "Phone", value: "+44 7947 992054" },
   { icon: Mail, label: "Email", value: "hello@apexmsp.com" },
   { icon: MapPin, label: "Location", value: "Austin, TX (remote-first)" },
   { icon: Clock, label: "Hours", value: "24/7 emergency support" },

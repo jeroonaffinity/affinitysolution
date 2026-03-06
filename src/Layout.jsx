@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Menu, X, Zap } from "lucide-react";
+import SupportChat from "./components/SupportChat";
 
 const navLinks = [
   { label: "Home", page: "Home" },

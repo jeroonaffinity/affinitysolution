@@ -156,20 +156,22 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Testimonials */}
+      {/* Cyber Threat Stats */}
       <section className="py-24 px-6 bg-card/20 border-y border-border/50">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">Trusted by Growing Businesses</h2>
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-destructive/40 bg-destructive/10 text-destructive text-sm font-medium mb-5">
+              ⚠ The Threat Is Real
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">Is Your Business Protected?</h2>
+            <p className="text-muted-foreground text-lg max-w-xl mx-auto">Cybercriminals don't discriminate. Here's what unprotected businesses face every day.</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {testimonials.map((t) => (
-              <div key={t.name} className="p-7 rounded-2xl border border-border/60 bg-card/70 flex flex-col gap-4">
-                <p className="text-foreground/80 text-sm leading-relaxed italic">"{t.quote}"</p>
-                <div>
-                  <div className="font-semibold text-sm">{t.name}</div>
-                  <div className="text-xs text-muted-foreground">{t.role}</div>
-                </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {cyberStats.map((s) => (
+              <div key={s.stat} className="p-7 rounded-2xl border border-border/60 bg-card/70 flex flex-col gap-2">
+                <div className="text-4xl font-extrabold text-gradient">{s.stat}</div>
+                <div className="text-sm font-medium text-foreground leading-snug">{s.label}</div>
+                <div className="text-xs text-muted-foreground mt-auto pt-2 border-t border-border/40">Source: {s.source}</div>
               </div>
             ))}
           </div>

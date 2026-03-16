@@ -7,6 +7,7 @@ import SupportChat from "./components/SupportChat";
 const navLinks = [
   { label: "Home", page: "Home" },
   { label: "Services", page: "Services" },
+  { label: "Compliance", page: "Compliance" },
   { label: "Pricing", page: "Pricing" },
   { label: "Contact", page: "Contact" },
 ];

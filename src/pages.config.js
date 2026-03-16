@@ -47,6 +47,7 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
+import Compliance from './pages/Compliance';
 import Contact from './pages/Contact';
 import Home from './pages/Home';
 import Pricing from './pages/Pricing';

@@ -56,6 +56,7 @@ import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "Compliance": Compliance,
     "Contact": Contact,
     "Home": Home,
     "Pricing": Pricing,

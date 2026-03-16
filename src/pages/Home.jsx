@@ -42,21 +42,36 @@ const features = [
   },
 ];
 
-const testimonials = [
+const cyberStats = [
   {
-    name: "Sarah Mitchell",
-    role: "COO, Meridian Health",
-    quote: "ApexMSP transformed our IT from a liability into a competitive advantage. Response times are incredible.",
+    stat: "43%",
+    label: "of cyberattacks target small businesses",
+    source: "Verizon DBIR",
   },
   {
-    name: "James Torrance",
-    role: "CTO, Vantage Logistics",
-    quote: "We've had zero unplanned outages since switching. The proactive monitoring alone has saved us hundreds of thousands.",
+    stat: "£3.4M",
+    label: "average cost of a data breach in the UK",
+    source: "IBM Cost of a Data Breach Report",
   },
   {
-    name: "Priya Nair",
-    role: "Director of Ops, Nova Finance",
-    quote: "Their compliance expertise got us through our SOC 2 audit without a single finding. Worth every penny.",
+    stat: "60%",
+    label: "of SMBs close within 6 months of a cyberattack",
+    source: "National Cyber Security Alliance",
+  },
+  {
+    stat: "300%",
+    label: "increase in ransomware attacks since 2020",
+    source: "Cybersecurity Ventures",
+  },
+  {
+    stat: "95%",
+    label: "of breaches are caused by human error",
+    source: "World Economic Forum",
+  },
+  {
+    stat: "11 sec",
+    label: "a business is hit by a ransomware attack every 11 seconds",
+    source: "Cybersecurity Ventures",
   },
 ];
 

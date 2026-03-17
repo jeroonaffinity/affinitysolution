@@ -131,8 +131,8 @@ export default function Home() {
           </div>
 
           <h1 className="text-5xl md:text-7xl font-extrabold leading-tight mb-6 tracking-tight">
-            IT That Just <span className="text-gradient">Works.</span>
-            <br />So You Don't Have To Think About It.
+            Your IT, <span className="text-gradient">Fully Managed.</span>
+            <br />Absolutely Bulletproof.
           </h1>
 
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-6 leading-relaxed">

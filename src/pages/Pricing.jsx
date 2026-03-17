@@ -166,6 +166,15 @@ export default function Pricing() {
         </div>
       </section>
 
+      {/* Interactive Calculator */}
+      <section className="px-6 pb-16 max-w-5xl mx-auto">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl md:text-3xl font-bold mb-2">Calculate Your Monthly Cost</h2>
+          <p className="text-muted-foreground text-sm">Pick exactly what you need — see the price update in real time.</p>
+        </div>
+        <PricingCalculator />
+      </section>
+
       {/* FAQ */}
       <section className="py-20 px-6 border-t border-border/50">
         <div className="max-w-3xl mx-auto">

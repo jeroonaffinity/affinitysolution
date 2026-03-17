@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { ArrowRight, CheckCircle2, User, Monitor, Globe, Zap } from "lucide-react";
+import PricingCalculator from "@/components/PricingCalculator";
 
 const perUserServices = [
   { name: "Unlimited On-site & Remote Support", price: 20, note: "Unlimited tickets, remote & on-site" },

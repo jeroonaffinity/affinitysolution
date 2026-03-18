@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Mail, Phone, MapPin, Clock, CheckCircle2 } from "lucide-react";
+import CallbackForm from "@/components/CallbackForm";
 
 const contactInfo = [
   { icon: Phone, label: "Phone", value: "+44 7947 992054" },

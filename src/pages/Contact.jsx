@@ -79,24 +79,8 @@ export default function Contact() {
           </div>
         </div>
 
-        {/* Contact Buttons */}
-        <div className="rounded-2xl border border-border/60 bg-card/60 p-8 flex flex-col justify-center gap-6">
-          <h3 className="text-xl font-bold mb-2">Get in Touch</h3>
-          <a
-            href="tel:03338808496"
-            className="flex items-center justify-center gap-3 w-full py-5 rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-all glow-blue text-lg"
-          >
-            <Phone className="w-6 h-6" />
-            Call Us: 0333 880 8496
-          </a>
-          <a
-            href="mailto:info@affinitysolution.com"
-            className="flex items-center justify-center gap-3 w-full py-5 rounded-xl border border-border/60 bg-card/60 text-foreground font-semibold hover:border-primary/50 hover:bg-primary/10 transition-all text-lg"
-          >
-            <Mail className="w-6 h-6" />
-            Email Us
-          </a>
-        </div>
+        {/* Callback Form */}
+        <CallbackForm />
       </section>
     </div>
   );

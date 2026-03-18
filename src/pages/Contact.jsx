@@ -3,7 +3,7 @@ import { Mail, Phone, MapPin, Clock, CheckCircle2 } from "lucide-react";
 import CallbackForm from "@/components/CallbackForm";
 
 const contactInfo = [
-  { icon: Phone, label: "Phone", value: "+44 7947 992054" },
+  { icon: Phone, label: "Phone", value: "0333 880 8496" },
   { icon: Mail, label: "Email", value: "info@affinitysolution.com" },
   { icon: MapPin, label: "Location", value: "London, United Kingdom" },
   { icon: Clock, label: "Hours", value: "24/7 emergency support" },

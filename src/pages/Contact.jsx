@@ -90,7 +90,7 @@ export default function Contact() {
             Email Us
           </a>
           <a
-            href="https://wa.me/447947992054"
+            href="https://wa.me/443338808496"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-3 w-full py-5 rounded-xl bg-[#25D366] text-white font-semibold hover:bg-[#1ebe5d] transition-all text-lg"

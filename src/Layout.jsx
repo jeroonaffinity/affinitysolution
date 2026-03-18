@@ -106,11 +106,12 @@ export default function Layout({ children, currentPageName }) {
       {/* Footer */}
       <footer className="border-t border-border/50 bg-card/50 py-10">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-              <Zap className="w-3.5 h-3.5 text-primary-foreground" />
-            </div>
-            <span className="text-sm font-bold">Affinity<span className="text-gradient">Solution</span></span>
+          <div className="flex items-center">
+            <img
+              src="https://media.base44.com/images/public/69aa02e6ea92c996cd4d16f3/dc140f6fd_AbstractTechnologyProfileLinkedInBanner2.png"
+              alt="AffinitySolution"
+              className="h-7 w-auto"
+            />
           </div>
           <p className="text-muted-foreground text-sm">
             © {new Date().getFullYear()} AffinitySolution. All rights reserved.

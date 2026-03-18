@@ -45,6 +45,15 @@ export default function Layout({ children, currentPageName }) {
           </nav>
 
           <div className="hidden md:flex items-center gap-4">
+            <a
+              href="tel:03338808496"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-primary/40 bg-primary/10 hover:bg-primary/20 transition-all group"
+            >
+              <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                <Phone className="w-3 h-3 text-primary-foreground" />
+              </div>
+              <span className="text-sm font-bold tracking-wide text-foreground group-hover:text-primary transition-colors">0333 880 8496</span>
+            </a>
             <Link
               to={createPageUrl("Contact")}
               className="px-5 py-2 text-sm font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all glow-blue"

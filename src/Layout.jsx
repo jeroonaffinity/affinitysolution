@@ -18,15 +18,14 @@ export default function Layout({ children, currentPageName }) {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Navbar */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 backdrop-blur-xl bg-background/80">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to={createPageUrl("Home")} className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center glow-blue">
-              <Zap className="w-4 h-4 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold tracking-tight text-foreground">
-              Affinity<span className="text-gradient">Solution</span>
-            </span>
+      <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 backdrop-blur-xl bg-black/95">
+        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+          <Link to={createPageUrl("Home")} className="flex items-center group">
+            <img
+              src="https://media.base44.com/images/public/69aa02e6ea92c996cd4d16f3/dc140f6fd_AbstractTechnologyProfileLinkedInBanner2.png"
+              alt="AffinitySolution"
+              className="h-10 w-auto"
+            />
           </Link>
 
           {/* Desktop nav */}

@@ -51,7 +51,7 @@ export default function Layout({ children, currentPageName }) {
               <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
                 <Phone className="w-3 h-3 text-primary-foreground" />
               </div>
-              <span className="hidden lg:inline text-sm font-bold tracking-wide text-foreground group-hover:text-primary transition-colors">0333 880 8496</span>
+              <span className="text-sm font-bold tracking-wide text-foreground group-hover:text-primary transition-colors">0333 880 8496</span>
             </a>
             <Link
               to={createPageUrl("Contact")}

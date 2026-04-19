@@ -1,18 +1,24 @@
 import { useState } from "react";
 import { Phone, Mail, CheckCircle2, Loader2 } from "lucide-react";
+import { base44 } from "@/api/base44Client";
 
 export default function CallbackForm() {
   const [form, setForm] = useState({ name: "", company: "", contact: "", preferredMethod: "call", message: "" });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      setSubmitted(true);
-    }, 1200);
+    await base44.entities.ContactSubmission.create({
+      name: form.name,
+      company: form.company,
+      contact: form.contact,
+      preferred_method: form.preferredMethod,
+      message: form.message,
+    });
+    setLoading(false);
+    setSubmitted(true);
   };
 
   if (submitted) {

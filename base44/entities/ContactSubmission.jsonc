@@ -1,0 +1,35 @@
+{
+  "name": "ContactSubmission",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Full name of the person"
+    },
+    "company": {
+      "type": "string",
+      "description": "Company name"
+    },
+    "contact": {
+      "type": "string",
+      "description": "Phone number or email address"
+    },
+    "preferred_method": {
+      "type": "string",
+      "enum": [
+        "call",
+        "email"
+      ],
+      "description": "Preferred contact method"
+    },
+    "message": {
+      "type": "string",
+      "description": "Additional message or notes"
+    }
+  },
+  "required": [
+    "name",
+    "contact",
+    "preferred_method"
+  ]
+}

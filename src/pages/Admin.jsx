@@ -28,6 +28,11 @@ export default function Admin() {
 
   useEffect(() => {
     const init = async () => {
+      const authed = await base44.auth.isAuthenticated();
+      if (!authed) {
+        base44.auth.redirectToLogin(window.location.href);
+        return;
+      }
       const me = await base44.auth.me();
       setUser(me);
       await fetchAll();

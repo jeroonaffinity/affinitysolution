@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Ticket, CreditCard, MessageSquare, Loader2, LayoutDashboard, LogOut } from "lucide-react";
+import { Ticket, CreditCard, MessageSquare, Loader2, LayoutDashboard, LogOut, Clock } from "lucide-react";
 import StatsCard from "@/components/dashboard/StatsCard";
 import TicketsSection from "@/components/dashboard/TicketsSection";
 import BillingSection from "@/components/dashboard/BillingSection";
@@ -47,6 +47,30 @@ export default function Dashboard() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const approvedRoles = ["user", "admin"];
+  if (!approvedRoles.includes(user?.role)) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-6 px-6 text-center">
+        <div className="w-16 h-16 rounded-full bg-yellow-500/15 flex items-center justify-center">
+          <Clock className="w-8 h-8 text-yellow-400" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-extrabold mb-2">Access Pending Approval</h1>
+          <p className="text-muted-foreground text-sm max-w-sm">
+            Your account is awaiting verification by the AffinitySolution team. We'll be in touch shortly to confirm your identity and activate your portal access.
+          </p>
+        </div>
+        <p className="text-xs text-muted-foreground/60">Need help? Email us at <span className="text-primary">info@affinitysolution.com</span></p>
+        <button
+          onClick={() => base44.auth.logout("/")}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border/60 text-sm text-muted-foreground hover:text-foreground transition-all"
+        >
+          <LogOut className="w-4 h-4" /> Sign Out
+        </button>
       </div>
     );
   }

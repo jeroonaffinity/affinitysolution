@@ -3,27 +3,31 @@ import { base44 } from "@/api/base44Client";
 import { Loader2, ShieldAlert } from "lucide-react";
 import AdminTicketsTable from "@/components/admin/AdminTicketsTable";
 import AdminServicesTable from "@/components/admin/AdminServicesTable";
+import AdminUsersTable from "@/components/admin/AdminUsersTable";
 
-const TABS = ["Tickets", "Services", "Leads"];
+const TABS = ["Tickets", "Services", "Leads", "Users"];
 
 export default function Admin() {
   const [user, setUser] = useState(null);
   const [tickets, setTickets] = useState([]);
   const [services, setServices] = useState([]);
   const [leads, setLeads] = useState([]);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("Tickets");
   const [filterEmail, setFilterEmail] = useState("");
 
   const fetchAll = async () => {
-    const [t, s, l] = await Promise.all([
+    const [t, s, l, u] = await Promise.all([
       base44.entities.SupportTicket.list("-created_date", 200),
       base44.entities.ServiceUsage.list("-created_date", 200),
       base44.entities.ContactSubmission.list("-created_date", 200),
+      base44.entities.User.list("-created_date", 200),
     ]);
     setTickets(t);
     setServices(s);
     setLeads(l);
+    setUsers(u);
   };
 
   useEffect(() => {
@@ -115,6 +119,19 @@ export default function Admin() {
                 <div className="text-xs text-muted-foreground/50 mt-1">{new Date(l.created_date).toLocaleDateString()}</div>
               </div>
             ))}
+          </div>
+        )}
+
+        {activeTab === "Users" && (
+          <div>
+            <div className="mb-4 p-4 rounded-xl border border-yellow-500/30 bg-yellow-500/10 text-yellow-400 text-sm">
+              <strong>Approval Flow:</strong> When a new user signs up, you'll receive a daily email summary. Contact them to verify their identity, then click <em>Approve Access</em> below to grant them portal access.
+            </div>
+            <AdminUsersTable
+              users={filterEmail ? users.filter(u => (u.email || "").toLowerCase().includes(filterEmail.toLowerCase()) || (u.full_name || "").toLowerCase().includes(filterEmail.toLowerCase())) : users}
+              currentUserId={user?.id}
+              onRefresh={fetchAll}
+            />
           </div>
         )}
       </div>

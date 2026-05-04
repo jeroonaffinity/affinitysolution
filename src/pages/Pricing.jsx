@@ -1,30 +1,7 @@
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ArrowRight, CheckCircle2, User, Monitor, Globe, Zap } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import PricingCalculator from "@/components/PricingCalculator";
-
-const perUserServices = [
-  { name: "Unlimited On-site & Remote Support", price: 20, note: "Unlimited tickets, remote & on-site" },
-  { name: "Office 365 Desktop Apps License", price: 10, note: "Word, Excel, PowerPoint, Outlook & more" },
-  { name: "Email Management + Google Workspace Basic", price: 12, note: "Mailbox + admin support included" },
-  { name: "Cloud File Sync & Share Management", price: 5, note: "Secure cloud storage management" },
-  { name: "Security Awareness Training", price: 5, note: "Regular training & phishing simulations" },
-];
-
-const perEndpointServices = [
-  { name: "Endpoint Monitoring + Antivirus (RMM)", price: 22, note: "24/7 monitoring & AV protection" },
-  { name: "Endpoint Security Assessment", price: 5, note: "Regular vulnerability assessments" },
-  { name: "Security Threat Detection & Remediation", price: 8, note: "Active threat hunting & remediation" },
-];
-
-const perDomainServices = [
-  { name: "Domain Management", price: 10, note: "DNS management + renewal monitoring" },
-  { name: "Website Handling", price: 20, note: "Uptime monitoring + basic support" },
-];
-
-const oneTimeServices = [
-  { name: "Onboarding & Initial Setup", price: 80, note: "Per user, one-time fee" },
-];
 
 const faqs = [
   {
@@ -45,36 +22,6 @@ const faqs = [
   },
 ];
 
-function ServiceTable({ icon: Icon, title, services, unit }) {
-  return (
-    <div className="rounded-2xl border border-border/60 bg-card/60 overflow-hidden">
-      <div className="px-6 py-4 border-b border-border/60 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center">
-          <Icon className="w-5 h-5 text-primary" />
-        </div>
-        <div>
-          <h3 className="font-bold text-base">{title}</h3>
-          <p className="text-xs text-muted-foreground">{unit}</p>
-        </div>
-      </div>
-      <div className="divide-y divide-border/40">
-        {services.map((s) => (
-          <div key={s.name} className="flex items-center justify-between px-6 py-4 hover:bg-primary/5 transition-colors">
-            <div>
-              <div className="text-sm font-medium">{s.name}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">{s.note}</div>
-            </div>
-            <div className="text-right flex-shrink-0 ml-6">
-              <span className="text-xl font-extrabold text-gradient">£{s.price}</span>
-              <div className="text-xs text-muted-foreground">{unit}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export default function Pricing() {
   return (
     <div className="bg-background min-h-screen">
@@ -91,78 +38,6 @@ export default function Pricing() {
           <p className="text-lg text-muted-foreground max-w-xl mx-auto">
             No bundles, no bloat. Mix and match exactly the services your business needs — and only pay for those.
           </p>
-        </div>
-      </section>
-
-      {/* Tables */}
-      <section className="px-6 pb-16 max-w-5xl mx-auto flex flex-col gap-8">
-        <ServiceTable
-          icon={User}
-          title="Per User Services"
-          unit="/ user / month"
-          color=""
-          services={perUserServices}
-        />
-        <ServiceTable
-          icon={Monitor}
-          title="Per Endpoint Services"
-          unit="/ endpoint / month"
-          color=""
-          services={perEndpointServices}
-        />
-        <ServiceTable
-          icon={Globe}
-          title="Per Domain / Website Services"
-          unit="/ month"
-          color=""
-          services={perDomainServices}
-        />
-
-        {/* One-time */}
-        <div className="rounded-2xl border border-primary/40 bg-primary/10 overflow-hidden glow-blue">
-          <div className="px-6 py-4 border-b border-primary/30 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center">
-              <Zap className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <h3 className="font-bold text-base">One-Time Fees</h3>
-              <p className="text-xs text-muted-foreground">Charged once at the start</p>
-            </div>
-          </div>
-          {oneTimeServices.map((s) => (
-            <div key={s.name} className="flex items-center justify-between px-6 py-5">
-              <div>
-                <div className="text-sm font-medium">{s.name}</div>
-                <div className="text-xs text-muted-foreground mt-0.5">{s.note}</div>
-              </div>
-              <div className="text-right ml-6">
-                <span className="text-2xl font-extrabold text-gradient">£{oneTimeServices[0].price}</span>
-                <div className="text-xs text-muted-foreground">one-time / user</div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Example estimate banner */}
-        <div className="rounded-2xl border border-border/60 bg-card/40 p-6 md:p-8">
-          <h3 className="font-bold text-lg mb-2">Example: 10-User Business</h3>
-          <p className="text-muted-foreground text-sm mb-5">A typical small business taking core services:</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-            {[
-              { label: "Support (5 users × £20)", val: "£100/mo" },
-              { label: "Endpoint Monitoring (5 × £22)", val: "£110/mo" },
-            ].map((row) => (
-              <div key={row.label} className="flex items-center gap-2 text-sm">
-                <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />
-                <span className="text-foreground/80 flex-1">{row.label}</span>
-                <span className="font-semibold">{row.val}</span>
-              </div>
-            ))}
-          </div>
-          <div className="flex items-center justify-between border-t border-border/50 pt-4">
-            <span className="font-bold">Monthly Total</span>
-            <span className="text-2xl font-extrabold text-gradient">£210 / mo</span>
-          </div>
         </div>
       </section>
 

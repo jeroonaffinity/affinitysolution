@@ -50,7 +50,7 @@ export default function Layout({ children, currentPageName }) {
               to={dashboardPath}
               className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
             >
-              Dashboard
+              Client Portal
             </Link>
 
             <Link

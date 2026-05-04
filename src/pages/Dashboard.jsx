@@ -57,7 +57,7 @@ export default function Dashboard() {
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-1">
             <LayoutDashboard className="w-6 h-6 text-primary" />
-            <h1 className="text-2xl font-extrabold">Client Dashboard</h1>
+            <h1 className="text-2xl font-extrabold">Client Portal</h1>
           </div>
           <p className="text-muted-foreground text-sm">Welcome back, <span className="text-foreground font-medium">{user?.full_name || user?.email}</span></p>
         </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Loader2, ShieldAlert } from "lucide-react";
+import { Loader2, ShieldAlert, LogOut } from "lucide-react";
 import AdminTicketsTable from "@/components/admin/AdminTicketsTable";
 import AdminServicesTable from "@/components/admin/AdminServicesTable";
 import AdminUsersTable from "@/components/admin/AdminUsersTable";
@@ -69,9 +69,17 @@ export default function Admin() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-6xl mx-auto px-6 py-10">
-        <div className="mb-8">
-          <h1 className="text-2xl font-extrabold mb-1">MSP Admin Panel</h1>
-          <p className="text-muted-foreground text-sm">Manage all client tickets, services, and enquiries.</p>
+        <div className="mb-8 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-extrabold mb-1">MSP Admin Panel</h1>
+            <p className="text-muted-foreground text-sm">Manage all client tickets, services, and enquiries.</p>
+          </div>
+          <button
+            onClick={() => base44.auth.logout("/")}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border/60 text-sm text-muted-foreground hover:text-foreground hover:border-border transition-all flex-shrink-0"
+          >
+            <LogOut className="w-4 h-4" /> Logout
+          </button>
         </div>
 
         {/* Filter */}

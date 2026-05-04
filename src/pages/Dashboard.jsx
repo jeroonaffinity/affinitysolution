@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Ticket, CreditCard, MessageSquare, Loader2, LayoutDashboard } from "lucide-react";
+import { Ticket, CreditCard, MessageSquare, Loader2, LayoutDashboard, LogOut } from "lucide-react";
 import StatsCard from "@/components/dashboard/StatsCard";
 import TicketsSection from "@/components/dashboard/TicketsSection";
 import BillingSection from "@/components/dashboard/BillingSection";
@@ -60,9 +60,17 @@ export default function Dashboard() {
       <div className="max-w-6xl mx-auto px-6 py-10">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-1">
-            <LayoutDashboard className="w-6 h-6 text-primary" />
-            <h1 className="text-2xl font-extrabold">Client Portal</h1>
+          <div className="flex items-center justify-between gap-3 mb-1">
+            <div className="flex items-center gap-3">
+              <LayoutDashboard className="w-6 h-6 text-primary" />
+              <h1 className="text-2xl font-extrabold">Client Portal</h1>
+            </div>
+            <button
+              onClick={() => base44.auth.logout("/")}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border/60 text-sm text-muted-foreground hover:text-foreground hover:border-border transition-all"
+            >
+              <LogOut className="w-4 h-4" /> Logout
+            </button>
           </div>
           <p className="text-muted-foreground text-sm">Welcome back, <span className="text-foreground font-medium">{user?.full_name || user?.email}</span></p>
         </div>

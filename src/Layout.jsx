@@ -12,6 +12,8 @@ const navLinks = [
   { label: "Contact", page: "Contact" },
 ];
 
+const dashboardPath = "/dashboard";
+
 export default function Layout({ children, currentPageName }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -44,6 +46,12 @@ export default function Layout({ children, currentPageName }) {
           </nav>
 
           <div className="hidden md:flex items-center gap-4">
+            <Link
+              to={dashboardPath}
+              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+            >
+              Dashboard
+            </Link>
 
             <Link
               to={createPageUrl("Contact")}

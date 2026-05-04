@@ -1,0 +1,53 @@
+{
+  "name": "ServiceUsage",
+  "type": "object",
+  "properties": {
+    "client_email": {
+      "type": "string",
+      "description": "Email of the client"
+    },
+    "service_name": {
+      "type": "string",
+      "description": "Name of the service"
+    },
+    "users": {
+      "type": "number",
+      "description": "Number of users on this service"
+    },
+    "endpoints": {
+      "type": "number",
+      "description": "Number of endpoints covered"
+    },
+    "monthly_cost": {
+      "type": "number",
+      "description": "Monthly cost in GBP"
+    },
+    "billing_cycle": {
+      "type": "string",
+      "enum": [
+        "monthly",
+        "annual"
+      ],
+      "default": "monthly"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "paused",
+        "cancelled"
+      ],
+      "default": "active"
+    },
+    "next_billing_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Next billing date"
+    }
+  },
+  "required": [
+    "client_email",
+    "service_name",
+    "monthly_cost"
+  ]
+}

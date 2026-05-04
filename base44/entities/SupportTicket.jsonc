@@ -1,0 +1,61 @@
+{
+  "name": "SupportTicket",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Short summary of the issue"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of the issue"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "in_progress",
+        "resolved",
+        "closed"
+      ],
+      "default": "open",
+      "description": "Current ticket status"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "medium",
+      "description": "Ticket priority level"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "hardware",
+        "software",
+        "network",
+        "email",
+        "security",
+        "other"
+      ],
+      "default": "other",
+      "description": "Type of issue"
+    },
+    "client_email": {
+      "type": "string",
+      "description": "Email of the client who raised the ticket"
+    },
+    "resolution_notes": {
+      "type": "string",
+      "description": "Notes on how the ticket was resolved"
+    }
+  },
+  "required": [
+    "title",
+    "client_email"
+  ]
+}

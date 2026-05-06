@@ -11,6 +11,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import PageTransition from '@/components/PageTransition';
 import SplashScreen from '@/components/SplashScreen';
+import MyTickets from './pages/MyTickets';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -66,6 +67,7 @@ const AuthenticatedApp = () => {
         <Route path="/About" element={<LayoutWrapper currentPageName="About"><About /></LayoutWrapper>} />
         <Route path="/dashboard" element={<LayoutWrapper currentPageName="Dashboard"><Dashboard /></LayoutWrapper>} />
         <Route path="/admin" element={<LayoutWrapper currentPageName="Admin"><Admin /></LayoutWrapper>} />
+        <Route path="/my-tickets" element={<LayoutWrapper currentPageName="MyTickets"><MyTickets /></LayoutWrapper>} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
     </PageTransition>

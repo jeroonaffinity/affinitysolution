@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Ticket, CreditCard, MessageSquare, Loader2, LayoutDashboard, LogOut } from "lucide-react";
+import { Ticket, CreditCard, MessageSquare, Loader2, LayoutDashboard, LogOut, ExternalLink } from "lucide-react";
+import { Link } from "react-router-dom";
 import StatsCard from "@/components/dashboard/StatsCard";
 import TicketsSection from "@/components/dashboard/TicketsSection";
 import BillingSection from "@/components/dashboard/BillingSection";
@@ -101,6 +102,16 @@ export default function Dashboard() {
               <StatsCard icon={MessageSquare} label="Enquiries" value={submissions.length} sub="Contact form submissions" color="primary" />
             </div>
 
+            {/* Quick links */}
+            <div className="flex gap-3 flex-wrap">
+              <Link
+                to="/my-tickets"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-primary/30 bg-primary/8 text-primary text-sm font-semibold hover:bg-primary/15 transition-all"
+              >
+                <Ticket className="w-4 h-4" /> View All My Tickets
+              </Link>
+            </div>
+
             {/* Recent tickets */}
             {tickets.length > 0 && (
               <div>
@@ -120,7 +131,15 @@ export default function Dashboard() {
         )}
 
         {activeTab === "Support Tickets" && (
-          <TicketsSection tickets={tickets} userEmail={user?.email} onRefresh={() => fetchData(user)} />
+          <div className="flex flex-col gap-4">
+            <Link
+              to="/my-tickets"
+              className="flex items-center gap-2 self-start px-4 py-2 rounded-xl border border-primary/40 bg-primary/10 text-primary text-sm font-semibold hover:bg-primary/20 transition-all"
+            >
+              <ExternalLink className="w-4 h-4" /> Open Full Ticket View
+            </Link>
+            <TicketsSection tickets={tickets} userEmail={user?.email} onRefresh={() => fetchData(user)} />
+          </div>
         )}
 
         {activeTab === "Billing" && (

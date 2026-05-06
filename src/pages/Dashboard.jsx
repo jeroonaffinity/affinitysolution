@@ -4,15 +4,18 @@ import {
   Ticket, CreditCard, MessageSquare, Loader2, LogOut,
   TicketCheck, Clock, Zap, CheckCircle2, XCircle,
   ChevronDown, ChevronUp, Search, Plus, Send,
-  Cpu, Wifi, Mail, Shield, HelpCircle, LayoutDashboard,
-  CalendarDays, Users, Server, Phone, ArrowRight
+  Cpu, Wifi, Mail, Shield, HelpCircle,
+  CalendarDays, Users, Server, Phone, ArrowRight, BookOpen
 } from "lucide-react";
+import BillingTab from "@/components/dashboard/BillingTab";
+import SupportDocsTab from "@/components/dashboard/SupportDocsTab";
 
 // ─── Config ────────────────────────────────────────────────────────────────
 const TABS = [
   { id: "overview",  label: "Overview"       },
   { id: "tickets",   label: "Support Tickets" },
   { id: "billing",   label: "Billing"         },
+  { id: "docs",      label: "Support Docs"    },
   { id: "enquiries", label: "My Enquiries"    },
 ];
 
@@ -318,89 +321,28 @@ function TicketsTab({ tickets, userEmail, onRefresh }) {
   );
 }
 
-function BillingTab({ services }) {
-  const active = services.filter(s => s.status === "active");
-  const totalMonthly = active.reduce((sum, s) => sum + (s.monthly_cost || 0), 0);
-  const totalAnnual = totalMonthly * 12;
 
-  return (
-    <div className="flex flex-col gap-5">
-      {services.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-primary/8 border border-primary/15 flex items-center justify-center">
-            <CreditCard className="w-6 h-6 text-primary/40" />
-          </div>
-          <p className="text-muted-foreground text-sm">No services found. Contact us to get started.</p>
-        </div>
-      ) : (
-        <>
-          {/* Summary cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="p-4 rounded-2xl border border-primary/25 bg-primary/5">
-              <div className="text-xs text-muted-foreground mb-1">Monthly Total</div>
-              <div className="text-2xl font-extrabold text-gradient">£{totalMonthly.toLocaleString()}</div>
-              <div className="text-xs text-muted-foreground/60 mt-0.5">per month</div>
-            </div>
-            <div className="p-4 rounded-2xl border border-border/30 bg-card/40">
-              <div className="text-xs text-muted-foreground mb-1">Annual Estimate</div>
-              <div className="text-2xl font-extrabold">£{totalAnnual.toLocaleString()}</div>
-              <div className="text-xs text-muted-foreground/60 mt-0.5">per year</div>
-            </div>
-            <div className="p-4 rounded-2xl border border-border/30 bg-card/40">
-              <div className="text-xs text-muted-foreground mb-1">Active Services</div>
-              <div className="text-2xl font-extrabold">{active.length}</div>
-              <div className="text-xs text-muted-foreground/60 mt-0.5">of {services.length} total</div>
-            </div>
-          </div>
-
-          {/* Service list */}
-          <div className="flex flex-col gap-2.5">
-            {services.map(s => {
-              const sc = SERVICE_STATUS[s.status] || SERVICE_STATUS.active;
-              return (
-                <div key={s.id} className="p-4 rounded-2xl border border-border/30 bg-card/40 flex items-center justify-between gap-4 flex-wrap hover:border-border/60 transition-all">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Server className="w-4 h-4 text-primary" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="font-semibold text-sm truncate">{s.service_name}</div>
-                      <div className="flex flex-wrap gap-2 text-xs text-muted-foreground mt-0.5">
-                        {s.users > 0 && <span className="flex items-center gap-1"><Users className="w-3 h-3" />{s.users} users</span>}
-                        {s.endpoints > 0 && <span>{s.endpoints} endpoints</span>}
-                        {s.next_billing_date && (
-                          <span className="flex items-center gap-1"><CalendarDays className="w-3 h-3" />Next: {new Date(s.next_billing_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>
-                        )}
-                        <span className="capitalize">{s.billing_cycle}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 flex-shrink-0">
-                    <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${sc.bg} ${sc.color}`}>{sc.label}</span>
-                    <div className="text-right">
-                      <div className="font-bold text-sm">£{s.monthly_cost?.toLocaleString()}</div>
-                      <div className="text-xs text-muted-foreground">/mo</div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
 
 function EnquiriesTab({ submissions }) {
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
+      {/* Explanation banner */}
+      <div className="p-4 rounded-2xl border border-primary/20 bg-primary/5 flex gap-3">
+        <MessageSquare className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+        <div>
+          <div className="text-sm font-semibold mb-0.5">What are enquiries?</div>
+          <div className="text-xs text-muted-foreground leading-relaxed">
+            These are callback or email requests you submitted via our <strong>Contact</strong> page — before or after becoming a client. Each entry shows your preferred contact method and any message you left us. Our team will follow up directly.
+          </div>
+        </div>
+      </div>
+
       {submissions.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+        <div className="flex flex-col items-center justify-center py-12 gap-3 text-center">
           <div className="w-14 h-14 rounded-2xl bg-primary/8 border border-primary/15 flex items-center justify-center">
             <MessageSquare className="w-6 h-6 text-primary/40" />
           </div>
-          <p className="text-muted-foreground text-sm">No enquiries found.</p>
+          <p className="text-muted-foreground text-sm">No enquiries found. If you've contacted us via the website, it'll appear here.</p>
         </div>
       ) : (
         submissions.map(s => (
@@ -613,7 +555,11 @@ export default function Dashboard() {
         )}
 
         {activeTab === "billing" && (
-          <BillingTab services={services} />
+          <BillingTab services={services} userName={user?.full_name || user?.email} />
+        )}
+
+        {activeTab === "docs" && (
+          <SupportDocsTab />
         )}
 
         {activeTab === "enquiries" && (

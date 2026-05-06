@@ -1,0 +1,45 @@
+{
+  "name": "KnowledgeBase",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Title of the guide"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "hardware",
+        "software",
+        "network",
+        "email",
+        "security",
+        "other"
+      ],
+      "default": "other",
+      "description": "Category of the guide"
+    },
+    "content": {
+      "type": "string",
+      "description": "Full guide content / steps"
+    },
+    "summary": {
+      "type": "string",
+      "description": "Short one-line summary shown in listing"
+    },
+    "tags": {
+      "type": "string",
+      "description": "Comma-separated tags for search"
+    },
+    "is_published": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether the article is visible to clients"
+    }
+  },
+  "required": [
+    "title",
+    "category",
+    "content"
+  ]
+}

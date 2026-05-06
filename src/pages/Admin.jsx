@@ -132,9 +132,6 @@ export default function Admin() {
 
         {activeTab === "Users" && (
           <div>
-            <div className="mb-4 p-4 rounded-xl border border-yellow-500/30 bg-yellow-500/10 text-yellow-400 text-sm">
-              <strong>Approval Flow:</strong> When a new user signs up, you'll receive a daily email summary. Contact them to verify their identity, then click <em>Approve Access</em> below to grant them portal access.
-            </div>
             <AdminUsersTable
               users={filterEmail ? users.filter(u => (u.email || "").toLowerCase().includes(filterEmail.toLowerCase()) || (u.full_name || "").toLowerCase().includes(filterEmail.toLowerCase())) : users}
               currentUserId={user?.id}

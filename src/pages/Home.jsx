@@ -75,7 +75,7 @@ export default function Home() {
     <div className="bg-background text-foreground">
 
       {/* ── Hero ── */}
-      <section className="bg-white py-16 px-6 border-b border-border">
+      <section className="bg-card py-16 px-6 border-b border-border">
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-5 border border-primary/20">
@@ -124,7 +124,7 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {painPoints.map((p) => (
-              <div key={p.title} className="p-5 rounded-2xl border border-border bg-white hover:border-primary/30 hover:shadow-sm transition-all flex flex-col gap-3">
+              <div key={p.title} className="p-5 rounded-2xl border border-border bg-card hover:border-primary/30 hover:shadow-sm transition-all flex flex-col gap-3">
                 <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                   <p.icon className="w-4 h-4 text-primary" />
                 </div>
@@ -137,7 +137,7 @@ export default function Home() {
       </section>
 
       {/* ── How It Works + Cyber Stats ── */}
-      <section className="py-14 px-6 bg-white border-b border-border">
+      <section className="py-14 px-6 bg-card border-b border-border">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
 
           {/* How It Works */}
@@ -189,7 +189,7 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {features.map((f) => (
-              <div key={f.title} className="p-5 rounded-2xl border border-border bg-white hover:border-primary/30 hover:shadow-sm transition-all">
+              <div key={f.title} className="p-5 rounded-2xl border border-border bg-card hover:border-primary/30 hover:shadow-sm transition-all">
                 <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
                   <f.icon className="w-4 h-4 text-primary" />
                 </div>
@@ -202,7 +202,7 @@ export default function Home() {
       </section>
 
       {/* ── What's Included + CTA ── */}
-      <section className="py-14 px-6 bg-white">
+      <section className="py-14 px-6 bg-card">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
 
           {/* What's Included */}

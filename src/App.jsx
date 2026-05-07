@@ -11,6 +11,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import PageTransition from '@/components/PageTransition';
 import SplashScreen from '@/components/SplashScreen';
+import { ThemeProvider } from '@/lib/ThemeContext';
 
 
 const { Pages, Layout, mainPage } = pagesConfig;
@@ -78,6 +79,7 @@ const AuthenticatedApp = () => {
 function App() {
 
   return (
+    <ThemeProvider>
     <SplashScreen>
       <AuthProvider>
         <QueryClientProvider client={queryClientInstance}>
@@ -88,6 +90,7 @@ function App() {
         </QueryClientProvider>
       </AuthProvider>
     </SplashScreen>
+    </ThemeProvider>
   )
 }
 

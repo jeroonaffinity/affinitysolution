@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Sun, Moon } from "lucide-react";
 import SupportChat from "./components/SupportChat";
+import { useTheme } from "@/lib/ThemeContext";
+
+const LIGHT_LOGO = "https://media.base44.com/images/public/69aa02e6ea92c996cd4d16f3/39556fe0a_AbstractTechnologyProfileLinkedInBanner9.png";
+const DARK_LOGO  = "https://media.base44.com/images/public/69aa02e6ea92c996cd4d16f3/dc140f6fd_AbstractTechnologyProfileLinkedInBanner2.png";
 
 const navLinks = [
   { label: "Home",       page: "Home"       },
@@ -17,16 +21,19 @@ const dashboardPath = "/dashboard";
 
 export default function Layout({ children, currentPageName }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { dark, toggle } = useTheme();
+
+  const logo = dark ? DARK_LOGO : LIGHT_LOGO;
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Navbar */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-white/95 backdrop-blur-xl shadow-sm">
+      <header className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/95 backdrop-blur-xl shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
           {/* Logo */}
           <Link to={createPageUrl("Home")} className="flex items-center">
             <img
-              src="https://media.base44.com/images/public/69aa02e6ea92c996cd4d16f3/dc140f6fd_AbstractTechnologyProfileLinkedInBanner2.png"
+              src={logo}
               alt="AffinitySolution"
               className="h-9 w-auto"
             />
@@ -50,6 +57,14 @@ export default function Layout({ children, currentPageName }) {
           </nav>
 
           <div className="hidden md:flex items-center gap-3">
+            {/* Dark mode toggle */}
+            <button
+              onClick={toggle}
+              className="w-9 h-9 flex items-center justify-center rounded-lg border border-border text-foreground/60 hover:text-foreground hover:border-primary/40 transition-all"
+              aria-label="Toggle dark mode"
+            >
+              {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
             <Link
               to={dashboardPath}
               className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors"
@@ -64,18 +79,27 @@ export default function Layout({ children, currentPageName }) {
             </Link>
           </div>
 
-          {/* Mobile hamburger */}
-          <button
-            className="md:hidden text-foreground/60 hover:text-foreground"
-            onClick={() => setMobileOpen(!mobileOpen)}
-          >
-            {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          {/* Mobile: toggle + hamburger */}
+          <div className="md:hidden flex items-center gap-2">
+            <button
+              onClick={toggle}
+              className="w-9 h-9 flex items-center justify-center rounded-lg border border-border text-foreground/60 hover:text-foreground transition-all"
+              aria-label="Toggle dark mode"
+            >
+              {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+            <button
+              className="text-foreground/60 hover:text-foreground"
+              onClick={() => setMobileOpen(!mobileOpen)}
+            >
+              {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile menu */}
         {mobileOpen && (
-          <div className="md:hidden border-t border-border bg-white px-6 py-4 flex flex-col gap-4">
+          <div className="md:hidden border-t border-border bg-background px-6 py-4 flex flex-col gap-4">
             {navLinks.map((link) => (
               <Link
                 key={link.page}
@@ -107,11 +131,11 @@ export default function Layout({ children, currentPageName }) {
       <SupportChat />
 
       {/* Footer */}
-      <footer className="border-t border-border bg-white py-8">
+      <footer className="border-t border-border bg-background py-8">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center">
             <img
-              src="https://media.base44.com/images/public/69aa02e6ea92c996cd4d16f3/dc140f6fd_AbstractTechnologyProfileLinkedInBanner2.png"
+              src={logo}
               alt="AffinitySolution"
               className="h-7 w-auto"
             />

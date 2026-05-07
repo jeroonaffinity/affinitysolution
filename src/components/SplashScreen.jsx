@@ -161,15 +161,41 @@ export default function SplashScreen({ children }) {
               : { duration: 0.5, ease: "easeIn" }
           }
         >
-          <img
-            src="https://media.base44.com/images/public/69aa02e6ea92c996cd4d16f3/674ec2824_AbstractTechnologyProfileLinkedInBanner2.png"
-            alt="AffinitySolution"
+          {/* Bolt icon */}
+          <motion.svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#2D2B8F"
+            strokeWidth="1.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
             style={{
-              width: "min(320px, 68vw)",
-              filter:
-                "drop-shadow(0 0 24px rgba(45,43,143,0.8)) drop-shadow(0 0 60px rgba(45,43,143,0.25))",
+              width: 42,
+              height: 42,
+              filter: "drop-shadow(0 0 12px rgba(45,43,143,1)) drop-shadow(0 0 30px rgba(45,43,143,0.5))",
             }}
-          />
+            initial={{ opacity: 0 }}
+            animate={phase === "hold" ? { opacity: 1 } : { opacity: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+          >
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="rgba(45,43,143,0.15)" />
+          </motion.svg>
+
+          {/* Wordmark */}
+          <div style={{ textAlign: "center" }}>
+            <div
+              style={{
+                fontSize: "clamp(28px, 7vw, 48px)",
+                fontWeight: 800,
+                letterSpacing: "-0.02em",
+                color: "#fff",
+                lineHeight: 1,
+                textShadow: "0 0 40px rgba(45,43,143,0.6), 0 0 80px rgba(45,43,143,0.2)",
+              }}
+            >
+              Affinity<span style={{ color: "#2D2B8F" }}>Solution</span>
+            </div>
+          </div>
 
           <motion.div
             className="h-px bg-white/10"

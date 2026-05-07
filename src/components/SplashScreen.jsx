@@ -20,13 +20,18 @@ export default function SplashScreen({ children }) {
             transition={{ duration: 0.5, ease: "easeInOut" }}
             className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-6" style={{ backgroundColor: '#000000' }}
           >
-            <motion.img
-              src="https://media.base44.com/images/public/69aa02e6ea92c996cd4d16f3/533958f84_AbstractTechnologyProfileLinkedInBanner3.png"
-              alt="AffinitySolution"
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1, rotate: 360 }}
               transition={{ opacity: { duration: 0.3 }, rotate: { duration: 2.5, repeat: Infinity, ease: "linear" } }}
-              className="h-36 w-36 mx-auto object-contain"
+              style={{
+                width: 180,
+                height: 180,
+                backgroundImage: "url(https://media.base44.com/images/public/69aa02e6ea92c996cd4d16f3/533958f84_AbstractTechnologyProfileLinkedInBanner3.png)",
+                backgroundSize: "1100%",
+                backgroundPosition: "51% 50%",
+                backgroundRepeat: "no-repeat",
+              }}
             />
           </motion.div>
         )}

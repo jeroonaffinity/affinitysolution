@@ -1,230 +1,200 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const BOLT_COUNT = 70;
-
-function useSeed(count) {
-  return useMemo(() => Array.from({ length: count }, (_, i) => ({
-    id: i,
-    top: Math.random() * 100,
-    left: Math.random() * 100,
-    size: 14 + Math.random() * 30,
-    delay: Math.random() * 1.6,
-    duration: 2 + Math.random() * 1.5,
-    rotation: (Math.random() - 0.5) * 50,
-    opacity: 0.3 + Math.random() * 0.5,
-  })), []);
-}
-
-// Shockwave ring
-function Ring({ delay, size }) {
-  return (
-    <motion.div
-      className="absolute rounded-full"
-      style={{
-        width: size,
-        height: size,
-        border: "1px solid rgba(45,43,143,0.6)",
-        left: "50%",
-        top: "50%",
-        marginLeft: -size / 2,
-        marginTop: -size / 2,
-      }}
-      initial={{ scale: 0, opacity: 0.9 }}
-      animate={{ scale: 6, opacity: 0 }}
-      transition={{ duration: 1.6, delay, ease: [0.2, 0.8, 0.4, 1] }}
-    />
-  );
-}
+const BOLT_COUNT = 50;
 
 export default function SplashScreen({ children }) {
-  // phases: scatter → converge → shockwave → logo → hold → exit → done
-  const [phase, setPhase] = useState("scatter");
-  const bolts = useSeed(BOLT_COUNT);
+  const [phase, setPhase] = useState("in"); // in → hold → out → done
 
   useEffect(() => {
-    const seq = [
-      [1800, "converge"],
-      [2600, "shockwave"],
-      [2700, "logo"],
-      [4200, "exit"],
-      [5100, "done"],
-    ];
-    const timers = seq.map(([ms, p]) => setTimeout(() => setPhase(p), ms));
-    return () => timers.forEach(clearTimeout);
+    const t1 = setTimeout(() => setPhase("hold"), 2200);
+    const t2 = setTimeout(() => setPhase("out"), 3800);
+    const t3 = setTimeout(() => setPhase("done"), 4800);
+    return () => [t1, t2, t3].forEach(clearTimeout);
   }, []);
+
+  const bolts = useMemo(() =>
+    Array.from({ length: BOLT_COUNT }, (_, i) => {
+      const angle = (i / BOLT_COUNT) * Math.PI * 2;
+      const radius = 30 + Math.random() * 42; // % from center
+      return {
+        id: i,
+        // start scattered in a rough circle around centre
+        startX: 50 + Math.cos(angle) * radius * 1.6,
+        startY: 50 + Math.sin(angle) * radius * 0.9,
+        size: 16 + Math.random() * 26,
+        rotation: (Math.random() - 0.5) * 60,
+        delay: (i / BOLT_COUNT) * 0.9,
+        opacity: 0.25 + Math.random() * 0.55,
+      };
+    }), []);
 
   if (phase === "done") return <>{children}</>;
 
-  const boltVariants = {
-    scatter: (b) => ({
-      opacity: b.opacity,
-      x: 0,
-      y: 0,
-      scale: 1,
-      transition: { duration: b.duration, delay: b.delay, ease: "easeInOut", repeat: Infinity, repeatType: "reverse" },
-    }),
-    converge: (b) => {
-      const cx = b.left - 50;
-      const cy = b.top - 50;
-      return {
-        x: `${-cx * 0.85}vw`,
-        y: `${-cy * 0.85}vh`,
-        scale: 0.3,
-        opacity: 0.9,
-        transition: { duration: 0.75, ease: [0.4, 0, 0.2, 1] },
-      };
-    },
-    shockwave: () => ({ opacity: 0, scale: 0, transition: { duration: 0.25 } }),
-    logo: () => ({ opacity: 0, scale: 0, transition: { duration: 0 } }),
-    exit: () => ({ opacity: 0, transition: { duration: 0 } }),
-  };
-
   return (
     <>
-      <div
-        className="fixed inset-0 z-[9999] overflow-hidden flex items-center justify-center"
+      <motion.div
+        className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden"
         style={{ backgroundColor: "#000" }}
+        animate={phase === "out" ? { opacity: 0 } : { opacity: 1 }}
+        transition={{ duration: 0.9, ease: "easeInOut" }}
       >
-        {/* ── Ambient glow behind everything ── */}
+        {/* ── Deep glow core ── */}
         <motion.div
           className="absolute rounded-full pointer-events-none"
           style={{
-            width: 400,
-            height: 400,
-            background: "radial-gradient(circle, rgba(45,43,143,0.18) 0%, transparent 70%)",
+            width: 500,
+            height: 500,
+            background: "radial-gradient(circle, rgba(45,43,143,0.22) 0%, transparent 65%)",
           }}
-          initial={{ scale: 0.5, opacity: 0 }}
+          initial={{ scale: 0, opacity: 0 }}
           animate={
-            phase === "shockwave" || phase === "logo" || phase === "hold"
-              ? { scale: 1.8, opacity: 1 }
-              : phase === "exit"
-              ? { scale: 2.5, opacity: 0 }
-              : { scale: 0.5, opacity: 0 }
+            phase === "in"
+              ? { scale: 0.6, opacity: 0.7 }
+              : phase === "hold"
+              ? { scale: 1.1, opacity: 1 }
+              : { scale: 1.8, opacity: 0 }
           }
-          transition={{ duration: 0.6, ease: "easeOut" }}
+          transition={{ duration: 1.2, ease: "easeOut" }}
         />
 
-        {/* ── Scattered breathing bolts ── */}
-        {(phase === "scatter" || phase === "converge") &&
-          bolts.map((bolt) => (
+        {/* ── Bolts ── */}
+        {bolts.map((bolt) => {
+          const isIn = phase === "in";
+          const isHold = phase === "hold";
+          const isOut = phase === "out";
+
+          return (
             <motion.svg
               key={bolt.id}
-              custom={bolt}
               viewBox="0 0 24 24"
               fill="none"
               stroke="#2D2B8F"
-              strokeWidth="1.4"
+              strokeWidth="1.3"
               strokeLinecap="round"
               strokeLinejoin="round"
               style={{
                 position: "absolute",
-                top: `${bolt.top}%`,
-                left: `${bolt.left}%`,
+                top: `${bolt.startY}%`,
+                left: `${bolt.startX}%`,
                 width: bolt.size,
                 height: bolt.size,
                 rotate: `${bolt.rotation}deg`,
                 pointerEvents: "none",
+                translateX: "-50%",
+                translateY: "-50%",
               }}
-              initial={{ opacity: 0 }}
+              initial={{ opacity: 0, scale: 0.5 }}
               animate={
-                phase === "converge"
+                isIn
                   ? {
-                      x: `${-(bolt.left - 50) * 0.9}vw`,
-                      y: `${-(bolt.top - 50) * 0.9}vh`,
-                      scale: 0.2,
-                      opacity: 1,
+                      opacity: bolt.opacity,
+                      scale: 1,
+                      transition: {
+                        duration: 0.7,
+                        delay: bolt.delay,
+                        ease: "easeOut",
+                      },
+                    }
+                  : isHold
+                  ? {
+                      opacity: [bolt.opacity, bolt.opacity * 0.4, bolt.opacity],
+                      scale: [1, 0.95, 1],
+                      transition: {
+                        duration: 1.8,
+                        ease: "easeInOut",
+                        repeat: Infinity,
+                        repeatType: "mirror",
+                      },
                     }
                   : {
-                      opacity: [0, bolt.opacity, bolt.opacity * 0.4, bolt.opacity],
-                    }
-              }
-              transition={
-                phase === "converge"
-                  ? { duration: 0.7, ease: [0.4, 0, 0.2, 1] }
-                  : {
-                      duration: bolt.duration,
-                      delay: bolt.delay,
-                      ease: "easeInOut",
-                      repeat: Infinity,
-                      repeatType: "mirror",
+                      // converge into centre
+                      x: `${(50 - bolt.startX) * 3}px`,
+                      y: `${(50 - bolt.startY) * 3}px`,
+                      scale: 0,
+                      opacity: 0,
+                      transition: {
+                        duration: 0.55,
+                        delay: bolt.delay * 0.25,
+                        ease: [0.4, 0, 1, 1],
+                      },
                     }
               }
             >
               <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
             </motion.svg>
-          ))}
+          );
+        })}
 
-        {/* ── Shockwave rings ── */}
+        {/* ── Pulse rings on hold ── */}
         <AnimatePresence>
-          {(phase === "shockwave" || phase === "logo" || phase === "hold") && (
+          {phase === "hold" && (
             <>
-              <Ring delay={0} size={60} />
-              <Ring delay={0.12} size={60} />
-              <Ring delay={0.26} size={60} />
+              {[0, 0.3, 0.6].map((d, i) => (
+                <motion.div
+                  key={i}
+                  className="absolute rounded-full pointer-events-none"
+                  style={{ border: "1px solid rgba(45,43,143,0.45)", width: 80, height: 80 }}
+                  initial={{ scale: 0.5, opacity: 0.6 }}
+                  animate={{ scale: 5, opacity: 0 }}
+                  transition={{ duration: 2, delay: d, ease: "easeOut", repeat: Infinity, repeatDelay: 0.4 }}
+                />
+              ))}
             </>
           )}
         </AnimatePresence>
 
-        {/* ── Logo materialise ── */}
-        <AnimatePresence>
-          {(phase === "logo" || phase === "hold") && (
-            <motion.div
-              className="absolute flex flex-col items-center gap-5 z-10"
-              initial={{ opacity: 0, scale: 0.88, filter: "blur(12px)" }}
-              animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-              exit={{ opacity: 0, scale: 1.06, filter: "blur(8px)" }}
-              transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-            >
-              {/* Logo */}
-              <motion.img
-                src="https://media.base44.com/images/public/69aa02e6ea92c996cd4d16f3/674ec2824_AbstractTechnologyProfileLinkedInBanner2.png"
-                alt="AffinitySolution"
-                style={{
-                  width: "min(340px, 72vw)",
-                  filter: "drop-shadow(0 0 32px rgba(45,43,143,0.7)) drop-shadow(0 0 80px rgba(45,43,143,0.3))",
-                }}
-              />
+        {/* ── Logo ── */}
+        <motion.div
+          className="absolute flex flex-col items-center gap-4 z-10 pointer-events-none"
+          initial={{ opacity: 0, scale: 0.92, filter: "blur(14px)" }}
+          animate={
+            phase === "in"
+              ? { opacity: 0, scale: 0.92, filter: "blur(14px)" }
+              : phase === "hold"
+              ? { opacity: 1, scale: 1, filter: "blur(0px)" }
+              : { opacity: 0, scale: 1.04, filter: "blur(6px)" }
+          }
+          transition={
+            phase === "hold"
+              ? { duration: 0.9, ease: [0.16, 1, 0.3, 1] }
+              : { duration: 0.5, ease: "easeIn" }
+          }
+        >
+          <img
+            src="https://media.base44.com/images/public/69aa02e6ea92c996cd4d16f3/674ec2824_AbstractTechnologyProfileLinkedInBanner2.png"
+            alt="AffinitySolution"
+            style={{
+              width: "min(320px, 68vw)",
+              filter:
+                "drop-shadow(0 0 24px rgba(45,43,143,0.8)) drop-shadow(0 0 60px rgba(45,43,143,0.25))",
+            }}
+          />
 
-              {/* Divider line */}
-              <motion.div
-                className="h-px bg-white/10"
-                initial={{ width: 0 }}
-                animate={{ width: "min(220px, 50vw)" }}
-                transition={{ delay: 0.3, duration: 0.6, ease: "easeOut" }}
-              />
+          <motion.div
+            className="h-px bg-white/10"
+            initial={{ scaleX: 0 }}
+            animate={phase === "hold" ? { scaleX: 1 } : { scaleX: 0 }}
+            transition={{ duration: 0.7, delay: 0.4, ease: "easeOut" }}
+            style={{ width: "min(200px, 45vw)", originX: 0.5 }}
+          />
 
-              {/* Tagline */}
-              <motion.p
-                className="text-[10px] md:text-xs tracking-[0.4em] uppercase text-white/35 font-light"
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, duration: 0.5 }}
-              >
-                Managed IT Solutions
-              </motion.p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ── Exit flash ── */}
-        <AnimatePresence>
-          {phase === "exit" && (
-            <motion.div
-              className="absolute inset-0 bg-black pointer-events-none"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.7, ease: "easeInOut" }}
-            />
-          )}
-        </AnimatePresence>
+          <motion.p
+            className="text-[9px] md:text-[11px] tracking-[0.45em] uppercase text-white/30 font-light"
+            initial={{ opacity: 0, y: 8 }}
+            animate={phase === "hold" ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+          >
+            Managed IT Solutions
+          </motion.p>
+        </motion.div>
 
         {/* ── Scanlines ── */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
             backgroundImage:
-              "repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.06) 3px, rgba(0,0,0,0.06) 4px)",
+              "repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.07) 3px, rgba(0,0,0,0.07) 4px)",
           }}
         />
 
@@ -233,10 +203,10 @@ export default function SplashScreen({ children }) {
           className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              "radial-gradient(ellipse at center, transparent 25%, rgba(0,0,0,0.9) 100%)",
+              "radial-gradient(ellipse at center, transparent 20%, rgba(0,0,0,0.92) 100%)",
           }}
         />
-      </div>
+      </motion.div>
 
       {children}
     </>

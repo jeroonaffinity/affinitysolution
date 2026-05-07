@@ -42,16 +42,27 @@ export default function SplashScreen({ children }) {
               transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut", repeatDelay: 0.5 }}
             />
 
-            {/* Logo centred on top */}
-            <motion.img
-              src="https://media.base44.com/images/public/69aa02e6ea92c996cd4d16f3/674ec2824_AbstractTechnologyProfileLinkedInBanner2.png"
-              alt="AffinitySolution"
-              className="relative z-10"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-              style={{ width: 220, height: "auto" }}
-            />
+            {/* Logo centred on top with shimmer wave */}
+            <div className="relative z-10" style={{ width: 220 }}>
+              <motion.img
+                src="https://media.base44.com/images/public/69aa02e6ea92c996cd4d16f3/674ec2824_AbstractTechnologyProfileLinkedInBanner2.png"
+                alt="AffinitySolution"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+                style={{ width: 220, height: "auto", display: "block" }}
+              />
+              {/* Slow subtle shimmer over logo */}
+              <motion.div
+                className="absolute inset-0 rounded"
+                style={{
+                  background: "linear-gradient(105deg, transparent 25%, rgba(255,255,255,0.22) 50%, transparent 75%)",
+                  width: "60%",
+                }}
+                animate={{ x: ["-80%", "220%"] }}
+                transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut", repeatDelay: 1.2 }}
+              />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -24,10 +24,10 @@ export default function Contact() {
   };
 
   return (
-    <div className="bg-background min-h-screen">
+    <div className="bg-background text-foreground min-h-screen">
       {/* Header */}
-      <section className="relative py-24 px-6 text-center overflow-hidden bg-grid">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[300px] bg-primary/10 blur-[100px] pointer-events-none rounded-full" />
+      <section className="relative py-24 px-6 text-center overflow-hidden bg-white border-b border-border">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[300px] bg-primary/5 blur-[100px] pointer-events-none rounded-full" />
         <div className="relative max-w-2xl mx-auto">
           <h1 className="text-5xl md:text-6xl font-extrabold mb-5 tracking-tight">
             Let's <span className="text-gradient">Talk IT.</span>
@@ -62,7 +62,7 @@ export default function Contact() {
             ))}
           </div>
 
-          <div className="p-6 rounded-2xl border border-primary/30 bg-primary/10">
+          <div className="p-6 rounded-2xl border border-primary/20 bg-primary/5">
             <h3 className="font-bold mb-2 text-primary">Free IT Assessment Includes:</h3>
             <ul className="flex flex-col gap-2">
               {[

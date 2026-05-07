@@ -161,47 +161,71 @@ export default function SplashScreen({ children }) {
               : { duration: 0.5, ease: "easeIn" }
           }
         >
-          {/* Monogram badge */}
+          {/* Logo lockup: bolt + wordmark */}
           <motion.div
-            style={{
-              width: 52,
-              height: 52,
-              border: "1px solid rgba(255,255,255,0.12)",
-              borderRadius: 4,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "rgba(45,43,143,0.12)",
-              boxShadow: "0 0 30px rgba(45,43,143,0.35)",
-            }}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={phase === "hold" ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.5, delay: 0.05 }}
+            style={{ display: "flex", alignItems: "center", gap: 16 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={phase === "hold" ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" style={{ width: 22, height: 22 }}>
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-            </svg>
-          </motion.div>
-
-          {/* Wordmark */}
-          <motion.div
-            style={{ textAlign: "center" }}
-            initial={{ opacity: 0, y: 6 }}
-            animate={phase === "hold" ? { opacity: 1, y: 0 } : { opacity: 0, y: 6 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            <div
+            {/* Bolt */}
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
               style={{
-                fontSize: "clamp(22px, 5vw, 36px)",
-                fontWeight: 300,
-                letterSpacing: "0.18em",
-                color: "#fff",
-                lineHeight: 1,
-                textTransform: "uppercase",
-                textShadow: "0 0 40px rgba(45,43,143,0.4)",
+                width: "clamp(36px, 8vw, 56px)",
+                height: "clamp(36px, 8vw, 56px)",
+                flexShrink: 0,
+                filter: "drop-shadow(0 0 10px rgba(45,43,143,0.9))",
               }}
             >
-              Affinity<span style={{ color: "rgba(255,255,255,0.45)", fontWeight: 300 }}>Solution</span>
+              <polygon
+                points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"
+                fill="none"
+                stroke="#2D2B8F"
+                strokeWidth="1.6"
+              />
+            </svg>
+
+            {/* Text */}
+            <div>
+              <div style={{ display: "flex", alignItems: "baseline", lineHeight: 1 }}>
+                <span
+                  style={{
+                    fontSize: "clamp(26px, 6vw, 46px)",
+                    fontWeight: 800,
+                    color: "#ffffff",
+                    letterSpacing: "-0.01em",
+                    textShadow: "0 0 30px rgba(255,255,255,0.15)",
+                  }}
+                >
+                  Affinity
+                </span>
+                <span
+                  style={{
+                    fontSize: "clamp(26px, 6vw, 46px)",
+                    fontWeight: 800,
+                    color: "#1e40af",
+                    letterSpacing: "-0.01em",
+                    textShadow: "0 0 30px rgba(30,64,175,0.6)",
+                  }}
+                >
+                  Solution
+                </span>
+              </div>
+              <div
+                style={{
+                  fontSize: "clamp(11px, 2vw, 15px)",
+                  color: "rgba(255,255,255,0.45)",
+                  fontWeight: 400,
+                  letterSpacing: "0.02em",
+                  marginTop: 4,
+                }}
+              >
+                Your IT, Fully Managed.
+              </div>
             </div>
           </motion.div>
 

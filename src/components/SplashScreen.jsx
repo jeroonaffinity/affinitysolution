@@ -41,7 +41,7 @@ export default function SplashScreen({ children }) {
                 key={bolt.id}
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#3730d4"
+                stroke="#2D2B8F"
                 strokeWidth="1.4"
                 strokeLinecap="round"
                 strokeLinejoin="round"

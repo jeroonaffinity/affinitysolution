@@ -18,7 +18,7 @@ export default function SplashScreen({ children }) {
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5, ease: "easeInOut" }}
-            className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-6" style={{ backgroundColor: '#F8FAFC' }}
+            className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-6" style={{ backgroundColor: '#000000' }}
           >
             <motion.img
               src="https://media.base44.com/images/public/69aa02e6ea92c996cd4d16f3/dc140f6fd_AbstractTechnologyProfileLinkedInBanner2.png"
@@ -26,7 +26,7 @@ export default function SplashScreen({ children }) {
               initial={{ opacity: 0, scale: 0.85 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.4, ease: "easeOut" }}
-              className="h-20 w-auto max-w-xs mx-auto translate-x-16"
+              className="h-20 w-auto max-w-xs mx-auto"
             />
             <motion.div
               initial={{ opacity: 0 }}
@@ -37,7 +37,7 @@ export default function SplashScreen({ children }) {
               {[0, 1, 2].map((i) => (
                 <span
                   key={i}
-                  className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce"
+                  className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce"
                   style={{ animationDelay: `${i * 0.15}s` }}
                 />
               ))}

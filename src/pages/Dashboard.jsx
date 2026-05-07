@@ -423,9 +423,9 @@ export default function Dashboard() {
     : user?.email?.[0]?.toUpperCase() || "?";
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background">
       {/* Top nav bar */}
-      <div className="sticky top-0 z-30 border-b border-border bg-white/95 backdrop-blur-xl shadow-sm">
+      <div className="sticky top-0 z-30 border-b border-white/6 bg-black/80 backdrop-blur-2xl">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <img
@@ -434,14 +434,14 @@ export default function Dashboard() {
               className="h-7 w-auto"
             />
             <div className="hidden sm:block w-px h-4 bg-border/60" />
-            <span className="hidden sm:block text-sm font-medium text-foreground/60">Client Portal</span>
+            <span className="hidden sm:block text-sm font-medium text-muted-foreground">Client Portal</span>
           </div>
           <div className="flex items-center gap-3">
             <div className="hidden sm:flex items-center gap-2.5 text-sm">
               <div className="w-7 h-7 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-xs font-bold text-primary">
                 {initials}
               </div>
-              <span className="text-foreground/70 font-medium">{user?.full_name || user?.email}</span>
+              <span className="text-muted-foreground font-medium">{user?.full_name || user?.email}</span>
             </div>
             <button
               onClick={() => base44.auth.logout("/")}

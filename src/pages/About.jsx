@@ -11,10 +11,10 @@ const values = [
 
 export default function About() {
   return (
-    <div className="bg-background text-foreground min-h-screen">
+    <div className="bg-background min-h-screen">
       {/* Hero */}
-      <section className="relative py-24 px-6 text-center overflow-hidden bg-white border-b border-border">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-primary/5 blur-[100px] pointer-events-none rounded-full" />
+      <section className="relative py-24 px-6 text-center overflow-hidden bg-grid">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-primary/10 blur-[100px] pointer-events-none rounded-full" />
         <div className="relative max-w-3xl mx-auto">
           <h1 className="text-5xl md:text-6xl font-extrabold mb-6 tracking-tight">
             About <span className="text-gradient">AffinitySolution</span>
@@ -28,9 +28,9 @@ export default function About() {
 
       {/* Who We Are */}
       <section className="max-w-4xl mx-auto px-6 py-16">
-        <div className="bg-white border border-border rounded-2xl p-8 md:p-12">
+        <div className="bg-card border border-border/60 rounded-2xl p-8 md:p-12">
           <h2 className="text-3xl font-bold mb-6">Who We Are</h2>
-          <div className="max-w-none text-foreground/65 space-y-4 leading-relaxed text-base">
+          <div className="prose prose-invert max-w-none text-muted-foreground space-y-4 leading-relaxed">
             <p>
               AffinitySolution was founded with a single mission: to make world-class managed IT accessible to businesses 
               of all sizes. Too many small businesses are left to navigate cybersecurity threats, compliance requirements, 

@@ -25,8 +25,8 @@ export default function SplashScreen({ children }) {
               alt="AffinitySolution"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1, rotate: 360 }}
-              transition={{ opacity: { duration: 0.3 }, rotate: { duration: 1.2, repeat: Infinity, ease: "linear" } }}
-              className="h-20 w-20 mx-auto object-contain"
+              transition={{ opacity: { duration: 0.3 }, rotate: { duration: 2.5, repeat: Infinity, ease: "linear" } }}
+              className="h-36 w-36 mx-auto object-contain"
             />
           </motion.div>
         )}

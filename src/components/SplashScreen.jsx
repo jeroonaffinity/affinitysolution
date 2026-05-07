@@ -26,7 +26,7 @@ export default function SplashScreen({ children }) {
               initial={{ opacity: 0, scale: 0.85 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.4, ease: "easeOut" }}
-              className="h-20 w-auto max-w-xs mx-auto"
+              className="h-20 w-auto max-w-xs mx-auto translate-x-6"
             />
             <motion.div
               initial={{ opacity: 0 }}

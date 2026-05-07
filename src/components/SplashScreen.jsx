@@ -161,41 +161,49 @@ export default function SplashScreen({ children }) {
               : { duration: 0.5, ease: "easeIn" }
           }
         >
-          {/* Bolt icon */}
-          <motion.svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#2D2B8F"
-            strokeWidth="1.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+          {/* Monogram badge */}
+          <motion.div
             style={{
-              width: 42,
-              height: 42,
-              filter: "drop-shadow(0 0 12px rgba(45,43,143,1)) drop-shadow(0 0 30px rgba(45,43,143,0.5))",
+              width: 52,
+              height: 52,
+              border: "1px solid rgba(255,255,255,0.12)",
+              borderRadius: 4,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "rgba(45,43,143,0.12)",
+              boxShadow: "0 0 30px rgba(45,43,143,0.35)",
             }}
-            initial={{ opacity: 0 }}
-            animate={phase === "hold" ? { opacity: 1 } : { opacity: 0 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={phase === "hold" ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.5, delay: 0.05 }}
           >
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="rgba(45,43,143,0.15)" />
-          </motion.svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" style={{ width: 22, height: 22 }}>
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+            </svg>
+          </motion.div>
 
           {/* Wordmark */}
-          <div style={{ textAlign: "center" }}>
+          <motion.div
+            style={{ textAlign: "center" }}
+            initial={{ opacity: 0, y: 6 }}
+            animate={phase === "hold" ? { opacity: 1, y: 0 } : { opacity: 0, y: 6 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
             <div
               style={{
-                fontSize: "clamp(28px, 7vw, 48px)",
-                fontWeight: 800,
-                letterSpacing: "-0.02em",
+                fontSize: "clamp(22px, 5vw, 36px)",
+                fontWeight: 300,
+                letterSpacing: "0.18em",
                 color: "#fff",
                 lineHeight: 1,
-                textShadow: "0 0 40px rgba(45,43,143,0.6), 0 0 80px rgba(45,43,143,0.2)",
+                textTransform: "uppercase",
+                textShadow: "0 0 40px rgba(45,43,143,0.4)",
               }}
             >
-              Affinity<span style={{ color: "#2D2B8F" }}>Solution</span>
+              Affinity<span style={{ color: "rgba(255,255,255,0.45)", fontWeight: 300 }}>Solution</span>
             </div>
-          </div>
+          </motion.div>
 
           <motion.div
             className="h-px bg-white/10"

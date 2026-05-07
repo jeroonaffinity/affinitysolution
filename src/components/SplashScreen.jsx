@@ -5,7 +5,7 @@ export default function SplashScreen({ children }) {
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => setVisible(false), 2000);
+    const timer = setTimeout(() => setVisible(false), 2800);
     return () => clearTimeout(timer);
   }, []);
 
@@ -17,52 +17,50 @@ export default function SplashScreen({ children }) {
             key="splash"
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}
-            className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-6" style={{ backgroundColor: '#000000' }}
+            transition={{ duration: 0.7, ease: "easeInOut" }}
+            className="fixed inset-0 z-[9999] overflow-hidden"
           >
-              {/* Pattern background */}
+            {/* Tiled bolt pattern */}
             <div
               className="absolute inset-0"
               style={{
-                backgroundImage: "url(https://media.base44.com/images/public/69aa02e6ea92c996cd4d16f3/f4238b822_logofill.png)",
-                backgroundSize: "400px",
+                backgroundImage: "url(https://media.base44.com/images/public/69aa02e6ea92c996cd4d16f3/35ca695d6_logofill.png)",
+                backgroundSize: "380px",
                 backgroundRepeat: "repeat",
-                opacity: 0.6,
               }}
             />
 
-            {/* Sweeping brightness wave */}
+            {/* Dark vignette overlay — edges stay dark */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background: "radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.7) 100%)",
+              }}
+            />
+
+            {/* Slow diagonal brightness wave sweeping across */}
             <motion.div
-              className="absolute inset-y-0 w-[40%]"
+              className="absolute inset-y-0"
               style={{
                 left: 0,
-                background: "linear-gradient(105deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%)",
+                width: "50%",
+                background: "linear-gradient(110deg, transparent 0%, rgba(80,80,255,0.12) 40%, rgba(255,255,255,0.08) 50%, rgba(80,80,255,0.12) 60%, transparent 100%)",
               }}
-              animate={{ x: ["-100%", "350%"] }}
-              transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut", repeatDelay: 0.5 }}
+              animate={{ x: ["-100%", "300%"] }}
+              transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut", repeatDelay: 0.6 }}
             />
 
-            {/* Logo centred on top with shimmer wave */}
-            <div className="relative z-10" style={{ width: 220 }}>
-              <motion.img
-                src="https://media.base44.com/images/public/69aa02e6ea92c996cd4d16f3/674ec2824_AbstractTechnologyProfileLinkedInBanner2.png"
-                alt="AffinitySolution"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
-                style={{ width: 220, height: "auto", display: "block" }}
-              />
-              {/* Slow subtle shimmer over logo */}
-              <motion.div
-                className="absolute inset-0 rounded"
-                style={{
-                  background: "linear-gradient(105deg, transparent 25%, rgba(255,255,255,0.22) 50%, transparent 75%)",
-                  width: "60%",
-                }}
-                animate={{ x: ["-80%", "220%"] }}
-                transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut", repeatDelay: 1.2 }}
-              />
-            </div>
+            {/* Second subtler wave offset */}
+            <motion.div
+              className="absolute inset-y-0"
+              style={{
+                left: 0,
+                width: "30%",
+                background: "linear-gradient(110deg, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%)",
+              }}
+              animate={{ x: ["-100%", "400%"] }}
+              transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut", repeatDelay: 0.6, delay: 1.4 }}
+            />
           </motion.div>
         )}
       </AnimatePresence>

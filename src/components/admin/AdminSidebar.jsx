@@ -27,7 +27,7 @@ export default function AdminSidebar({ activeSection, setActiveSection, tickets,
       {/* Logo */}
       <div className="px-6 py-5 border-b border-border/40">
         <img
-          src="https://media.base44.com/images/public/69aa02e6ea92c996cd4d16f3/dc140f6fd_AbstractTechnologyProfileLinkedInBanner2.png"
+          src="https://media.base44.com/images/public/69aa02e6ea92c996cd4d16f3/674ec2824_AbstractTechnologyProfileLinkedInBanner2.png"
           alt="AffinitySolution"
           className="h-8 w-auto"
         />

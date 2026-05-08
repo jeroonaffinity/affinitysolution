@@ -36,13 +36,14 @@ export default function ZohoCallback() {
         <div className="flex flex-col gap-2">
           <p className="text-sm text-muted-foreground">
             First, <a
-              href={`https://accounts.zoho.eu/oauth/v2/auth?scope=Desk.tickets.ALL,Desk.contacts.READ&client_id=1000.IV4T37FGQ9KIGGHR52I5S1UUGEZ6TD&response_type=code&redirect_uri=https://affinitysolution.base44.app/zoho-callback&access_type=offline`}
+              href={`https://accounts.zoho.eu/oauth/v2/auth?scope=Desk.tickets.ALL,Desk.contacts.READ,Desk.basic.READ&client_id=1000.IV4T37FGQ9KIGGHR52I5S1UUGEZ6TD&response_type=code&redirect_uri=https://affinitysolution.base44.app/zoho-callback&access_type=offline&prompt=consent`}
               className="text-primary underline"
               target="_self"
             >
               click here to authorise with Zoho
             </a>. You'll be redirected back here with the code filled in automatically.
           </p>
+          <p className="text-xs text-amber-400 mt-1">⚠️ Make sure <strong>https://affinitysolution.base44.app/zoho-callback</strong> is added as an Authorised Redirect URI in your Zoho API Console.</p>
         </div>
 
         <div className="flex flex-col gap-2">

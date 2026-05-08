@@ -7,6 +7,7 @@ import PageNotFound from './lib/PageNotFound';
 import Dashboard from './pages/Dashboard';
 import About from './pages/About.jsx';
 import Admin from './pages/Admin.jsx';
+import ZohoCallback from './pages/ZohoCallback.jsx';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import PageTransition from '@/components/PageTransition';
@@ -68,6 +69,7 @@ const AuthenticatedApp = () => {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/admin" element={<LayoutWrapper currentPageName="Admin"><Admin /></LayoutWrapper>} />
 
+        <Route path="/zoho-callback" element={<ZohoCallback />} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
     </PageTransition>

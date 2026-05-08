@@ -16,13 +16,26 @@ async function getToken() {
   return data.access_token;
 }
 
-async function action1Fetch(token, path) {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+async function action1Fetch(token, path, method = "GET", body = null) {
+  const opts = {
+    method,
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(`${BASE_URL}${path}`, opts);
   const text = await res.text();
   if (!res.ok) throw new Error(`Action1 ${res.status}: ${text}`);
-  try { return JSON.parse(text); } catch { return {}; }
+  try { return JSON.parse(text); } catch { return { raw: text }; }
+}
+
+// Build a one-shot policy payload targeting specific endpoint IDs
+function buildPolicy(name, actionTemplate, endpointIds) {
+  return {
+    name,
+    retry_minutes: "1",
+    endpoints: endpointIds.map(id => ({ id, type: "Endpoint" })),
+    actions: [actionTemplate],
+  };
 }
 
 Deno.serve(async (req) => {
@@ -31,7 +44,8 @@ Deno.serve(async (req) => {
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
   if (user.role !== "admin") return Response.json({ error: "Forbidden" }, { status: 403 });
 
-  const { action, orgId, path } = await req.json();
+  const payload = await req.json();
+  const { action, orgId, path, controlAction, endpointIds, scriptId, scriptText } = payload;
 
   const token = await getToken();
 
@@ -46,8 +60,71 @@ Deno.serve(async (req) => {
   }
 
   if (action === "fetch" && path) {
-    const data = await action1Fetch(token, path);
-    return Response.json({ data });
+    try {
+      const data = await action1Fetch(token, path);
+      return Response.json({ data });
+    } catch (e) {
+      return Response.json({ error: e.message }, { status: 400 });
+    }
+  }
+
+  // ── ENDPOINT CONTROL ──────────────────────────────────────────────────────
+  if (action === "control" && orgId && controlAction && endpointIds?.length) {
+    let policyBody;
+
+    if (controlAction === "reboot") {
+      policyBody = buildPolicy(
+        `Remote Reboot - ${new Date().toISOString()}`,
+        {
+          name: "Reboot",
+          template_id: "reboot",
+          params: {
+            show_message: "yes",
+            message_text: "Your computer will be rebooted remotely by IT. Please save your work.",
+            timeout: 60,
+            auto_reboot: "yes",
+          },
+        },
+        endpointIds
+      );
+    } else if (controlAction === "deploy_updates") {
+      policyBody = buildPolicy(
+        `Deploy Updates - ${new Date().toISOString()}`,
+        {
+          name: "Deploy Update",
+          template_id: "deploy_update",
+          params: {
+            scope: "All",
+            update_approval: "all",
+            reboot_options: { auto_reboot: "yes", show_message: "yes", timeout: 240 },
+          },
+        },
+        endpointIds
+      );
+    } else if (controlAction === "run_script" && (scriptId || scriptText)) {
+      const scriptParams = scriptId
+        ? { script_id: scriptId }
+        : { script_text: scriptText, language: "PowerShell" };
+
+      policyBody = buildPolicy(
+        `Run Script - ${new Date().toISOString()}`,
+        {
+          name: "Run Script",
+          template_id: "run_script",
+          params: scriptParams,
+        },
+        endpointIds
+      );
+    } else {
+      return Response.json({ error: "Invalid controlAction or missing params" }, { status: 400 });
+    }
+
+    try {
+      const data = await action1Fetch(token, `/policies/instances/${orgId}`, "POST", policyBody);
+      return Response.json({ success: true, data });
+    } catch (e) {
+      return Response.json({ error: e.message }, { status: 400 });
+    }
   }
 
   return Response.json({ error: "Invalid action" }, { status: 400 });

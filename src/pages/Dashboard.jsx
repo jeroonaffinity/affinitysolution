@@ -10,15 +10,17 @@ import {
 import BillingTab from "@/components/dashboard/BillingTab";
 import SupportDocsTab from "@/components/dashboard/SupportDocsTab";
 import ClientABRTab from "@/components/dashboard/ClientABRTab";
+import ClientEndpointsTab from "@/components/dashboard/ClientEndpointsTab";
 
 // ─── Config ────────────────────────────────────────────────────────────────
 const TABS = [
-  { id: "overview",  label: "Overview"       },
-  { id: "tickets",   label: "Support Tickets" },
-  { id: "billing",   label: "Billing"         },
-  { id: "docs",      label: "Support Docs"    },
-  { id: "enquiries", label: "My Enquiries"    },
-  { id: "abr",       label: "Admin Access"    },
+  { id: "overview",   label: "Overview"       },
+  { id: "tickets",    label: "Support Tickets" },
+  { id: "billing",    label: "Billing"         },
+  { id: "docs",       label: "Support Docs"    },
+  { id: "enquiries",  label: "My Enquiries"    },
+  { id: "abr",        label: "Admin Access"    },
+  { id: "endpoints",  label: "Endpoints"       },
 ];
 
 const STATUS_CONFIG = {
@@ -570,6 +572,10 @@ export default function Dashboard() {
 
         {activeTab === "abr" && (
           <ClientABRTab />
+        )}
+
+        {activeTab === "endpoints" && (
+          <ClientEndpointsTab userEmail={user?.email} />
         )}
       </div>
     </div>

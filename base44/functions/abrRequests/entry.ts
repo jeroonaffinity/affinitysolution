@@ -37,13 +37,14 @@ Deno.serve(async (req) => {
   // ── LIST ──────────────────────────────────────────────────────────────────
   if (action === "list") {
     if (isAdmin && !clientEmail) {
-      // Merged view: fetch all client keys + the master key
-      const clientKeys = await base44.asServiceRole.entities.ClientABRKey.list();
+      // Merged view: fetch from all teams + master key
+      const teams = await base44.asServiceRole.entities.Team.list();
       const masterKey = Deno.env.get("abr_key");
 
-      const sources = [...clientKeys];
+      const sources = teams
+        .filter(t => t.abr_api_key)
+        .map(t => ({ abr_api_key: t.abr_api_key, abr_datacenter: t.abr_datacenter || "dc3", label: t.name, client_email: null }));
 
-      // Add master key as a special "All / Unassigned" source if set
       if (masterKey) {
         sources.unshift({ abr_api_key: masterKey, label: "Master Account", client_email: null, abr_datacenter: "dc3" });
       }
@@ -55,7 +56,7 @@ Deno.serve(async (req) => {
           const list = Array.isArray(data) ? data : [];
           return list.map(r => ({
             ...r,
-            _source_label: src.label || src.client_email || "Master Account",
+            _source_label: src.label,
             _source_email: src.client_email,
           }));
         })
@@ -69,17 +70,20 @@ Deno.serve(async (req) => {
     }
 
     // Fetch for a specific client (admin viewing one client, or the client themselves)
+    // Look up via Team entity
     let keyRecord = null;
     if (isAdmin && clientEmail) {
-      const records = await base44.asServiceRole.entities.ClientABRKey.filter({ client_email: clientEmail });
-      keyRecord = records[0];
+      const allTeams = await base44.asServiceRole.entities.Team.list();
+      const team = allTeams.find(t => t.member_emails?.includes(clientEmail));
+      if (team) keyRecord = { abr_api_key: team.abr_api_key, abr_datacenter: team.abr_datacenter || "dc3" };
     } else {
-      // Client fetching their own
-      const records = await base44.entities.ClientABRKey.filter({ client_email: user.email });
-      keyRecord = records[0];
+      // Client fetching their own team
+      const allTeams = await base44.entities.Team.list();
+      const team = allTeams.find(t => t.member_emails?.includes(user.email));
+      if (team) keyRecord = { abr_api_key: team.abr_api_key, abr_datacenter: team.abr_datacenter || "dc3" };
     }
 
-    if (!keyRecord) return Response.json({ requests: [], error: "No ABR key assigned" });
+    if (!keyRecord?.abr_api_key) return Response.json({ requests: [], error: "No ABR key assigned" });
 
     const url = status ? `/requests?status=${status}` : "/requests";
     const data = await fetchABR(keyRecord.abr_api_key, keyRecord.abr_datacenter || "dc3", url);

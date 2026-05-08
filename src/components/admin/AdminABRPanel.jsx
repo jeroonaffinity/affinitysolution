@@ -5,6 +5,7 @@ import {
   Monitor, User, Calendar, ChevronDown, ChevronUp, ShieldAlert, Search, Key, Layers
 } from "lucide-react";
 import AdminABRKeysManager from "./AdminABRKeysManager";
+import AdminTeamsPanel from "./AdminTeamsPanel";
 
 const getStatusStyle = (status = "") => {
   const s = status.toLowerCase();
@@ -141,12 +142,13 @@ export default function AdminABRPanel({ users }) {
   const [activeTab, setActiveTab] = useState("Pending");
   const [search, setSearch] = useState("");
   const [error, setError] = useState(null);
-  const [view, setView] = useState("requests"); // "requests" | "keys"
+  const [view, setView] = useState("requests"); // "requests" | "keys" | "teams"
   const [sourceFilter, setSourceFilter] = useState("all");
 
   const loadKeys = useCallback(async () => {
-    const data = await base44.entities.ClientABRKey.list();
-    setClientKeys(data);
+    const data = await base44.entities.Team.list();
+    // Normalise team records to match the key shape used in handleAction
+    setClientKeys(data.map(t => ({ ...t, label: t.name, client_email: null })));
   }, []);
 
   const fetchRequests = useCallback(async (tab = activeTab) => {
@@ -168,8 +170,8 @@ export default function AdminABRPanel({ users }) {
 
   const handleAction = async (req, action) => {
     setActionLoading(req.id);
-    // Find the API key for this source
-    const keyRecord = clientKeys.find(k => k.client_email === req._source_email);
+    // Find the API key for this source from clientKeys (now teams, passed via the request's _source_label)
+    const keyRecord = clientKeys.find(k => k.client_email === req._source_email || k.label === req._source_label);
     const apiKey = keyRecord?.abr_api_key || null;
     const dc = keyRecord?.abr_datacenter || "dc3";
 
@@ -215,12 +217,12 @@ export default function AdminABRPanel({ users }) {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => setView(view === "keys" ? "requests" : "keys")}
+            onClick={() => setView(view === "teams" ? "requests" : "teams")}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition-all ${
-              view === "keys" ? "bg-primary text-primary-foreground border-primary" : "border-border/50 text-muted-foreground hover:text-foreground"
+              view === "teams" ? "bg-primary text-primary-foreground border-primary" : "border-border/50 text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Key className="w-3.5 h-3.5" /> Manage Keys
+            <Key className="w-3.5 h-3.5" /> Manage Teams
           </button>
           {view === "requests" && (
             <button
@@ -233,9 +235,9 @@ export default function AdminABRPanel({ users }) {
         </div>
       </div>
 
-      {view === "keys" ? (
+      {view === "teams" ? (
         <div className="bg-card/30 border border-border/30 rounded-2xl p-5">
-          <AdminABRKeysManager users={users} />
+          <AdminTeamsPanel users={users} />
         </div>
       ) : (
         <>

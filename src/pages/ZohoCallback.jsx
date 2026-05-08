@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { base44 } from "@/api/base44Client";
 
 export default function ZohoCallback() {
   const [result, setResult] = useState(null);
@@ -18,22 +19,9 @@ export default function ZohoCallback() {
     setError(null);
     setResult(null);
 
-    const body = new URLSearchParams({
-      code,
-      client_id: "1000.IV4T37FGQ9KIGGHR52I5S1UUGEZ6TD",
-      client_secret: "d5f8654adf6d2ec14f5a3a8624e3033e5b8e4c8b41",
-      redirect_uri: "https://affinitysolution.base44.app/zoho-callback",
-      grant_type: "authorization_code",
-    });
-
     try {
-      const res = await fetch("https://accounts.zoho.eu/oauth/v2/token", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: body.toString(),
-      });
-      const data = await res.json();
-      setResult(data);
+      const res = await base44.functions.invoke("zohoTokenExchange", { code, redirect_uri: "https://affinitysolution.base44.app/zoho-callback" });
+      setResult(res.data);
     } catch (e) {
       setError(e.message);
     }

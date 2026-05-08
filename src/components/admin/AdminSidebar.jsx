@@ -11,6 +11,7 @@ const navItems = [
 
 const endpointItems = [
   { id: "abr", label: "ABR Requests", icon: ShieldAlert },
+  { id: "action1", label: "Action1", icon: Monitor },
 ];
 
 export default function AdminSidebar({ activeSection, setActiveSection, tickets, leads, user }) {

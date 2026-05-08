@@ -8,6 +8,7 @@ import AdminServicesPanel from "@/components/admin/AdminServicesPanel";
 import AdminLeadsPanel from "@/components/admin/AdminLeadsPanel";
 import AdminUsersPanel from "@/components/admin/AdminUsersPanel";
 import AdminABRPanel from "@/components/admin/AdminABRPanel";
+import AdminAction1Panel from "@/components/admin/AdminAction1Panel";
 
 export default function Admin() {
   const [user, setUser] = useState(null);
@@ -88,6 +89,9 @@ export default function Admin() {
         )}
         {activeSection === "abr" && (
           <AdminABRPanel users={users} />
+        )}
+        {activeSection === "action1" && (
+          <AdminAction1Panel />
         )}
       </main>
     </div>

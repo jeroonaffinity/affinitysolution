@@ -98,6 +98,7 @@ export default function SplashScreen({ children }) {
           {/* ── Logo ── */}
           <motion.div
             className="absolute flex flex-col items-center z-10 pointer-events-none"
+            initial={{ opacity: 0, scale: 0.94 }}
             animate={
               phase === "in"
                 ? { opacity: 0, scale: 0.94 }

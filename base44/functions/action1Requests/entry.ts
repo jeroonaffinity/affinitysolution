@@ -65,16 +65,16 @@ Deno.serve(async (req) => {
     const groups = groupsData?.items || [];
 
     // Fetch members for each group in parallel
-    const groupsWithMembers = await Promise.all(
-      groups.map(async (group) => {
-        try {
-          const contentsData = await action1Fetch(token, `/endpoints/groups/${orgId}/${group.id}/contents`);
-          return { ...group, endpoints: contentsData?.items || [] };
-        } catch {
-          return { ...group, endpoints: [] };
-        }
-      })
-    );
+    // Fetch sequentially to avoid 429 rate limiting from Action1 API
+    const groupsWithMembers = [];
+    for (const group of groups) {
+      try {
+        const contentsData = await action1Fetch(token, `/endpoints/managed/${orgId}?endpoint_group_id=${group.id}&fields=*`);
+        groupsWithMembers.push({ ...group, endpoints: contentsData?.items || [] });
+      } catch (e) {
+        groupsWithMembers.push({ ...group, endpoints: [] });
+      }
+    }
 
     return Response.json({ groups: groupsWithMembers });
   }

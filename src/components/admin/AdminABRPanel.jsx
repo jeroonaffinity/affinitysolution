@@ -5,17 +5,19 @@ import {
   Monitor, User, Calendar, ChevronDown, ChevronUp, ShieldAlert, Search
 } from "lucide-react";
 
-const STATUS_CONFIG = {
-  Pending:    { label: "Pending",  bg: "bg-amber-500/15",   color: "text-amber-400",   dot: "bg-amber-400"   },
-  Approved:   { label: "Approved", bg: "bg-emerald-500/15", color: "text-emerald-400", dot: "bg-emerald-400" },
-  Denied:     { label: "Denied",   bg: "bg-red-500/15",     color: "text-red-400",     dot: "bg-red-400"     },
+const getStatusStyle = (status = "") => {
+  const s = status.toLowerCase();
+  if (s.includes("pending"))  return { bg: "bg-amber-500/15",   color: "text-amber-400"   };
+  if (s.includes("approved")) return { bg: "bg-emerald-500/15", color: "text-emerald-400" };
+  if (s.includes("denied") || s.includes("deleted")) return { bg: "bg-red-500/15", color: "text-red-400" };
+  return { bg: "bg-muted", color: "text-muted-foreground" };
 };
 
 const TAB_OPTIONS = ["Pending", "Approved", "Denied"];
 
 function RequestCard({ req, onApprove, onDeny, loading }) {
   const [expanded, setExpanded] = useState(false);
-  const isPending = req.status?.toLowerCase() === "pending";
+  const isPending = req.status?.toLowerCase().includes("pending");
 
   return (
     <div className={`rounded-2xl border overflow-hidden transition-all ${
@@ -29,24 +31,24 @@ function RequestCard({ req, onApprove, onDeny, loading }) {
               {req.application?.name || req.requesttype || "Admin Request"}
             </span>
             <div className="flex items-center gap-1.5 flex-shrink-0">
-              {req.status && (
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_CONFIG[req.status]?.bg || "bg-muted"} ${STATUS_CONFIG[req.status]?.color || "text-muted-foreground"}`}>
+              {req.status && (() => { const s = getStatusStyle(req.status); return (
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${s.bg} ${s.color}`}>
                   {req.status}
                 </span>
-              )}
+              ); })()}
             </div>
           </div>
           <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
-            {req.account?.user && (
-              <span className="flex items-center gap-1"><User className="w-3 h-3" />{req.account.user}</span>
-            )}
+            {req.user?.fullName || req.user?.email ? (
+              <span className="flex items-center gap-1"><User className="w-3 h-3" />{req.user.fullName || req.user.email}</span>
+            ) : null}
             {req.computer?.name && (
               <span className="flex items-center gap-1"><Monitor className="w-3 h-3" />{req.computer.name}</span>
             )}
-            {req.requesttime && (
+            {req.requestTime && (
               <span className="flex items-center gap-1">
                 <Calendar className="w-3 h-3" />
-                {new Date(req.requesttime).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                {new Date(req.requestTime).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
               </span>
             )}
           </div>
@@ -78,31 +80,42 @@ function RequestCard({ req, onApprove, onDeny, loading }) {
                 <div className="font-medium">{req.application.version}</div>
               </div>
             )}
+            {req.application?.scanResult && (
+              <div>
+                <div className="text-xs text-muted-foreground mb-0.5">Scan Result</div>
+                <div className={`font-semibold ${req.application.scanResult === "Clean" ? "text-emerald-400" : "text-red-400"}`}>
+                  {req.application.scanResult}
+                </div>
+              </div>
+            )}
             {req.computer?.platform && (
               <div>
                 <div className="text-xs text-muted-foreground mb-0.5">Platform</div>
                 <div className="font-medium">{req.computer.platform}</div>
               </div>
             )}
-            {req.computer?.ip && (
+            {req.computer?.model && (
               <div>
-                <div className="text-xs text-muted-foreground mb-0.5">IP Address</div>
-                <div className="font-medium font-mono text-xs">{req.computer.ip}</div>
+                <div className="text-xs text-muted-foreground mb-0.5">Device</div>
+                <div className="font-medium">{req.computer.model}</div>
               </div>
             )}
-            {req.riskassessment?.risklevel && (
+            {req.user?.email && (
               <div>
-                <div className="text-xs text-muted-foreground mb-0.5">Risk Level</div>
-                <div className={`font-semibold ${
-                  req.riskassessment.risklevel === "High" ? "text-red-400" :
-                  req.riskassessment.risklevel === "Medium" ? "text-amber-400" : "text-emerald-400"
-                }`}>{req.riskassessment.risklevel}</div>
+                <div className="text-xs text-muted-foreground mb-0.5">Email</div>
+                <div className="font-medium">{req.user.email}</div>
               </div>
             )}
-            {req.riskassessment?.appscore != null && (
+            {req.type && (
               <div>
-                <div className="text-xs text-muted-foreground mb-0.5">App Score</div>
-                <div className="font-medium">{req.riskassessment.appscore}</div>
+                <div className="text-xs text-muted-foreground mb-0.5">Request Type</div>
+                <div className="font-medium">{req.type}</div>
+              </div>
+            )}
+            {req.application?.virustotalLink && (
+              <div className="col-span-full">
+                <a href={req.application.virustotalLink} target="_blank" rel="noopener noreferrer"
+                  className="text-xs text-primary hover:underline">View on VirusTotal →</a>
               </div>
             )}
           </div>
@@ -158,9 +171,9 @@ export default function AdminABRPanel() {
     fetchRequests(activeTab);
   }, [activeTab]);
 
-  const handleAction = async (requestId, newStatus) => {
+  const handleAction = async (requestId, action) => {
     setActionLoading(requestId);
-    await base44.functions.invoke("abrRequests", { action: "update", requestId, status: newStatus });
+    await base44.functions.invoke("abrRequests", { action, requestId });
     setActionLoading(null);
     fetchRequests(activeTab);
   };
@@ -176,7 +189,7 @@ export default function AdminABRPanel() {
     );
   });
 
-  const pendingCount = requests.filter(r => r.status?.toLowerCase() === "pending").length;
+  const pendingCount = requests.filter(r => r.status?.toLowerCase().includes("pending")).length;
 
   return (
     <div className="p-6 flex flex-col gap-6 max-w-5xl">
@@ -257,8 +270,8 @@ export default function AdminABRPanel() {
             <RequestCard
               key={req.id}
               req={req}
-              onApprove={(id) => handleAction(id, "Approved")}
-              onDeny={(id) => handleAction(id, "Denied")}
+              onApprove={(id) => handleAction(id, "approve")}
+              onDeny={(id) => handleAction(id, "deny")}
               loading={actionLoading}
             />
           ))}

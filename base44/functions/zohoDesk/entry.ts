@@ -79,7 +79,13 @@ Deno.serve(async (req) => {
 
   // Create ticket
   if (action === "create_ticket" && data) {
-    const result = await deskFetch(accessToken, orgId, "/tickets", "POST", data);
+    // Build payload — wrap email in contact object if no contactId provided
+    const ticketPayload = { ...data };
+    if (!ticketPayload.contactId && ticketPayload.email) {
+      ticketPayload.contact = { email: ticketPayload.email };
+      delete ticketPayload.email;
+    }
+    const result = await deskFetch(accessToken, orgId, "/tickets", "POST", ticketPayload);
     return Response.json({ data: result });
   }
 

@@ -134,24 +134,29 @@ function TicketsTab({ userEmail }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
-    await base44.functions.invoke("zohoDesk", {
-      action: "create_ticket", orgId: ZOHO_ORG_ID,
-      data: {
-        subject: form.subject,
-        description: form.description,
-        priority: form.priority,
-        email: userEmail,
-        departmentId: "238671000000007061",
-        status: "Open",
-        channel: "Portal",
-      },
-    });
-    setForm({ subject: "", description: "", priority: "Medium" });
-    setShowForm(false);
-    setSubmitting(false);
-    setSubmitSuccess(true);
-    setTimeout(() => setSubmitSuccess(false), 4000);
-    loadTickets();
+    try {
+      await base44.functions.invoke("zohoDesk", {
+        action: "create_ticket", orgId: ZOHO_ORG_ID,
+        data: {
+          subject: form.subject,
+          description: form.description,
+          priority: form.priority,
+          email: userEmail,
+          departmentId: "238671000000007061",
+          status: "Open",
+          channel: "Portal",
+        },
+      });
+      setForm({ subject: "", description: "", priority: "Medium" });
+      setShowForm(false);
+      setSubmitSuccess(true);
+      setTimeout(() => setSubmitSuccess(false), 4000);
+      loadTickets();
+    } catch (err) {
+      console.error("Failed to submit ticket:", err);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const filtered = tickets.filter(t => {

@@ -59,6 +59,26 @@ Deno.serve(async (req) => {
     return Response.json({ data });
   }
 
+  if (action === "groups" && orgId) {
+    // Fetch all groups
+    const groupsData = await action1Fetch(token, `/endpoints/groups/${orgId}`);
+    const groups = groupsData?.items || [];
+
+    // Fetch members for each group in parallel
+    const groupsWithMembers = await Promise.all(
+      groups.map(async (group) => {
+        try {
+          const contentsData = await action1Fetch(token, `/endpoints/groups/${orgId}/${group.id}/contents`);
+          return { ...group, endpoints: contentsData?.items || [] };
+        } catch {
+          return { ...group, endpoints: [] };
+        }
+      })
+    );
+
+    return Response.json({ groups: groupsWithMembers });
+  }
+
   if (action === "fetch" && path) {
     try {
       const data = await action1Fetch(token, path);

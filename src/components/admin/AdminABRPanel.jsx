@@ -2,10 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import {
   Loader2, RefreshCw, CheckCircle2, XCircle, Clock,
-  Monitor, User, Calendar, ChevronDown, ChevronUp, ShieldAlert, Search, Key, Layers
+  Monitor, User, Calendar, ChevronDown, ChevronUp, ShieldAlert, Search
 } from "lucide-react";
-import AdminABRKeysManager from "./AdminABRKeysManager";
-import AdminTeamsPanel from "./AdminTeamsPanel";
 
 const getStatusStyle = (status = "") => {
   const s = status.toLowerCase();
@@ -142,7 +140,6 @@ export default function AdminABRPanel({ users }) {
   const [activeTab, setActiveTab] = useState("Pending");
   const [search, setSearch] = useState("");
   const [error, setError] = useState(null);
-  const [view, setView] = useState("requests"); // "requests" | "keys" | "teams"
   const [sourceFilter, setSourceFilter] = useState("all");
 
   const loadKeys = useCallback(async () => {
@@ -217,30 +214,15 @@ export default function AdminABRPanel({ users }) {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => setView(view === "teams" ? "requests" : "teams")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition-all ${
-              view === "teams" ? "bg-primary text-primary-foreground border-primary" : "border-border/50 text-muted-foreground hover:text-foreground"
-            }`}
+            onClick={() => fetchRequests(activeTab)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border/50 text-sm text-muted-foreground hover:text-foreground hover:border-border transition-all"
           >
-            <Key className="w-3.5 h-3.5" /> Manage Teams
+            <RefreshCw className="w-3.5 h-3.5" /> Refresh
           </button>
-          {view === "requests" && (
-            <button
-              onClick={() => fetchRequests(activeTab)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border/50 text-sm text-muted-foreground hover:text-foreground hover:border-border transition-all"
-            >
-              <RefreshCw className="w-3.5 h-3.5" /> Refresh
-            </button>
-          )}
         </div>
       </div>
 
-      {view === "teams" ? (
-        <div className="bg-card/30 border border-border/30 rounded-2xl p-5">
-          <AdminTeamsPanel users={users} />
-        </div>
-      ) : (
-        <>
+      <>
           {/* Tabs */}
           <div className="flex gap-1 bg-card/40 border border-border/30 rounded-xl p-1 w-fit">
             {TAB_OPTIONS.map(tab => (
@@ -315,8 +297,7 @@ export default function AdminABRPanel({ users }) {
               ))}
             </div>
           )}
-        </>
-      )}
+      </>
     </div>
   );
 }

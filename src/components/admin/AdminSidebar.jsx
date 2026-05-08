@@ -1,11 +1,12 @@
 import { base44 } from "@/api/base44Client";
-import { LayoutDashboard, Ticket, Server, MessageSquare, Users, LogOut, AlertCircle, ShieldAlert, Monitor } from "lucide-react";
+import { LayoutDashboard, Ticket, Server, MessageSquare, Users, LogOut, AlertCircle, ShieldAlert, Monitor, Building2 } from "lucide-react";
 
 const navItems = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "tickets", label: "Tickets", icon: Ticket },
   { id: "services", label: "Services", icon: Server },
   { id: "leads", label: "Leads", icon: MessageSquare },
+  { id: "clients", label: "Clients", icon: Building2 },
   { id: "users", label: "Users", icon: Users },
 ];
 

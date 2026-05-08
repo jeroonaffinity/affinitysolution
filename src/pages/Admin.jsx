@@ -9,6 +9,7 @@ import AdminLeadsPanel from "@/components/admin/AdminLeadsPanel";
 import AdminUsersPanel from "@/components/admin/AdminUsersPanel";
 import AdminABRPanel from "@/components/admin/AdminABRPanel";
 import AdminAction1Panel from "@/components/admin/AdminAction1Panel";
+import AdminClientManagement from "@/components/admin/AdminClientManagement";
 
 export default function Admin() {
   const [user, setUser] = useState(null);
@@ -16,20 +17,23 @@ export default function Admin() {
   const [services, setServices] = useState([]);
   const [leads, setLeads] = useState([]);
   const [users, setUsers] = useState([]);
+  const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState("overview");
 
   const fetchAll = async () => {
-    const [t, s, l, u] = await Promise.all([
+    const [t, s, l, u, tm] = await Promise.all([
       base44.entities.SupportTicket.list("-created_date", 200),
       base44.entities.ServiceUsage.list("-created_date", 200),
       base44.entities.ContactSubmission.list("-created_date", 200),
       base44.entities.User.list("-created_date", 200),
+      base44.entities.Team.list("-created_date"),
     ]);
     setTickets(t);
     setServices(s);
     setLeads(l);
     setUsers(u);
+    setTeams(tm);
   };
 
   useEffect(() => {
@@ -85,7 +89,10 @@ export default function Admin() {
           <AdminLeadsPanel leads={leads} />
         )}
         {activeSection === "users" && (
-          <AdminUsersPanel users={users} currentUserId={user?.id} onRefresh={fetchAll} />
+          <AdminUsersPanel users={users} teams={teams} currentUserId={user?.id} onRefresh={fetchAll} />
+        )}
+        {activeSection === "clients" && (
+          <AdminClientManagement users={users} tickets={tickets} services={services} onRefresh={fetchAll} />
         )}
         {activeSection === "abr" && (
           <AdminABRPanel users={users} />

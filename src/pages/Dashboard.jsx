@@ -125,7 +125,10 @@ function TicketsTab({ userEmail }) {
     });
     // Filter to tickets matching this user's email
     const all = res.data?.data?.data || [];
-    setTickets(all.filter(t => t.email?.toLowerCase() === userEmail?.toLowerCase()));
+    setTickets(all.filter(t =>
+      t.email?.toLowerCase() === userEmail?.toLowerCase() ||
+      t.contact?.email?.toLowerCase() === userEmail?.toLowerCase()
+    ));
     setLoading(false);
   }, [userEmail]);
 

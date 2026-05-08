@@ -7,6 +7,7 @@ import AdminTicketsBoard from "@/components/admin/AdminTicketsBoard";
 import AdminServicesPanel from "@/components/admin/AdminServicesPanel";
 import AdminLeadsPanel from "@/components/admin/AdminLeadsPanel";
 import AdminUsersPanel from "@/components/admin/AdminUsersPanel";
+import AdminABRPanel from "@/components/admin/AdminABRPanel";
 
 export default function Admin() {
   const [user, setUser] = useState(null);
@@ -84,6 +85,9 @@ export default function Admin() {
         )}
         {activeSection === "users" && (
           <AdminUsersPanel users={users} currentUserId={user?.id} onRefresh={fetchAll} />
+        )}
+        {activeSection === "abr" && (
+          <AdminABRPanel />
         )}
       </main>
     </div>

@@ -8,8 +8,8 @@ export default function SplashScreen({ children }) {
 
   useEffect(() => {
     const t1 = setTimeout(() => setPhase("hold"), 2200);
-    const t2 = setTimeout(() => setPhase("out"), 3800);
-    const t3 = setTimeout(() => setPhase("done"), 4800);
+    const t2 = setTimeout(() => setPhase("out"), 5200);
+    const t3 = setTimeout(() => setPhase("done"), 6200);
     return () => [t1, t2, t3].forEach(clearTimeout);
   }, []);
 
@@ -229,22 +229,7 @@ export default function SplashScreen({ children }) {
             </div>
           </motion.div>
 
-          <motion.div
-            className="h-px bg-white/10"
-            initial={{ scaleX: 0 }}
-            animate={phase === "hold" ? { scaleX: 1 } : { scaleX: 0 }}
-            transition={{ duration: 0.7, delay: 0.4, ease: "easeOut" }}
-            style={{ width: "min(200px, 45vw)", originX: 0.5 }}
-          />
 
-          <motion.p
-            className="text-[9px] md:text-[11px] tracking-[0.45em] uppercase text-white/30 font-light"
-            initial={{ opacity: 0, y: 8 }}
-            animate={phase === "hold" ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-          >
-            Managed IT Solutions
-          </motion.p>
         </motion.div>
 
         {/* ── Scanlines ── */}

@@ -87,6 +87,13 @@ export default function Layout({ children, currentPageName }) {
               </Link>
             ))}
             <Link
+              to={dashboardPath}
+              onClick={() => setMobileOpen(false)}
+              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+            >
+              Client Portal
+            </Link>
+            <Link
               to={createPageUrl("Contact")}
               onClick={() => setMobileOpen(false)}
               className="px-5 py-2 text-sm font-semibold rounded-lg bg-primary text-primary-foreground text-center mt-2"

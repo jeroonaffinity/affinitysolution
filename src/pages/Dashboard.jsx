@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import {
-  Ticket, CreditCard, MessageSquare, Loader2, LogOut,
+  Ticket, CreditCard, Loader2, LogOut,
   TicketCheck, Clock, CheckCircle2,
   ChevronDown, ChevronUp, Search, Plus, Send,
-  Mail, Server, Phone, ArrowRight
+  Server, ArrowRight, MessageSquare, RefreshCw
 } from "lucide-react";
 import BillingTab from "@/components/dashboard/BillingTab";
 import SupportDocsTab from "@/components/dashboard/SupportDocsTab";
@@ -13,16 +13,13 @@ import ClientEndpointsTab from "@/components/dashboard/ClientEndpointsTab";
 
 // ─── Config ────────────────────────────────────────────────────────────────
 const TABS = [
-  { id: "overview",   label: "Overview"       },
-  { id: "tickets",    label: "Support Tickets" },
-  { id: "billing",    label: "Billing"         },
-  { id: "docs",       label: "Support Docs"    },
-  { id: "enquiries",  label: "My Enquiries"    },
-  { id: "abr",        label: "Admin Access"    },
-  { id: "endpoints",  label: "Endpoints"       },
+  { id: "overview",   label: "Overview"        },
+  { id: "tickets",    label: "Support Tickets"  },
+  { id: "billing",    label: "Billing"          },
+  { id: "docs",       label: "Support Docs"     },
+  { id: "abr",        label: "Admin Access"     },
+  { id: "endpoints",  label: "Endpoints"        },
 ];
-
-
 
 // ─── Sub-components ─────────────────────────────────────────────────────────
 
@@ -51,17 +48,62 @@ function StatCard({ icon: Icon, label, value, sub, accent = false, warning = fal
   );
 }
 
-const ZOHO_ORG_ID = "20114459933";
+const ORG_ID = "20114459933";
 
-const ZOHO_STATUS_CONFIG = {
+const STATUS_CONFIG = {
   "Open":        { label: "Open",        color: "text-amber-400",   bg: "bg-amber-500/15",   dot: "bg-amber-400"   },
   "In Progress": { label: "In Progress", color: "text-blue-400",    bg: "bg-blue-500/15",    dot: "bg-blue-400"    },
   "On Hold":     { label: "On Hold",     color: "text-purple-400",  bg: "bg-purple-500/15",  dot: "bg-purple-400"  },
   "Closed":      { label: "Closed",      color: "text-slate-400",   bg: "bg-slate-500/15",   dot: "bg-slate-400"   },
 };
 
+function TicketThreads({ ticketId }) {
+  const [threads, setThreads] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    base44.functions.invoke("zohoDesk", {
+      action: "get_threads", orgId: ORG_ID, ticketId,
+    }).then(res => {
+      setThreads(res.data?.data?.data || []);
+      setLoading(false);
+    });
+  }, [ticketId]);
+
+  if (loading) return <div className="flex justify-center py-3"><Loader2 className="w-4 h-4 animate-spin text-primary" /></div>;
+  if (threads.length === 0) return (
+    <div className="flex items-center gap-2 text-xs text-muted-foreground bg-background/30 rounded-xl px-4 py-3 border border-border/15">
+      <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+      Our team will review this shortly and respond via email.
+    </div>
+  );
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+        <MessageSquare className="w-3 h-3" /> Conversation
+      </div>
+      {threads.map((thread, i) => {
+        const isAgent = thread.type === "agentReply";
+        return (
+          <div key={i} className={`flex flex-col gap-1 ${isAgent ? "items-end" : "items-start"}`}>
+            <div className="text-xs text-muted-foreground px-1">
+              {isAgent ? "AffinitySolution" : "You"} · {new Date(thread.createdTime).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+            </div>
+            <div className={`max-w-[90%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+              isAgent ? "bg-primary/15 text-foreground rounded-tr-sm" : "bg-card border border-border/50 rounded-tl-sm"
+            }`}>
+              {thread.content?.replace(/<[^>]*>/g, '') || thread.summary || ""}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function ZohoTicketRow({ t, expanded, onToggle }) {
-  const status = ZOHO_STATUS_CONFIG[t.status] || ZOHO_STATUS_CONFIG["Open"];
+  const status = STATUS_CONFIG[t.status] || STATUS_CONFIG["Open"];
   const priorityMap = { High: "text-red-400 bg-red-500/15", Medium: "text-amber-400 bg-amber-500/15", Low: "text-emerald-400 bg-emerald-500/15" };
   const priorityCls = priorityMap[t.priority] || "text-muted-foreground bg-muted";
 
@@ -89,18 +131,11 @@ function ZohoTicketRow({ t, expanded, onToggle }) {
         </div>
       </button>
       {expanded && (
-        <div className="px-5 pb-5 border-t border-border/20 pt-4 flex flex-col gap-3">
-          {t.description ? (
+        <div className="px-5 pb-5 border-t border-border/20 pt-4 flex flex-col gap-4">
+          {t.description && (
             <p className="text-sm text-foreground/75 leading-relaxed bg-background/40 rounded-xl px-4 py-3 border border-border/20">{t.description}</p>
-          ) : (
-            <div className="flex items-center gap-2.5 text-xs text-muted-foreground bg-background/30 rounded-xl px-4 py-3 border border-border/15">
-              <Clock className="w-3.5 h-3.5 flex-shrink-0" />
-              Our team will review this shortly and respond via email.
-            </div>
           )}
-          {t.dueDate && (
-            <div className="text-xs text-muted-foreground">Due: {new Date(t.dueDate).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</div>
-          )}
+          <TicketThreads ticketId={t.id} />
         </div>
       )}
     </div>
@@ -121,9 +156,8 @@ function TicketsTab({ userEmail }) {
   const loadTickets = useCallback(async () => {
     setLoading(true);
     const res = await base44.functions.invoke("zohoDesk", {
-      action: "list_tickets", orgId: ZOHO_ORG_ID, limit: 100,
+      action: "list_tickets", orgId: ORG_ID, limit: 100,
     });
-    // Filter to tickets matching this user's email
     const all = res.data?.data?.data || [];
     setTickets(all.filter(t =>
       t.email?.toLowerCase() === userEmail?.toLowerCase() ||
@@ -139,7 +173,7 @@ function TicketsTab({ userEmail }) {
     setSubmitting(true);
     try {
       await base44.functions.invoke("zohoDesk", {
-        action: "create_ticket", orgId: ZOHO_ORG_ID,
+        action: "create_ticket", orgId: ORG_ID,
         data: {
           subject: form.subject,
           description: form.description,
@@ -185,7 +219,7 @@ function TicketsTab({ userEmail }) {
 
       {/* Status filter pills */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {Object.entries(ZOHO_STATUS_CONFIG).map(([key, cfg]) => {
+        {Object.entries(STATUS_CONFIG).map(([key, cfg]) => {
           const active = filter === key;
           return (
             <button key={key} onClick={() => setFilter(active ? "all" : key)}
@@ -207,6 +241,9 @@ function TicketsTab({ userEmail }) {
           <input placeholder="Search tickets..." value={search} onChange={e => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2 rounded-xl border border-border/40 bg-background/50 text-sm focus:outline-none focus:border-primary/50 transition-colors" />
         </div>
+        <button onClick={loadTickets} className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border/40 text-sm text-muted-foreground hover:text-foreground transition-all">
+          <RefreshCw className="w-3.5 h-3.5" />
+        </button>
         <button onClick={() => setShowForm(!showForm)}
           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-all glow-blue">
           <Plus className="w-3.5 h-3.5" /> New Ticket
@@ -273,71 +310,18 @@ function TicketsTab({ userEmail }) {
   );
 }
 
-
-
-function EnquiriesTab({ submissions }) {
-  return (
-    <div className="flex flex-col gap-4">
-      {/* Explanation banner */}
-      <div className="p-4 rounded-2xl border border-primary/20 bg-primary/5 flex gap-3">
-        <MessageSquare className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-        <div>
-          <div className="text-sm font-semibold mb-0.5">What are enquiries?</div>
-          <div className="text-xs text-muted-foreground leading-relaxed">
-            These are callback or email requests you submitted via our <strong>Contact</strong> page — before or after becoming a client. Each entry shows your preferred contact method and any message you left us. Our team will follow up directly.
-          </div>
-        </div>
-      </div>
-
-      {submissions.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 gap-3 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-primary/8 border border-primary/15 flex items-center justify-center">
-            <MessageSquare className="w-6 h-6 text-primary/40" />
-          </div>
-          <p className="text-muted-foreground text-sm">No enquiries found. If you've contacted us via the website, it'll appear here.</p>
-        </div>
-      ) : (
-        submissions.map(s => (
-          <div key={s.id} className="p-4 rounded-2xl border border-border/30 bg-card/40 flex flex-col gap-2.5 hover:border-border/60 transition-all">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="font-semibold text-sm">{s.name}</div>
-                {s.company && <div className="text-xs text-muted-foreground mt-0.5">{s.company}</div>}
-              </div>
-              <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium flex-shrink-0 flex items-center gap-1 ${
-                s.preferred_method === "call" ? "bg-primary/15 text-primary" : "bg-accent/15 text-accent-foreground"
-              }`}>
-                {s.preferred_method === "call" ? <Phone className="w-3 h-3" /> : <Mail className="w-3 h-3" />}
-                {s.preferred_method === "call" ? "Call back" : "Email"}
-              </span>
-            </div>
-            {s.message && <p className="text-sm text-muted-foreground leading-relaxed">{s.message}</p>}
-            <div className="text-xs text-muted-foreground/50">
-              {new Date(s.created_date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
-            </div>
-          </div>
-        ))
-      )}
-    </div>
-  );
-}
-
 // ─── Main Dashboard ─────────────────────────────────────────────────────────
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [services, setServices] = useState([]);
-  const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
 
   const fetchData = async (currentUser) => {
     const email = currentUser.email;
-    const [s, sub] = await Promise.all([
-      base44.entities.ServiceUsage.filter({ client_email: email }, "-created_date"),
-      base44.entities.ContactSubmission.filter({ contact: email }, "-created_date"),
-    ]);
-    setServices(s); setSubmissions(sub);
+    const s = await base44.entities.ServiceUsage.filter({ client_email: email }, "-created_date");
+    setServices(s);
   };
 
   useEffect(() => {
@@ -433,17 +417,16 @@ export default function Dashboard() {
         {activeTab === "overview" && (
           <div className="flex flex-col gap-6">
             {/* Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <StatCard icon={Ticket} label="Support Tickets" value="→" sub="Click to view your tickets" warning={false} onClick={() => setActiveTab("tickets")} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <StatCard icon={Ticket} label="Support Tickets" value="→" sub="Click to view your tickets" onClick={() => setActiveTab("tickets")} />
               <StatCard icon={CreditCard} label="Monthly Spend" value={`£${totalMonthly.toLocaleString()}`} sub={`${activeServices} active service${activeServices !== 1 ? "s" : ""}`} accent />
-              <StatCard icon={MessageSquare} label="My Enquiries" value={submissions.length} sub="Contact form submissions" />
             </div>
 
             {/* Quick access to tickets */}
             <div className="p-4 rounded-2xl border border-primary/20 bg-primary/5 flex items-center justify-between">
               <div>
                 <div className="font-semibold text-sm">Support Tickets</div>
-                <div className="text-xs text-muted-foreground mt-0.5">View and manage your support requests via Zoho Desk</div>
+                <div className="text-xs text-muted-foreground mt-0.5">View and manage your support requests</div>
               </div>
               <button onClick={() => setActiveTab("tickets")} className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90">
                 View Tickets <ArrowRight className="w-3.5 h-3.5" />
@@ -477,29 +460,11 @@ export default function Dashboard() {
           </div>
         )}
 
-        {activeTab === "tickets" && (
-          <TicketsTab userEmail={user?.email} />
-        )}
-
-        {activeTab === "billing" && (
-          <BillingTab services={services} userName={user?.full_name || user?.email} />
-        )}
-
-        {activeTab === "docs" && (
-          <SupportDocsTab />
-        )}
-
-        {activeTab === "enquiries" && (
-          <EnquiriesTab submissions={submissions} />
-        )}
-
-        {activeTab === "abr" && (
-          <ClientABRTab />
-        )}
-
-        {activeTab === "endpoints" && (
-          <ClientEndpointsTab userEmail={user?.email} />
-        )}
+        {activeTab === "tickets" && <TicketsTab userEmail={user?.email} />}
+        {activeTab === "billing" && <BillingTab services={services} userName={user?.full_name || user?.email} />}
+        {activeTab === "docs" && <SupportDocsTab />}
+        {activeTab === "abr" && <ClientABRTab />}
+        {activeTab === "endpoints" && <ClientEndpointsTab userEmail={user?.email} />}
       </div>
     </div>
   );

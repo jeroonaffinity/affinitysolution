@@ -87,7 +87,7 @@ export default function Admin() {
           <AdminUsersPanel users={users} currentUserId={user?.id} onRefresh={fetchAll} />
         )}
         {activeSection === "abr" && (
-          <AdminABRPanel />
+          <AdminABRPanel users={users} />
         )}
       </main>
     </div>

@@ -1,0 +1,61 @@
+{
+  "name": "ClientABRKey",
+  "type": "object",
+  "properties": {
+    "client_email": {
+      "type": "string",
+      "description": "Email of the client user this key belongs to"
+    },
+    "abr_api_key": {
+      "type": "string",
+      "description": "Admin By Request API key for this client"
+    },
+    "label": {
+      "type": "string",
+      "description": "Optional label e.g. company name"
+    },
+    "abr_datacenter": {
+      "type": "string",
+      "enum": [
+        "dc1",
+        "dc2",
+        "dc3"
+      ],
+      "default": "dc3",
+      "description": "ABR datacenter region"
+    }
+  },
+  "required": [
+    "client_email",
+    "abr_api_key"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.client_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

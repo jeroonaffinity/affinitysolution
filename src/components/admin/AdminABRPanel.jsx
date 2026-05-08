@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import {
   Loader2, RefreshCw, CheckCircle2, XCircle, Clock,
-  Monitor, User, Calendar, ChevronDown, ChevronUp, ShieldAlert, Search
+  Monitor, User, Calendar, ChevronDown, ChevronUp, ShieldAlert, Search, Key, Layers
 } from "lucide-react";
+import AdminABRKeysManager from "./AdminABRKeysManager";
 
 const getStatusStyle = (status = "") => {
   const s = status.toLowerCase();
@@ -31,6 +32,11 @@ function RequestCard({ req, onApprove, onDeny, loading }) {
               {req.application?.name || req.requesttype || "Admin Request"}
             </span>
             <div className="flex items-center gap-1.5 flex-shrink-0">
+              {req._source_label && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                  {req._source_label}
+                </span>
+              )}
               {req.status && (() => { const s = getStatusStyle(req.status); return (
                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${s.bg} ${s.color}`}>
                   {req.status}
@@ -58,7 +64,6 @@ function RequestCard({ req, onApprove, onDeny, loading }) {
 
       {expanded && (
         <div className="px-5 pb-5 border-t border-border/20 flex flex-col gap-4 pt-4">
-          {/* Details grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
             {req.reason && (
               <div className="col-span-full">
@@ -69,16 +74,10 @@ function RequestCard({ req, onApprove, onDeny, loading }) {
               </div>
             )}
             {req.application?.vendor && (
-              <div>
-                <div className="text-xs text-muted-foreground mb-0.5">Vendor</div>
-                <div className="font-medium">{req.application.vendor}</div>
-              </div>
+              <div><div className="text-xs text-muted-foreground mb-0.5">Vendor</div><div className="font-medium">{req.application.vendor}</div></div>
             )}
             {req.application?.version && (
-              <div>
-                <div className="text-xs text-muted-foreground mb-0.5">Version</div>
-                <div className="font-medium">{req.application.version}</div>
-              </div>
+              <div><div className="text-xs text-muted-foreground mb-0.5">Version</div><div className="font-medium">{req.application.version}</div></div>
             )}
             {req.application?.scanResult && (
               <div>
@@ -89,28 +88,16 @@ function RequestCard({ req, onApprove, onDeny, loading }) {
               </div>
             )}
             {req.computer?.platform && (
-              <div>
-                <div className="text-xs text-muted-foreground mb-0.5">Platform</div>
-                <div className="font-medium">{req.computer.platform}</div>
-              </div>
+              <div><div className="text-xs text-muted-foreground mb-0.5">Platform</div><div className="font-medium">{req.computer.platform}</div></div>
             )}
             {req.computer?.model && (
-              <div>
-                <div className="text-xs text-muted-foreground mb-0.5">Device</div>
-                <div className="font-medium">{req.computer.model}</div>
-              </div>
+              <div><div className="text-xs text-muted-foreground mb-0.5">Device</div><div className="font-medium">{req.computer.model}</div></div>
             )}
             {req.user?.email && (
-              <div>
-                <div className="text-xs text-muted-foreground mb-0.5">Email</div>
-                <div className="font-medium">{req.user.email}</div>
-              </div>
+              <div><div className="text-xs text-muted-foreground mb-0.5">Email</div><div className="font-medium">{req.user.email}</div></div>
             )}
             {req.type && (
-              <div>
-                <div className="text-xs text-muted-foreground mb-0.5">Request Type</div>
-                <div className="font-medium">{req.type}</div>
-              </div>
+              <div><div className="text-xs text-muted-foreground mb-0.5">Request Type</div><div className="font-medium">{req.type}</div></div>
             )}
             {req.application?.virustotalLink && (
               <div className="col-span-full">
@@ -120,11 +107,10 @@ function RequestCard({ req, onApprove, onDeny, loading }) {
             )}
           </div>
 
-          {/* Actions */}
           {isPending && (
             <div className="flex gap-3 pt-1">
               <button
-                onClick={() => onApprove(req.id)}
+                onClick={() => onApprove(req)}
                 disabled={loading === req.id}
                 className="flex items-center gap-2 px-5 py-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-sm font-semibold hover:bg-emerald-500/30 disabled:opacity-50 transition-all"
               >
@@ -132,7 +118,7 @@ function RequestCard({ req, onApprove, onDeny, loading }) {
                 Approve
               </button>
               <button
-                onClick={() => onDeny(req.id)}
+                onClick={() => onDeny(req)}
                 disabled={loading === req.id}
                 className="flex items-center gap-2 px-5 py-2 rounded-xl bg-red-500/20 text-red-400 border border-red-500/30 text-sm font-semibold hover:bg-red-500/30 disabled:opacity-50 transition-all"
               >
@@ -147,19 +133,27 @@ function RequestCard({ req, onApprove, onDeny, loading }) {
   );
 }
 
-export default function AdminABRPanel() {
+export default function AdminABRPanel({ users }) {
   const [requests, setRequests] = useState([]);
+  const [clientKeys, setClientKeys] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
   const [activeTab, setActiveTab] = useState("Pending");
   const [search, setSearch] = useState("");
   const [error, setError] = useState(null);
+  const [view, setView] = useState("requests"); // "requests" | "keys"
+  const [sourceFilter, setSourceFilter] = useState("all");
+
+  const loadKeys = useCallback(async () => {
+    const data = await base44.entities.ClientABRKey.list();
+    setClientKeys(data);
+  }, []);
 
   const fetchRequests = useCallback(async (tab = activeTab) => {
     setLoading(true);
     setError(null);
     const res = await base44.functions.invoke("abrRequests", { action: "list", status: tab });
-    if (res.data?.error) {
+    if (res.data?.error && !res.data?.requests) {
       setError(res.data.error);
     } else {
       setRequests(res.data?.requests || []);
@@ -169,24 +163,41 @@ export default function AdminABRPanel() {
 
   useEffect(() => {
     fetchRequests(activeTab);
+    loadKeys();
   }, [activeTab]);
 
-  const handleAction = async (requestId, action) => {
-    setActionLoading(requestId);
-    await base44.functions.invoke("abrRequests", { action, requestId });
+  const handleAction = async (req, action) => {
+    setActionLoading(req.id);
+    // Find the API key for this source
+    const keyRecord = clientKeys.find(k => k.client_email === req._source_email);
+    const apiKey = keyRecord?.abr_api_key || null;
+    const dc = keyRecord?.abr_datacenter || "dc3";
+
+    // We pass key + dc via payload for admin actions on merged view
+    await base44.functions.invoke("abrRequests", {
+      action,
+      requestId: req.id,
+      apiKey: keyRecord?.abr_api_key || null,
+      dc,
+    });
     setActionLoading(null);
     fetchRequests(activeTab);
   };
 
+  const sources = ["all", ...new Set(requests.map(r => r._source_label).filter(Boolean))];
+
   const filtered = requests.filter(r => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return (
-      r.application?.name?.toLowerCase().includes(q) ||
-      r.account?.user?.toLowerCase().includes(q) ||
-      r.computer?.name?.toLowerCase().includes(q) ||
-      r.reason?.toLowerCase().includes(q)
-    );
+    if (search) {
+      const q = search.toLowerCase();
+      if (!(r.application?.name?.toLowerCase().includes(q) ||
+            r.user?.fullName?.toLowerCase().includes(q) ||
+            r.user?.email?.toLowerCase().includes(q) ||
+            r.computer?.name?.toLowerCase().includes(q) ||
+            r.reason?.toLowerCase().includes(q) ||
+            r._source_label?.toLowerCase().includes(q))) return false;
+    }
+    if (sourceFilter !== "all" && r._source_label !== sourceFilter) return false;
+    return true;
   });
 
   const pendingCount = requests.filter(r => r.status?.toLowerCase().includes("pending")).length;
@@ -200,82 +211,109 @@ export default function AdminABRPanel() {
             <ShieldAlert className="w-5 h-5 text-primary" />
             Admin By Request
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Review and action privilege elevation requests from your endpoints.</p>
+          <p className="text-sm text-muted-foreground mt-0.5">Manage privilege elevation requests across all clients.</p>
         </div>
-        <button
-          onClick={() => fetchRequests(activeTab)}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border/50 text-sm text-muted-foreground hover:text-foreground hover:border-border transition-all"
-        >
-          <RefreshCw className="w-3.5 h-3.5" /> Refresh
-        </button>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex gap-1 bg-card/40 border border-border/30 rounded-xl p-1 w-fit">
-        {TAB_OPTIONS.map(tab => (
+        <div className="flex gap-2">
           <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
-              activeTab === tab ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            onClick={() => setView(view === "keys" ? "requests" : "keys")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition-all ${
+              view === "keys" ? "bg-primary text-primary-foreground border-primary" : "border-border/50 text-muted-foreground hover:text-foreground"
             }`}
           >
-            {tab === "Pending" && <Clock className="w-3.5 h-3.5" />}
-            {tab === "Approved" && <CheckCircle2 className="w-3.5 h-3.5" />}
-            {tab === "Denied" && <XCircle className="w-3.5 h-3.5" />}
-            {tab}
-            {tab === "Pending" && pendingCount > 0 && activeTab !== "Pending" && (
-              <span className="ml-1 px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold">{pendingCount}</span>
-            )}
+            <Key className="w-3.5 h-3.5" /> Manage Keys
           </button>
-        ))}
+          {view === "requests" && (
+            <button
+              onClick={() => fetchRequests(activeTab)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border/50 text-sm text-muted-foreground hover:text-foreground hover:border-border transition-all"
+            >
+              <RefreshCw className="w-3.5 h-3.5" /> Refresh
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <input
-          placeholder="Search by app, user, computer..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border/40 bg-background/60 text-sm focus:outline-none focus:border-primary/50 transition-colors"
-        />
-      </div>
-
-      {/* Content */}
-      {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" />
-        </div>
-      ) : error ? (
-        <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
-            <XCircle className="w-6 h-6 text-red-400" />
-          </div>
-          <p className="text-sm text-muted-foreground max-w-xs">Failed to load requests: {error}</p>
-          <button onClick={() => fetchRequests(activeTab)} className="text-xs text-primary hover:underline">Try again</button>
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-primary/8 border border-primary/15 flex items-center justify-center">
-            <ShieldAlert className="w-6 h-6 text-primary/40" />
-          </div>
-          <p className="text-muted-foreground text-sm">
-            {requests.length === 0 ? `No ${activeTab.toLowerCase()} requests.` : "No requests match your search."}
-          </p>
+      {view === "keys" ? (
+        <div className="bg-card/30 border border-border/30 rounded-2xl p-5">
+          <AdminABRKeysManager users={users} />
         </div>
       ) : (
-        <div className="flex flex-col gap-2.5">
-          {filtered.map(req => (
-            <RequestCard
-              key={req.id}
-              req={req}
-              onApprove={(id) => handleAction(id, "approve")}
-              onDeny={(id) => handleAction(id, "deny")}
-              loading={actionLoading}
-            />
-          ))}
-        </div>
+        <>
+          {/* Tabs */}
+          <div className="flex gap-1 bg-card/40 border border-border/30 rounded-xl p-1 w-fit">
+            {TAB_OPTIONS.map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+                  activeTab === tab ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {tab === "Pending" && <Clock className="w-3.5 h-3.5" />}
+                {tab === "Approved" && <CheckCircle2 className="w-3.5 h-3.5" />}
+                {tab === "Denied" && <XCircle className="w-3.5 h-3.5" />}
+                {tab}
+                {tab === "Pending" && pendingCount > 0 && activeTab !== "Pending" && (
+                  <span className="ml-1 px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold">{pendingCount}</span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Search + Source filter */}
+          <div className="flex gap-3 flex-wrap">
+            <div className="relative flex-1 min-w-44">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                placeholder="Search by app, user, computer, client..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border/40 bg-background/60 text-sm focus:outline-none focus:border-primary/50 transition-colors"
+              />
+            </div>
+            {sources.length > 2 && (
+              <select
+                value={sourceFilter}
+                onChange={e => setSourceFilter(e.target.value)}
+                className="px-3 py-2 rounded-xl border border-border/40 bg-background text-sm focus:outline-none"
+              >
+                {sources.map(s => <option key={s} value={s}>{s === "all" ? "All Clients" : s}</option>)}
+              </select>
+            )}
+          </div>
+
+          {/* Content */}
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+              <XCircle className="w-8 h-8 text-red-400" />
+              <p className="text-sm text-muted-foreground max-w-xs">Failed to load: {error}</p>
+              <button onClick={() => fetchRequests(activeTab)} className="text-xs text-primary hover:underline">Try again</button>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+              <ShieldAlert className="w-8 h-8 text-primary/30" />
+              <p className="text-muted-foreground text-sm">
+                {requests.length === 0 ? `No ${activeTab.toLowerCase()} requests across any client.` : "No requests match your filter."}
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2.5">
+              {filtered.map(req => (
+                <RequestCard
+                  key={`${req._source_label}-${req.id}`}
+                  req={req}
+                  onApprove={(r) => handleAction(r, "approve")}
+                  onDeny={(r) => handleAction(r, "deny")}
+                  loading={actionLoading}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

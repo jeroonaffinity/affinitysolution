@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import BillingTab from "@/components/dashboard/BillingTab";
 import SupportDocsTab from "@/components/dashboard/SupportDocsTab";
+import ClientABRTab from "@/components/dashboard/ClientABRTab";
 
 // ─── Config ────────────────────────────────────────────────────────────────
 const TABS = [
@@ -17,6 +18,7 @@ const TABS = [
   { id: "billing",   label: "Billing"         },
   { id: "docs",      label: "Support Docs"    },
   { id: "enquiries", label: "My Enquiries"    },
+  { id: "abr",       label: "Admin Access"    },
 ];
 
 const STATUS_CONFIG = {
@@ -564,6 +566,10 @@ export default function Dashboard() {
 
         {activeTab === "enquiries" && (
           <EnquiriesTab submissions={submissions} />
+        )}
+
+        {activeTab === "abr" && (
+          <ClientABRTab />
         )}
       </div>
     </div>

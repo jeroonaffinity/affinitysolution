@@ -41,10 +41,16 @@ Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
   const user = await base44.auth.me();
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
-  if (user.role !== "admin") return Response.json({ error: "Forbidden" }, { status: 403 });
 
   const payload = await req.json();
   const { action, orgId, ticketId, data } = payload;
+
+  // Non-admins can only create tickets or list their own
+  const isAdmin = user.role === "admin";
+  const clientOnlyActions = ["create_ticket", "list_tickets", "get_ticket"];
+  if (!isAdmin && !clientOnlyActions.includes(action)) {
+    return Response.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const accessToken = await getAccessToken();
 

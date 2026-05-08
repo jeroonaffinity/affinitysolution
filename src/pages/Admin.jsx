@@ -80,7 +80,7 @@ export default function Admin() {
           <AdminOverview tickets={tickets} services={services} leads={leads} users={users} setActiveSection={setActiveSection} />
         )}
         {activeSection === "tickets" && (
-          <AdminTicketsBoard tickets={tickets} onRefresh={fetchAll} />
+          <AdminTicketsBoard />
         )}
         {activeSection === "services" && (
           <AdminServicesPanel services={services} users={users} onRefresh={fetchAll} />

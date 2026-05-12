@@ -50,7 +50,7 @@ export default function Layout({ children, currentPageName }) {
               currentPageName === link.page ? "text-primary" : "text-muted-foreground"}`
               }>
               
-                {link.icon && <link.icon className="w-3.5 h-3.5 hidden" />}
+                
                 {link.label}
                 {link.badge &&
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary leading-none hidden">
@@ -193,7 +193,7 @@ export default function Layout({ children, currentPageName }) {
               <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground/60 mb-4">Get in Touch</h3>
               <ul className="flex flex-col gap-2.5 text-xs text-muted-foreground">
                 <li><a href="mailto:info@affinitysolution.com" className="hover:text-primary transition-colors">info@affinitysolution.com</a></li>
-                <li><a href="tel:+442012345678" className="hover:text-primary transition-colors hidden">+44 (0)20 1234 5678</a></li>
+                <li></li>
                 <li className="pt-1">
                   <Link to={createPageUrl("Contact")} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all">
                     Free Consultation →

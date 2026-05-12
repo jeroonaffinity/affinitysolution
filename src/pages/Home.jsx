@@ -134,9 +134,9 @@ export default function Home() {
             Your IT, <span className="text-gradient">Fully Managed.</span>
             <br />Absolutely Bulletproof.
           </h1>
-          <p className="text-base md:text-lg font-semibold text-primary/80 tracking-wide mb-6 uppercase hidden">
-            AffinitySolution — Your Trusted IT &amp; Cybersecurity Partner
-          </p>
+          
+
+          
 
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-4 leading-relaxed">
             We look after all the technology in your business — computers, emails, security, and more — so you can focus on what you do best: running your business.
@@ -145,13 +145,13 @@ export default function Home() {
             No technical jargon. No confusing contracts. Just reliable, affordable IT support for businesses across London and the UK.
           </p>
           <div className="mb-10">
-            <Link
-              to={createPageUrl("Contact")}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg border border-primary/40 bg-primary/10 text-primary text-sm font-semibold hover:bg-primary/20 transition-all hidden">
-              
-              Get a Free Consultation
-              <ChevronRight className="w-4 h-4" />
-            </Link>
+            
+
+
+
+
+
+            
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

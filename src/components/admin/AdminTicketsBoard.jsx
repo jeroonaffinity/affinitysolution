@@ -514,12 +514,7 @@ export default function AdminTicketsBoard() {
     return matchSearch && matchStatus && matchPriority;
   });
 
-  const counts = {
-    open: tickets.filter(t => t.status === "Open").length,
-    inProgress: tickets.filter(t => t.status === "In Progress").length,
-    onHold: tickets.filter(t => t.status === "On Hold").length,
-    closed: tickets.filter(t => t.status === "Closed").length,
-  };
+
 
   return (
     <div className="p-6 flex flex-col gap-5 max-w-6xl">
@@ -557,21 +552,7 @@ export default function AdminTicketsBoard() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[
-          { label: "Open", value: counts.open, color: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20" },
-          { label: "In Progress", value: counts.inProgress, color: "text-blue-400", bg: "bg-blue-500/10 border-blue-500/20" },
-          { label: "On Hold", value: counts.onHold, color: "text-purple-400", bg: "bg-purple-500/10 border-purple-500/20" },
-          { label: "Closed", value: counts.closed, color: "text-slate-400", bg: "bg-slate-500/10 border-slate-500/20" },
-        ].map(s => (
-          <button key={s.label} onClick={() => setStatusFilter(statusFilter === s.label ? "all" : s.label)}
-            className={`p-4 rounded-2xl border text-left transition-all hover:-translate-y-0.5 ${statusFilter === s.label ? "ring-1 ring-primary/40 " : ""}${s.bg}`}>
-            <div className={`text-2xl font-extrabold ${s.color}`}>{s.value}</div>
-            <div className="text-xs text-muted-foreground mt-0.5">{s.label}</div>
-          </button>
-        ))}
-      </div>
+
 
       {/* Filters */}
       <div className="flex gap-3 flex-wrap">

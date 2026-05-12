@@ -5,8 +5,9 @@ import {
   TicketCheck, Clock, CheckCircle2,
   ChevronDown, ChevronUp, Search, Plus, Send,
   Server, ArrowRight, MessageSquare, RefreshCw,
-  Paperclip, X, FileText, Image, Settings, Trash2, AlertTriangle
+  Paperclip, X, FileText, Image, Trash2, AlertTriangle
 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PullToRefreshWrapper from "@/components/PullToRefreshWrapper";
 import BillingTab from "@/components/dashboard/BillingTab";
 import SupportDocsTab from "@/components/dashboard/SupportDocsTab";
@@ -331,12 +332,16 @@ function TicketsTab({ userEmail }) {
               className="w-full px-4 py-2.5 rounded-xl border border-border/50 bg-background text-sm focus:outline-none focus:border-primary/60 resize-none transition-colors" />
             <div className="flex flex-col gap-1 w-48">
               <label className="text-xs text-muted-foreground">Priority</label>
-              <select value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value })}
-                className="px-3 py-2 rounded-xl border border-border/50 bg-background text-sm focus:outline-none">
-                <option value="Low">Low</option>
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
-              </select>
+              <Select value={form.priority} onValueChange={v => setForm({ ...form, priority: v })}>
+                <SelectTrigger className="rounded-xl border-border/50 bg-background text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Low">Low</SelectItem>
+                  <SelectItem value="Medium">Medium</SelectItem>
+                  <SelectItem value="High">High</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             {/* Attachments */}
             <div className="flex flex-col gap-2">

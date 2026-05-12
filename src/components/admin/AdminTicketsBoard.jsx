@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import Customer360Panel from "@/components/admin/Customer360Panel";
+import TicketKanban from "@/components/admin/TicketKanban";
 import {
   Loader2, RefreshCw, Search, Plus, ChevronDown,
   Send, X, MessageSquare,
@@ -461,31 +462,7 @@ function CreateTicketModal({ onClose, onCreated }) {
   );
 }
 
-function TicketRow({ ticket, onClick }) {
-  const status = STATUS_CONFIG[ticket.status] || STATUS_CONFIG["Open"];
-  return (
-    <button onClick={() => onClick(ticket)}
-      className="w-full text-left px-5 py-4 flex items-center gap-4 hover:bg-card/60 border-b border-border/20 transition-all group">
-      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${status.dot}`} />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1 flex-wrap">
-          <span className="font-semibold text-sm group-hover:text-primary transition-colors">{ticket.title}</span>
-          <span className="text-xs text-muted-foreground/60">#{ticket.id?.slice(0, 8)}</span>
-        </div>
-        <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
-          <span className="flex items-center gap-1"><User className="w-3 h-3" />{ticket.client_email}</span>
-          <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{new Date(ticket.created_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>
-          {ticket.category && <span className="flex items-center gap-1"><Tag className="w-3 h-3" />{ticket.category}</span>}
-        </div>
-      </div>
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <PriorityBadge priority={ticket.priority} />
-        <StatusBadge status={ticket.status} />
-        <ChevronDown className="w-4 h-4 text-muted-foreground/50 group-hover:text-muted-foreground -rotate-90 transition-all" />
-      </div>
-    </button>
-  );
-}
+
 
 export default function AdminTicketsBoard() {
   const [tickets, setTickets] = useState([]);
@@ -571,23 +548,24 @@ export default function AdminTicketsBoard() {
         </select>
       </div>
 
-      {/* Ticket list */}
+      {/* Kanban board */}
       {loading ? (
         <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
           <MessageSquare className="w-8 h-8 text-primary/30" />
-          <p className="text-muted-foreground text-sm">{tickets.length === 0 ? "No tickets found in Zoho Desk." : "No tickets match your filters."}</p>
+          <p className="text-muted-foreground text-sm">{tickets.length === 0 ? "No tickets yet." : "No tickets match your filters."}</p>
         </div>
       ) : (
-        <div className="rounded-2xl border border-border/40 bg-card/30 overflow-hidden">
-          <div className="px-5 py-3 border-b border-border/30 flex items-center justify-between text-xs text-muted-foreground font-medium">
-            <span className="flex items-center gap-2"><Filter className="w-3.5 h-3.5" /> {filtered.length} ticket{filtered.length !== 1 ? "s" : ""}</span>
-            <span>Click a ticket to view threads & reply</span>
+        <div>
+          <div className="px-1 py-3 flex items-center gap-2 text-xs text-muted-foreground font-medium">
+            <Filter className="w-3.5 h-3.5" /> {filtered.length} ticket{filtered.length !== 1 ? "s" : ""} • Drag tickets between columns to update status
           </div>
-          {filtered.map(ticket => (
-            <TicketRow key={ticket.id} ticket={ticket} onClick={setSelectedTicket} />
-          ))}
+          <TicketKanban
+            tickets={filtered}
+            onSelect={setSelectedTicket}
+            onStatusUpdate={loadTickets}
+          />
         </div>
       )}
     </div>

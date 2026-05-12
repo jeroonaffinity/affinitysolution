@@ -6,7 +6,7 @@ import AdminOverview from "@/components/admin/AdminOverview";
 import AdminTicketsBoard from "@/components/admin/AdminTicketsBoard";
 import AdminServicesPanel from "@/components/admin/AdminServicesPanel";
 import AdminLeadsPanel from "@/components/admin/AdminLeadsPanel";
-import AdminUsersPanel from "@/components/admin/AdminUsersPanel";
+
 import AdminABRPanel from "@/components/admin/AdminABRPanel";
 import AdminAction1Panel from "@/components/admin/AdminAction1Panel";
 import AdminClientManagement from "@/components/admin/AdminClientManagement";
@@ -83,16 +83,13 @@ export default function Admin() {
           <AdminTicketsBoard />
         )}
         {activeSection === "services" && (
-          <AdminServicesPanel services={services} users={users} onRefresh={fetchAll} />
+          <AdminServicesPanel services={services} teams={teams} onRefresh={fetchAll} />
         )}
         {activeSection === "leads" && (
           <AdminLeadsPanel leads={leads} />
         )}
-        {activeSection === "users" && (
-          <AdminUsersPanel users={users} teams={teams} currentUserId={user?.id} onRefresh={fetchAll} />
-        )}
         {activeSection === "clients" && (
-          <AdminClientManagement users={users} tickets={tickets} services={services} onRefresh={fetchAll} />
+          <AdminClientManagement users={users} tickets={tickets} services={services} teams={teams} onRefresh={fetchAll} />
         )}
         {activeSection === "abr" && (
           <AdminABRPanel users={users} />

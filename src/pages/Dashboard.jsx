@@ -511,8 +511,8 @@ export default function Dashboard() {
   useRealtimeNotifications({ userEmail: user?.email, endpoints });
 
   const fetchData = async (currentUser) => {
-    const email = currentUser.email;
-    const s = await base44.entities.ServiceUsage.filter({ client_email: email }, "-created_date");
+    // Load services via team membership (RLS handles access control)
+    const s = await base44.entities.ServiceUsage.list("-created_date");
     setServices(s);
   };
 

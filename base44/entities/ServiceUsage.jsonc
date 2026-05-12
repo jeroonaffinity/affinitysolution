@@ -2,9 +2,13 @@
   "name": "ServiceUsage",
   "type": "object",
   "properties": {
+    "team_id": {
+      "type": "string",
+      "description": "ID of the Team this service belongs to"
+    },
     "client_email": {
       "type": "string",
-      "description": "Email of the client"
+      "description": "Legacy: email of the client (use team_id instead)"
     },
     "service_name": {
       "type": "string",
@@ -46,12 +50,11 @@
     },
     "description": {
       "type": "string",
-      "description": "Optional extended description (up to 1000 characters)",
+      "description": "Optional extended description",
       "maxLength": 1000
     }
   },
   "required": [
-    "client_email",
     "service_name",
     "monthly_cost"
   ],
@@ -63,6 +66,19 @@
     },
     "read": {
       "$or": [
+        {
+          "data.team_id": {
+            "$in": {
+              "entity": "Team",
+              "field": "id",
+              "filter": {
+                "member_emails": {
+                  "$contains": "{{user.email}}"
+                }
+              }
+            }
+          }
+        },
         {
           "data.client_email": "{{user.email}}"
         },

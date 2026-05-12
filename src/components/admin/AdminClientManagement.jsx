@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-
+import TeamOnboardingWizard from "./TeamOnboardingWizard";
 import {
   Plus, Trash2, Loader2, Check, Users, X, Search,
   Building2, Server, Ticket, CreditCard, Pencil,
@@ -9,7 +9,6 @@ import {
   Crown, AlertTriangle, UserPlus
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import TeamOnboardingWizard from "./TeamOnboardingWizard";
 
 const DEFAULT_ACTION1_ORG = "3fa05c66-f12c-4759-b991-346a4d300e42";
 
@@ -543,7 +542,8 @@ export default function AdminClientManagement({ users, tickets, services, onRefr
   const [teams, setTeams] = useState([]);
   const [allGroups, setAllGroups] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showWizard, setShowWizard] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState(EMPTY_TEAM_FORM);
   const [saving, setSaving] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [search, setSearch] = useState("");
@@ -561,8 +561,13 @@ export default function AdminClientManagement({ users, tickets, services, onRefr
 
   useEffect(() => { loadTeams(); }, []);
 
-  const handleWizardComplete = () => {
-    setShowWizard(false);
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    await base44.entities.Team.create({ ...form, action1_org_id: form.action1_org_id || DEFAULT_ACTION1_ORG });
+    setForm(EMPTY_TEAM_FORM);
+    setShowForm(false);
+    setSaving(false);
     loadTeams();
     onRefresh();
   };
@@ -614,7 +619,7 @@ export default function AdminClientManagement({ users, tickets, services, onRefr
           <p className="text-sm text-muted-foreground mt-0.5">Manage client teams, members, services and user access.</p>
         </div>
         {topTab === "teams" && (
-          <button onClick={() => setShowWizard(true)}
+          <button onClick={() => setShowForm(true)}
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90">
             <Plus className="w-4 h-4" /> Onboard Team
           </button>
@@ -654,12 +659,13 @@ export default function AdminClientManagement({ users, tickets, services, onRefr
             </div>
           </div>
 
-          {showWizard && (
+          {/* Onboarding Wizard Modal */}
+          {showForm && (
             <TeamOnboardingWizard
               allGroups={allGroups}
               clientUsers={clientUsers}
-              onComplete={handleWizardComplete}
-              onClose={() => setShowWizard(false)}
+              onComplete={() => { setShowForm(false); loadTeams(); onRefresh(); }}
+              onClose={() => setShowForm(false)}
             />
           )}
 

@@ -51,6 +51,16 @@ function ThreadPanel({ ticket, onClose }) {
   const [activeTab, setActiveTab] = useState("thread");
   const [analysis, setAnalysis] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const [clientEmail, setClientEmail] = useState(ticket.email || ticket.contact?.email || null);
+
+  // Resolve client email from local SupportTicket index (Zoho doesn't return email on ticket objects)
+  useEffect(() => {
+    if (clientEmail) return;
+    base44.entities.SupportTicket.filter({ zoho_ticket_id: ticket.id })
+      .then(records => {
+        if (records?.[0]?.client_email) setClientEmail(records[0].client_email);
+      });
+  }, [ticket.id]);
 
   const loadThreads = useCallback(async () => {
     setLoading(true);
@@ -148,7 +158,14 @@ function ThreadPanel({ ticket, onClose }) {
         <div className="px-6 py-4 border-b border-border/30 grid grid-cols-2 gap-3 text-sm">
           <div>
             <div className="text-xs text-muted-foreground mb-1">Contact</div>
-            <div className="font-medium truncate">{ticket.contact?.firstName} {ticket.contact?.lastName || ticket.email || "—"}</div>
+            <div className="font-medium truncate">
+              {ticket.contact?.firstName
+                ? `${ticket.contact.firstName} ${ticket.contact.lastName || ""}`.trim()
+                : clientEmail || "—"}
+            </div>
+            {clientEmail && ticket.contact?.firstName && (
+              <div className="text-xs text-muted-foreground truncate">{clientEmail}</div>
+            )}
           </div>
           <div>
             <div className="text-xs text-muted-foreground mb-1">Created</div>
@@ -234,7 +251,16 @@ function ThreadPanel({ ticket, onClose }) {
         {/* Customer 360 tab */}
         {activeTab === "customer360" && (
           <div className="flex-1 overflow-y-auto">
-            <Customer360Panel email={ticket.email || ticket.contact?.email} />
+            {clientEmail
+              ? <Customer360Panel email={clientEmail} />
+              : (
+                <div className="flex flex-col items-center gap-2 py-12 text-center px-4">
+                  <Monitor className="w-8 h-8 text-primary/20" />
+                  <p className="text-sm text-muted-foreground">No client email linked to this ticket.</p>
+                  <p className="text-xs text-muted-foreground/60">Only tickets created via the portal or admin board are linked.</p>
+                </div>
+              )
+            }
           </div>
         )}
       </div>

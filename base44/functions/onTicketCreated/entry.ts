@@ -25,9 +25,9 @@ function clientEmailHtml({ title, priority, category, ticketId }) {
       <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
 
         <!-- Header -->
-        <tr><td style="background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);border-radius:16px 16px 0 0;padding:32px 40px;text-align:center;border-bottom:2px solid #2d3161;">
-          <img src="${LOGO_URL}" alt="AffinitySolution" style="height:40px;max-width:220px;object-fit:contain;" />
-          <p style="color:#8b9cc8;font-size:13px;margin:10px 0 0;">IT Support Portal</p>
+        <tr><td style="background:#4f46e5;border-radius:16px 16px 0 0;padding:28px 40px;">
+          <p style="color:#fff;font-size:22px;font-weight:800;margin:0;letter-spacing:-0.5px;">AffinitySolution</p>
+          <p style="color:#c4b5fd;font-size:12px;margin:4px 0 0;letter-spacing:0.5px;text-transform:uppercase;font-weight:500;">IT Support Portal</p>
         </td></tr>
 
         <!-- Body -->
@@ -93,9 +93,9 @@ function adminEmailHtml({ title, priority, category, clientEmail, description })
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0f;padding:40px 0;">
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
-        <tr><td style="background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);border-radius:16px 16px 0 0;padding:28px 40px;border-bottom:2px solid #2d3161;">
-          <img src="${LOGO_URL}" alt="AffinitySolution" style="height:36px;object-fit:contain;" />
-          <span style="display:inline-block;margin-left:16px;background:#ef444422;color:#ef4444;border:1px solid #ef444444;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;vertical-align:middle;">NEW TICKET</span>
+        <tr><td style="background:#4f46e5;border-radius:16px 16px 0 0;padding:28px 40px;">
+          <p style="color:#fff;font-size:22px;font-weight:800;margin:0;letter-spacing:-0.5px;">AffinitySolution</p>
+          <p style="color:#c4b5fd;font-size:12px;margin:4px 0 0;letter-spacing:0.5px;text-transform:uppercase;font-weight:500;">IT Support Portal</p>
         </td></tr>
         <tr><td style="background:#111827;padding:36px 40px;">
           <h2 style="color:#f1f5f9;font-size:20px;font-weight:700;margin:0 0 6px;">${title}</h2>

@@ -12,9 +12,9 @@ function wrapInBrandedTemplate(subject, bodyHtml) {
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
         <!-- Header -->
-        <tr><td style="background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);border-radius:16px 16px 0 0;padding:32px 40px;text-align:center;border-bottom:2px solid #2d3161;">
-          <img src="${LOGO_URL}" alt="AffinitySolution" style="height:40px;max-width:220px;object-fit:contain;" />
-          <p style="color:#8b9cc8;font-size:13px;margin:10px 0 0;">IT Managed Services</p>
+        <tr><td style="background:#4f46e5;border-radius:16px 16px 0 0;padding:28px 40px;">
+          <p style="color:#fff;font-size:22px;font-weight:800;margin:0;letter-spacing:-0.5px;">AffinitySolution</p>
+          <p style="color:#c4b5fd;font-size:12px;margin:4px 0 0;letter-spacing:0.5px;text-transform:uppercase;font-weight:500;">IT Managed Services</p>
         </td></tr>
         <!-- Body -->
         <tr><td style="background:#111827;padding:40px;">

@@ -7,6 +7,7 @@ import {
   Crown, AlertTriangle, UserPlus
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import TeamOnboardingWizard from "./TeamOnboardingWizard";
 
 const DEFAULT_ACTION1_ORG = "3fa05c66-f12c-4759-b991-346a4d300e42";
 
@@ -540,8 +541,7 @@ export default function AdminClientManagement({ users, tickets, services, onRefr
   const [teams, setTeams] = useState([]);
   const [allGroups, setAllGroups] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState(EMPTY_TEAM_FORM);
+  const [showWizard, setShowWizard] = useState(false);
   const [saving, setSaving] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [search, setSearch] = useState("");
@@ -559,13 +559,8 @@ export default function AdminClientManagement({ users, tickets, services, onRefr
 
   useEffect(() => { loadTeams(); }, []);
 
-  const handleCreate = async (e) => {
-    e.preventDefault();
-    setSaving(true);
-    await base44.entities.Team.create({ ...form, action1_org_id: form.action1_org_id || DEFAULT_ACTION1_ORG });
-    setForm(EMPTY_TEAM_FORM);
-    setShowForm(false);
-    setSaving(false);
+  const handleWizardComplete = () => {
+    setShowWizard(false);
     loadTeams();
     onRefresh();
   };
@@ -617,9 +612,9 @@ export default function AdminClientManagement({ users, tickets, services, onRefr
           <p className="text-sm text-muted-foreground mt-0.5">Manage client teams, members, services and user access.</p>
         </div>
         {topTab === "teams" && (
-          <button onClick={() => setShowForm(!showForm)}
+          <button onClick={() => setShowWizard(true)}
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90">
-            <Plus className="w-4 h-4" /> New Team
+            <Plus className="w-4 h-4" /> Onboard Team
           </button>
         )}
       </div>
@@ -657,71 +652,13 @@ export default function AdminClientManagement({ users, tickets, services, onRefr
             </div>
           </div>
 
-          {/* New Team Form */}
-          {showForm && (
-            <form onSubmit={handleCreate} className="p-5 rounded-2xl border border-primary/25 bg-primary/5 flex flex-col gap-4">
-              <h3 className="font-semibold text-sm flex items-center gap-2"><Plus className="w-4 h-4" /> New Team</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="flex flex-col gap-1 sm:col-span-2">
-                  <label className="text-xs text-muted-foreground">Team Name *</label>
-                  <input required placeholder="e.g. Acme Corp" value={form.name}
-                    onChange={e => setForm({ ...form, name: e.target.value })}
-                    className="px-3 py-2 rounded-lg border border-border/60 bg-background text-sm focus:outline-none" />
-                </div>
-                <div className="flex flex-col gap-1 sm:col-span-2">
-                  <label className="text-xs text-muted-foreground">Members (optional)</label>
-                  <div className="grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pr-1">
-                    {clientUsers.map(u => (
-                      <label key={u.id} className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border/30 bg-card/30 cursor-pointer text-sm hover:border-primary/30">
-                        <input type="checkbox" checked={form.member_emails?.includes(u.email) || false}
-                          onChange={() => setForm(f => ({
-                            ...f,
-                            member_emails: f.member_emails?.includes(u.email)
-                              ? f.member_emails.filter(e => e !== u.email)
-                              : [...(f.member_emails || []), u.email],
-                          }))} className="accent-primary" />
-                        <span className="truncate">{u.full_name || u.email}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs text-muted-foreground">Action1 Endpoint Group</label>
-                  <select value={form.action1_group_id}
-                    onChange={e => {
-                      const group = allGroups.find(g => g.id === e.target.value);
-                      setForm(f => ({ ...f, action1_group_id: e.target.value, action1_group_name: group?.name || "" }));
-                    }}
-                    className="px-3 py-2 rounded-lg border border-border/60 bg-background text-sm focus:outline-none">
-                    <option value="">None</option>
-                    {allGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-                  </select>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs text-muted-foreground">ABR Datacenter</label>
-                  <select value={form.abr_datacenter} onChange={e => setForm({ ...form, abr_datacenter: e.target.value })}
-                    className="px-3 py-2 rounded-lg border border-border/60 bg-background text-sm focus:outline-none">
-                    <option value="dc1">DC1 (US/Global)</option>
-                    <option value="dc2">DC2 (EU)</option>
-                    <option value="dc3">DC3 (Australia)</option>
-                  </select>
-                </div>
-                <div className="flex flex-col gap-1 sm:col-span-2">
-                  <label className="text-xs text-muted-foreground">ABR API Key</label>
-                  <input placeholder="Paste API key..." value={form.abr_api_key}
-                    onChange={e => setForm({ ...form, abr_api_key: e.target.value })}
-                    className="px-3 py-2 rounded-lg border border-border/60 bg-background text-sm focus:outline-none font-mono" />
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <button type="submit" disabled={saving}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 disabled:opacity-60">
-                  {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />} Create Team
-                </button>
-                <button type="button" onClick={() => setShowForm(false)}
-                  className="px-4 py-2 rounded-lg border border-border/60 text-xs hover:bg-muted">Cancel</button>
-              </div>
-            </form>
+          {showWizard && (
+            <TeamOnboardingWizard
+              allGroups={allGroups}
+              clientUsers={clientUsers}
+              onComplete={handleWizardComplete}
+              onClose={() => setShowWizard(false)}
+            />
           )}
 
           {/* Search */}

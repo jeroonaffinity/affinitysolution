@@ -172,8 +172,8 @@ export default function ClientEndpointsTab({ userEmail }) {
     const myTeam = teams.find(t => t.member_emails?.includes(userEmail));
     if (!myTeam) { setNoTeam(true); setLoading(false); return; }
     setTeam(myTeam);
-    setLoading(false);
     await loadEndpoints(myTeam);
+    setLoading(false);
   }, [userEmail]);
 
   const loadEndpoints = async (t) => {

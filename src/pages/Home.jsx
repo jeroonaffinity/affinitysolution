@@ -131,7 +131,7 @@ export default function Home() {
           </div>
 
           <h1 className="text-5xl md:text-7xl font-extrabold leading-tight mb-3 tracking-tight">
-            Your IT, <span className="text-[hsl(var(--primary))]">Fully Managed.</span>
+            Your IT, <span className="bg-[hsl(var(--primary))] text-gradient">Fully Managed.</span>
             <br />Absolutely Bulletproof.
           </h1>
           

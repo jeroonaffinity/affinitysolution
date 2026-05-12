@@ -31,10 +31,23 @@ async function deskFetch(accessToken, orgId, path, method = "GET", body = null) 
     },
   };
   if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(`${DESK_BASE}${path}`, opts);
-  const text = await res.text();
-  if (!res.ok) throw new Error(`Zoho Desk ${res.status}: ${text}`);
-  try { return JSON.parse(text); } catch { return { raw: text }; }
+  
+  let lastError;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 25000);
+      const res = await fetch(`${DESK_BASE}${path}`, { ...opts, signal: controller.signal });
+      clearTimeout(timeout);
+      const text = await res.text();
+      if (!res.ok) throw new Error(`Zoho Desk ${res.status}: ${text}`);
+      try { return JSON.parse(text); } catch { return { raw: text }; }
+    } catch (err) {
+      lastError = err;
+      if (attempt < 3) await new Promise(r => setTimeout(r, 1000 * attempt));
+    }
+  }
+  throw lastError || new Error("deskFetch failed after 3 attempts");
 }
 
 Deno.serve(async (req) => {

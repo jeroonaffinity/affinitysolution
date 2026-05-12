@@ -100,12 +100,16 @@ Deno.serve(async (req) => {
       delete ticketPayload.email;
     }
     const result = await deskFetch(accessToken, orgId, "/tickets", "POST", ticketPayload);
-    // Save Zoho ticket ID + client email locally so clients can find their tickets
+    // Save Zoho ticket ID + client email + team_id locally
     if (result?.id && clientEmail) {
+      // Look up the team this email belongs to
+      const teams = await base44.asServiceRole.entities.Team.list();
+      const team = teams.find(t => t.member_emails?.includes(clientEmail));
       await base44.asServiceRole.entities.SupportTicket.create({
         title: ticketPayload.subject || data.subject || "Support Ticket",
         description: ticketPayload.description || "",
         client_email: clientEmail,
+        team_id: team?.id || null,
         status: "open",
         priority: (ticketPayload.priority || "medium").toLowerCase(),
         zoho_ticket_id: result.id,

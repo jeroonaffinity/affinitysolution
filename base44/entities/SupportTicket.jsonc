@@ -46,6 +46,10 @@
       "type": "string",
       "description": "Email of the client who raised the ticket"
     },
+    "team_id": {
+      "type": "string",
+      "description": "ID of the Team this ticket belongs to \u2014 all team members can see it"
+    },
     "resolution_notes": {
       "type": "string"
     },
@@ -84,6 +88,19 @@
       "$or": [
         {
           "data.client_email": "{{user.email}}"
+        },
+        {
+          "data.team_id": {
+            "$in": {
+              "entity": "Team",
+              "field": "id",
+              "filter": {
+                "member_emails": {
+                  "$contains": "{{user.email}}"
+                }
+              }
+            }
+          }
         },
         {
           "user_condition": {

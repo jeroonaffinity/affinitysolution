@@ -57,6 +57,21 @@ const STATUS_CONFIG = {
   "Closed":      { label: "Closed",      color: "text-slate-400",   bg: "bg-slate-500/15",   dot: "bg-slate-400"   },
 };
 
+// Map local SupportTicket record to a display-friendly object
+function localToDisplay(lt) {
+  return {
+    id: lt.zoho_ticket_id || lt.id,
+    _localId: lt.id,
+    subject: lt.title,
+    description: lt.description,
+    status: lt.zoho_status || (lt.status === "open" ? "Open" : lt.status === "in_progress" ? "In Progress" : lt.status === "on_hold" ? "On Hold" : "Closed"),
+    priority: lt.zoho_priority || (lt.priority ? lt.priority.charAt(0).toUpperCase() + lt.priority.slice(1) : "Medium"),
+    ticketNumber: lt.zoho_ticket_number,
+    channel: lt.zoho_channel,
+    createdTime: lt.zoho_created_time || lt.created_date,
+  };
+}
+
 function TicketThreads({ ticketId }) {
   const [threads, setThreads] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -155,21 +170,9 @@ function TicketsTab({ userEmail }) {
 
   const loadTickets = useCallback(async () => {
     setLoading(true);
-    // Use local SupportTicket records as an index to find this user's Zoho ticket IDs
-    const localTickets = await base44.entities.SupportTicket.filter({ client_email: userEmail });
-    const zohoIds = localTickets.map(t => t.zoho_ticket_id).filter(Boolean);
-
-    if (zohoIds.length === 0) {
-      setTickets([]);
-      setLoading(false);
-      return;
-    }
-
-    const res = await base44.functions.invoke("zohoDesk", {
-      action: "get_tickets_by_ids", orgId: ORG_ID, ticketIds: zohoIds,
-    });
-    const all = res.data?.data?.data || [];
-    setTickets(all);
+    // Load directly from local SupportTicket — instant, no Zoho API call needed
+    const localTickets = await base44.entities.SupportTicket.filter({ client_email: userEmail }, "-created_date");
+    setTickets(localTickets.map(localToDisplay));
     setLoading(false);
   }, [userEmail]);
 

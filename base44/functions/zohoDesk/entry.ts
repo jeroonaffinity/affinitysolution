@@ -109,6 +109,11 @@ Deno.serve(async (req) => {
         status: "open",
         priority: (ticketPayload.priority || "medium").toLowerCase(),
         zoho_ticket_id: result.id,
+        zoho_ticket_number: result.ticketNumber ? String(result.ticketNumber) : null,
+        zoho_status: result.status || "Open",
+        zoho_priority: result.priority || ticketPayload.priority || "Medium",
+        zoho_channel: result.channel || ticketPayload.channel || null,
+        zoho_created_time: result.createdTime || new Date().toISOString(),
       });
     }
     return Response.json({ data: result });
@@ -130,6 +135,31 @@ Deno.serve(async (req) => {
   if (action === "add_reply" && ticketId && data) {
     const result = await deskFetch(accessToken, orgId, `/tickets/${ticketId}/sendReply`, "POST", data);
     return Response.json({ data: result });
+  }
+
+  // ── SYNC LOCAL TICKETS FROM ZOHO ────────────────────────────────────────
+  // Pull latest status/priority for all local SupportTicket records from Zoho
+  if (action === "sync_all_tickets") {
+    if (!isAdmin) return Response.json({ error: "Forbidden" }, { status: 403 });
+    const localTickets = await base44.asServiceRole.entities.SupportTicket.list();
+    const withZohoId = localTickets.filter(t => t.zoho_ticket_id);
+    if (!withZohoId.length) return Response.json({ synced: 0 });
+
+    const updates = await Promise.allSettled(
+      withZohoId.map(async (lt) => {
+        const zt = await deskFetch(accessToken, orgId, `/tickets/${lt.zoho_ticket_id}`).catch(() => null);
+        if (!zt) return;
+        await base44.asServiceRole.entities.SupportTicket.update(lt.id, {
+          zoho_status: zt.status,
+          zoho_priority: zt.priority,
+          zoho_ticket_number: zt.ticketNumber ? String(zt.ticketNumber) : lt.zoho_ticket_number,
+          zoho_channel: zt.channel || lt.zoho_channel,
+          zoho_created_time: zt.createdTime || lt.zoho_created_time,
+        });
+      })
+    );
+    const synced = updates.filter(r => r.status === "fulfilled").length;
+    return Response.json({ synced });
   }
 
   // ── AUTO-ANALYZE TICKET ─────────────────────────────────────────────────

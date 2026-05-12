@@ -430,8 +430,11 @@ export default function AdminTicketsBoard() {
           <p className="text-sm text-muted-foreground mt-0.5">All client support tickets in one view.</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={loadTickets} className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border/50 text-sm text-muted-foreground hover:text-foreground hover:border-border transition-all">
-            <RefreshCw className="w-3.5 h-3.5" /> Refresh
+          <button onClick={async () => {
+            await base44.functions.invoke("syncZohoTickets", { scheduled: true });
+            loadTickets();
+          }} className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border/50 text-sm text-muted-foreground hover:text-foreground hover:border-border transition-all">
+            <RefreshCw className="w-3.5 h-3.5" /> Sync & Refresh
           </button>
           <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90">
             <Plus className="w-3.5 h-3.5" /> New Ticket

@@ -19,6 +19,13 @@ Deno.serve(async (req) => {
     // Build context from threads
     const threadHistory = threads.map(t => `${t.author_name || t.author_email}: ${t.content}`).join("\n");
 
+    // Get KB suggestions for this ticket
+    const kbSuggestions = await base44.functions.invoke("kbSmartSuggest", {
+      action: "suggest_for_ticket",
+      ticket_id,
+    });
+    const suggestedArticles = kbSuggestions.data?.suggestions || [];
+
     // Invoke LLM for AI response
     const aiResponse = await base44.integrations.Core.InvokeLLM({
       prompt: `You are a professional IT support assistant. A support ticket has been raised. Your job is to provide an instant helpful response to help resolve the issue.
@@ -31,6 +38,13 @@ Description: ${ticketData.description}
 Previous conversation:
 ${threadHistory || "(No previous messages)"}
 
+${suggestedArticles.length > 0 ? `
+Related Knowledge Base Articles:
+${suggestedArticles.map((a, i) => `${i + 1}. "${a.title}" (${a.category}) - ${a.summary}`).join("\n")}
+
+Reference these articles if relevant to your response.
+` : ""}
+
 Provide a helpful, friendly response that:
 1. Acknowledges the issue
 2. Asks clarifying questions if needed
@@ -40,15 +54,29 @@ Provide a helpful, friendly response that:
 Keep it concise (2-3 short paragraphs).`,
     });
 
+    // Build KB articles section for thread content
+    const kbSection = suggestedArticles.length > 0
+      ? `\n\n--- RELATED KNOWLEDGE BASE ARTICLES ---\n${suggestedArticles.map(a => `• "${a.title}" (${a.category}): ${a.summary}`).join("\n")}`
+      : "";
+
     // Save AI response as a thread message
     const aiMessage = await base44.asServiceRole.entities.TicketThread.create({
       ticket_id,
       author_email: "ai-support@affinitysolution.com",
       author_name: "AffinitySolution AI Support",
       is_ai_response: true,
-      content: aiResponse,
+      content: aiResponse + kbSection,
       is_public: true,
+      kb_article_ids: suggestedArticles.map(a => a.id),
     });
+
+    // Build KB articles HTML for email
+    const kbHtml = suggestedArticles.length > 0
+      ? `<p><strong>📚 Related Resources:</strong></p>
+         <ul style="margin: 10px 0; padding-left: 20px;">
+           ${suggestedArticles.map(a => `<li>${a.title} <em style="color: #666;">(${a.category})</em></li>`).join("")}
+         </ul>`
+      : "";
 
     // Email the client about the AI response
     await base44.integrations.Core.SendEmail({
@@ -60,6 +88,7 @@ Keep it concise (2-3 short paragraphs).`,
         <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
           <p>${aiResponse.replace(/\n/g, '<br>')}</p>
         </div>
+        ${kbHtml}
         <p><strong>Next Steps:</strong> If this doesn't resolve your issue, please reply to this email or visit your portal for updates.</p>
         <p>Best regards,<br>AffinitySolution Support Team</p>
       </body></html>`,

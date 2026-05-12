@@ -130,18 +130,29 @@ export default function Home() {
             London's Trusted IT Partner for Small Businesses
           </div>
 
-          <h1 className="text-5xl md:text-7xl font-extrabold leading-tight mb-6 tracking-tight">
+          <h1 className="text-5xl md:text-7xl font-extrabold leading-tight mb-3 tracking-tight">
             Your IT, <span className="text-gradient">Fully Managed.</span>
             <br />Absolutely Bulletproof.
           </h1>
-
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-6 leading-relaxed">
-            AffinitySolution looks after all the technology in your business — computers, emails, security, and more — so you can spend your time running your business, not dealing with IT problems.
+          <p className="text-base md:text-lg font-semibold text-primary/80 tracking-wide mb-6 uppercase">
+            AffinitySolution — Your Trusted IT &amp; Cybersecurity Partner
           </p>
 
-          <p className="text-base text-muted-foreground/80 max-w-xl mx-auto mb-10">
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-4 leading-relaxed">
+            We look after all the technology in your business — computers, emails, security, and more — so you can focus on what you do best: running your business.
+          </p>
+          <p className="text-base text-muted-foreground/80 max-w-xl mx-auto mb-8">
             No technical jargon. No confusing contracts. Just reliable, affordable IT support for businesses across London and the UK.
           </p>
+          <div className="mb-10">
+            <Link
+              to={createPageUrl("Contact")}
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg border border-primary/40 bg-primary/10 text-primary text-sm font-semibold hover:bg-primary/20 transition-all"
+            >
+              Get a Free Consultation
+              <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link

@@ -1,17 +1,21 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Menu, X, ChevronLeft } from "lucide-react";
+import { Menu, X, ChevronLeft, ShieldCheck, Tag } from "lucide-react";
 import SupportChat from "./components/SupportChat";
 import MobileBottomTabs from "./components/MobileBottomTabs";
 
 const navLinks = [
-  { label: "Home", page: "Home" },
-  { label: "About", page: "About" },
-  { label: "Services", page: "Services" },
-  { label: "Compliance", page: "Compliance" },
-  { label: "Pricing", page: "Pricing" },
-  { label: "Contact", page: "Contact" },
+  { label: "Home", page: "Home", title: "Go to the AffinitySolution homepage" },
+  { label: "About", page: "About", title: "Learn more about our company and team" },
+  { label: "Services", page: "Services", title: "Explore our managed IT service offerings" },
+  {
+    label: "Compliance",
+    page: "Compliance",
+    title: "View our regulatory and security compliance standards (GDPR, Cyber Essentials)",
+    icon: ShieldCheck,
+  },
+  { label: "Pricing", page: "Pricing", title: "See our transparent pricing and packages", badge: "Plans" },
 ];
 
 const dashboardPath = "/dashboard";
@@ -36,33 +40,41 @@ export default function Layout({ children, currentPageName }) {
           </Link>
 
           {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-6" aria-label="Main Navigation">
             {navLinks.map((link) => (
               <Link
                 key={link.page}
                 to={createPageUrl(link.page)}
-                className={`text-sm font-medium transition-colors hover:text-primary ${
+                title={link.title}
+                className={`flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-primary ${
                   currentPageName === link.page ? "text-primary" : "text-muted-foreground"
                 }`}
               >
+                {link.icon && <link.icon className="w-3.5 h-3.5" />}
                 {link.label}
+                {link.badge && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary leading-none">
+                    {link.badge}
+                  </span>
+                )}
               </Link>
             ))}
           </nav>
 
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-3">
             <Link
               to={dashboardPath}
+              title="Access the AffinitySolution client portal"
               className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
             >
               Client Portal
             </Link>
-
             <Link
               to={createPageUrl("Contact")}
+              title="Get in touch for a free consultation"
               className="px-5 py-2 text-sm font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all glow-blue"
             >
-              Get Started
+              Contact Us →
             </Link>
           </div>
 
@@ -85,34 +97,44 @@ export default function Layout({ children, currentPageName }) {
 
         {/* Mobile menu */}
         {mobileOpen && (
-          <div className="md:hidden border-t border-border/50 bg-background/95 backdrop-blur-xl px-6 py-4 flex flex-col gap-4">
+          <nav className="md:hidden border-t border-border/50 bg-background/95 backdrop-blur-xl px-6 py-4 flex flex-col gap-3" aria-label="Main Navigation">
             {navLinks.map((link) => (
               <Link
                 key={link.page}
                 to={createPageUrl(link.page)}
+                title={link.title}
                 onClick={() => setMobileOpen(false)}
-                className={`text-sm font-medium transition-colors hover:text-primary ${
+                className={`flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary ${
                   currentPageName === link.page ? "text-primary" : "text-muted-foreground"
                 }`}
               >
+                {link.icon && <link.icon className="w-3.5 h-3.5" />}
                 {link.label}
+                {link.badge && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary leading-none">
+                    {link.badge}
+                  </span>
+                )}
               </Link>
             ))}
-            <Link
-              to={dashboardPath}
-              onClick={() => setMobileOpen(false)}
-              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
-            >
-              Client Portal
-            </Link>
-            <Link
-              to={createPageUrl("Contact")}
-              onClick={() => setMobileOpen(false)}
-              className="px-5 py-2 text-sm font-semibold rounded-lg bg-primary text-primary-foreground text-center mt-2"
-            >
-              Get Started
-            </Link>
-          </div>
+            <div className="border-t border-border/30 pt-3 mt-1 flex flex-col gap-3">
+              <Link
+                to={dashboardPath}
+                onClick={() => setMobileOpen(false)}
+                title="Access the AffinitySolution client portal"
+                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+              >
+                Client Portal
+              </Link>
+              <Link
+                to={createPageUrl("Contact")}
+                onClick={() => setMobileOpen(false)}
+                className="px-5 py-2.5 text-sm font-semibold rounded-lg bg-primary text-primary-foreground text-center"
+              >
+                Contact Us →
+              </Link>
+            </div>
+          </nav>
         )}
       </header>
 
@@ -125,28 +147,67 @@ export default function Layout({ children, currentPageName }) {
       <MobileBottomTabs />
 
       {/* Footer */}
-      <footer className="border-t border-white/10 bg-black/95 py-10">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center">
-            <img
-              src="https://media.base44.com/images/public/69aa02e6ea92c996cd4d16f3/674ec2824_AbstractTechnologyProfileLinkedInBanner2.png"
-              alt="AffinitySolution"
-              className="h-7 w-auto"
-            />
+      <footer className="border-t border-white/10 bg-black/95 pt-14 pb-8">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
+            {/* Brand */}
+            <div className="md:col-span-1">
+              <img
+                src="https://media.base44.com/images/public/69aa02e6ea92c996cd4d16f3/674ec2824_AbstractTechnologyProfileLinkedInBanner2.png"
+                alt="AffinitySolution"
+                className="h-8 w-auto mb-3"
+              />
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Your trusted IT &amp; cybersecurity partner for businesses across London and the UK.
+              </p>
+            </div>
+
+            {/* Services nav group */}
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground/60 mb-4">Company</h3>
+              <ul className="flex flex-col gap-2.5">
+                {[
+                  { label: "About Us", page: "About" },
+                  { label: "Services", page: "Services" },
+                  { label: "Pricing", page: "Pricing" },
+                  { label: "Compliance", page: "Compliance" },
+                ].map(l => (
+                  <li key={l.page}>
+                    <Link to={createPageUrl(l.page)} className="text-xs text-muted-foreground hover:text-primary transition-colors">{l.label}</Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Client portal group */}
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground/60 mb-4">Client Portal</h3>
+              <ul className="flex flex-col gap-2.5">
+                <li><Link to={dashboardPath} className="text-xs text-muted-foreground hover:text-primary transition-colors">Dashboard</Link></li>
+                <li><Link to="/MyTickets" className="text-xs text-muted-foreground hover:text-primary transition-colors">My Tickets</Link></li>
+              </ul>
+            </div>
+
+            {/* Contact */}
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground/60 mb-4">Get in Touch</h3>
+              <ul className="flex flex-col gap-2.5 text-xs text-muted-foreground">
+                <li><a href="mailto:info@affinitysolution.com" className="hover:text-primary transition-colors">info@affinitysolution.com</a></li>
+                <li><a href="tel:+442012345678" className="hover:text-primary transition-colors">+44 (0)20 1234 5678</a></li>
+                <li className="pt-1">
+                  <Link to={createPageUrl("Contact")} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all">
+                    Free Consultation →
+                  </Link>
+                </li>
+              </ul>
+            </div>
           </div>
-          <p className="text-muted-foreground text-sm">
-            © {new Date().getFullYear()} AffinitySolution. All rights reserved.
-          </p>
-          <div className="flex gap-6">
-            {navLinks.map((link) => (
-              <Link
-                key={link.page}
-                to={createPageUrl(link.page)}
-                className="text-xs text-muted-foreground hover:text-primary transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
+
+          <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p className="text-muted-foreground text-xs">
+              © {new Date().getFullYear()} AffinitySolution Ltd. All rights reserved.
+            </p>
+            <p className="text-muted-foreground/50 text-xs">Registered in England &amp; Wales</p>
           </div>
         </div>
       </footer>

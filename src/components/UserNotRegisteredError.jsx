@@ -1,31 +1,57 @@
-import React from 'react';
+import { base44 } from "@/api/base44Client";
+import { ShieldAlert, ArrowLeft, Mail } from "lucide-react";
 
-const UserNotRegisteredError = () => {
+export default function UserNotRegisteredError() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-white to-slate-50">
-      <div className="max-w-md w-full p-8 bg-white rounded-lg shadow-lg border border-slate-100">
-        <div className="text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 mb-6 rounded-full bg-orange-100">
-            <svg className="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-          </div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-4">Access Restricted</h1>
-          <p className="text-slate-600 mb-8">
-            You are not registered to use this application. Please contact the app administrator to request access.
-          </p>
-          <div className="p-4 bg-slate-50 rounded-md text-sm text-slate-600">
-            <p>If you believe this is an error, you can:</p>
-            <ul className="list-disc list-inside mt-2 space-y-1">
-              <li>Verify you are logged in with the correct account</li>
-              <li>Contact the app administrator for access</li>
-              <li>Try logging out and back in again</li>
-            </ul>
-          </div>
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 relative overflow-hidden">
+      {/* Background glow */}
+      <div className="absolute inset-0 bg-grid opacity-30 pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-primary/5 blur-3xl pointer-events-none" />
+
+      <div className="relative z-10 max-w-sm w-full text-center flex flex-col items-center gap-6">
+        {/* Logo */}
+        <img
+          src="https://media.base44.com/images/public/69aa02e6ea92c996cd4d16f3/674ec2824_AbstractTechnologyProfileLinkedInBanner2.png"
+          alt="AffinitySolution"
+          className="h-9 w-auto mb-2"
+        />
+
+        {/* Icon */}
+        <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-center">
+          <ShieldAlert className="w-7 h-7 text-amber-400" />
         </div>
+
+        {/* Text */}
+        <div className="flex flex-col gap-2">
+          <h1 className="text-2xl font-extrabold tracking-tight">Access Restricted</h1>
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            Your account isn't registered for this portal yet. Contact AffinitySolution to request access.
+          </p>
+        </div>
+
+        {/* Actions */}
+        <div className="flex flex-col gap-3 w-full">
+          <a
+            href="mailto:support@affinitysolution.co.uk"
+            className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-all glow-blue"
+          >
+            <Mail className="w-4 h-4" /> Contact Support
+          </a>
+          <button
+            onClick={() => base44.auth.logout("/")}
+            className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-border/50 text-sm text-muted-foreground hover:text-foreground hover:border-border transition-all"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back to Homepage
+          </button>
+        </div>
+
+        <p className="text-xs text-muted-foreground/50">
+          Already have access? Try{" "}
+          <button onClick={() => base44.auth.redirectToLogin(window.location.href)} className="underline hover:text-muted-foreground transition-colors">
+            signing in again
+          </button>
+        </p>
       </div>
     </div>
   );
-};
-
-export default UserNotRegisteredError;
+}

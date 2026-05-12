@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
+import { ticketService } from "@/lib/ticketService";
 import Customer360Panel from "@/components/admin/Customer360Panel";
 import TicketKanban from "@/components/admin/TicketKanban";
 import {
@@ -475,8 +476,8 @@ export default function AdminTicketsBoard() {
 
   const loadTickets = useCallback(async () => {
     setLoading(true);
-    const tickets = await base44.entities.SupportTicket.list();
-    setTickets(tickets || []);
+    const t = await ticketService.listTickets();
+    setTickets(t || []);
     setLoading(false);
   }, []);
 
@@ -484,8 +485,7 @@ export default function AdminTicketsBoard() {
 
   const filtered = tickets.filter(t => {
     const q = search.toLowerCase();
-    const matchSearch = !q || t.subject?.toLowerCase().includes(q) || t.email?.toLowerCase().includes(q) ||
-      t.contact?.firstName?.toLowerCase().includes(q) || t.ticketNumber?.toString().includes(q);
+    const matchSearch = !q || t.title?.toLowerCase().includes(q) || t.client_email?.toLowerCase().includes(q);
     const matchStatus = statusFilter === "all" || t.status === statusFilter;
     const matchPriority = priorityFilter === "all" || t.priority === priorityFilter;
     return matchSearch && matchStatus && matchPriority;
@@ -517,11 +517,8 @@ export default function AdminTicketsBoard() {
           <p className="text-sm text-muted-foreground mt-0.5">All client support tickets in one view.</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={async () => {
-            await base44.functions.invoke("syncZohoTickets", { scheduled: true });
-            loadTickets();
-          }} className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border/50 text-sm text-muted-foreground hover:text-foreground hover:border-border transition-all">
-            <RefreshCw className="w-3.5 h-3.5" /> Sync & Refresh
+          <button onClick={loadTickets} className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border/50 text-sm text-muted-foreground hover:text-foreground hover:border-border transition-all">
+            <RefreshCw className="w-3.5 h-3.5" /> Refresh
           </button>
           <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90">
             <Plus className="w-3.5 h-3.5" /> New Ticket

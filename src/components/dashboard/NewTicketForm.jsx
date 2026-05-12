@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { ticketService } from "@/lib/ticketService";
 import { Loader2, Send, Paperclip, X, FileText, Image, Plus } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AITicketAssistant from "./AITicketAssistant";
-
-const ORG_ID = "20114459933";
 
 export default function NewTicketForm({ userEmail, onSuccess, onCancel }) {
   const [form, setForm] = useState({ subject: "", description: "", priority: "Medium", category: "other" });
@@ -29,13 +28,12 @@ export default function NewTicketForm({ userEmail, onSuccess, onCancel }) {
       ? "\n\n--- Attachments ---\n" + attachments.map((url, i) => `[File ${i + 1}](${url})`).join("\n")
       : "";
     try {
-      await base44.entities.SupportTicket.create({
+      await ticketService.createTicket({
         title: form.subject,
         description: form.description + attachmentText,
-        priority: form.priority.toLowerCase(),
+        priority: form.priority,
         category: form.category,
         client_email: userEmail,
-        status: "open",
       });
       onSuccess();
     } finally {

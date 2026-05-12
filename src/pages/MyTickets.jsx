@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { ticketService } from "@/lib/ticketService";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import {
@@ -42,7 +43,7 @@ export default function MyTickets() {
   const [form, setForm] = useState({ title: "", description: "", priority: "medium", category: "other" });
 
   const fetchTickets = async (email) => {
-    const t = await base44.entities.SupportTicket.filter({ client_email: email }, "-created_date");
+    const t = await ticketService.getUserTickets(email);
     setTickets(t);
   };
 
@@ -61,7 +62,10 @@ export default function MyTickets() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
-    await base44.entities.SupportTicket.create({ ...form, client_email: user.email, status: "open" });
+    await ticketService.createTicket({
+      ...form,
+      client_email: user.email,
+    });
     setForm({ title: "", description: "", priority: "medium", category: "other" });
     setShowForm(false);
     setSubmitting(false);

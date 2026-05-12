@@ -159,8 +159,8 @@ function ThreadPanel({ ticket, onClose }) {
         {/* Header */}
         <div className="px-6 py-5 border-b border-border/40 flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <div className="text-xs text-muted-foreground mb-1">#{ticket.ticketNumber}</div>
-            <h2 className="font-bold text-base leading-tight">{ticket.subject}</h2>
+            <div className="text-xs text-muted-foreground mb-1">#{ticket.id?.slice(0, 8)}</div>
+            <h2 className="font-bold text-base leading-tight">{ticket.title}</h2>
             <div className="flex items-center gap-2 mt-2 flex-wrap">
               <StatusBadge status={ticket.status} />
               <PriorityBadge priority={ticket.priority} />
@@ -201,18 +201,11 @@ function ThreadPanel({ ticket, onClose }) {
         <div className="px-6 py-4 border-b border-border/30 grid grid-cols-2 gap-3 text-sm">
           <div>
             <div className="text-xs text-muted-foreground mb-1">Contact</div>
-            <div className="font-medium truncate">
-              {ticket.contact?.firstName
-                ? `${ticket.contact.firstName} ${ticket.contact.lastName || ""}`.trim()
-                : clientEmail || "—"}
-            </div>
-            {clientEmail && ticket.contact?.firstName && (
-              <div className="text-xs text-muted-foreground truncate">{clientEmail}</div>
-            )}
+            <div className="font-medium truncate">{clientEmail || ticket.client_email || "—"}</div>
           </div>
           <div>
             <div className="text-xs text-muted-foreground mb-1">Created</div>
-            <div className="font-medium">{new Date(ticket.createdTime).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</div>
+            <div className="font-medium">{new Date(ticket.created_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</div>
           </div>
 
           {/* Inline controls */}
@@ -476,14 +469,13 @@ function TicketRow({ ticket, onClick }) {
       <div className={`w-2 h-2 rounded-full flex-shrink-0 ${status.dot}`} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1 flex-wrap">
-          <span className="font-semibold text-sm group-hover:text-primary transition-colors">{ticket.subject}</span>
-          <span className="text-xs text-muted-foreground/60">#{ticket.ticketNumber}</span>
+          <span className="font-semibold text-sm group-hover:text-primary transition-colors">{ticket.title}</span>
+          <span className="text-xs text-muted-foreground/60">#{ticket.id?.slice(0, 8)}</span>
         </div>
         <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
-          {ticket.contact?.firstName && <span className="flex items-center gap-1"><User className="w-3 h-3" />{ticket.contact.firstName} {ticket.contact.lastName || ""}</span>}
-          {ticket.email && !ticket.contact?.firstName && <span className="flex items-center gap-1"><User className="w-3 h-3" />{ticket.email}</span>}
-          <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{new Date(ticket.createdTime).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>
-          {ticket.channel && <span className="flex items-center gap-1"><Tag className="w-3 h-3" />{ticket.channel}</span>}
+          <span className="flex items-center gap-1"><User className="w-3 h-3" />{ticket.client_email}</span>
+          <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{new Date(ticket.created_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>
+          {ticket.category && <span className="flex items-center gap-1"><Tag className="w-3 h-3" />{ticket.category}</span>}
         </div>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
@@ -506,10 +498,8 @@ export default function AdminTicketsBoard() {
 
   const loadTickets = useCallback(async () => {
     setLoading(true);
-    const res = await base44.functions.invoke("zohoDesk", {
-      action: "list_tickets", orgId: ORG_ID, limit: 100,
-    });
-    setTickets(res.data?.data?.data || []);
+    const tickets = await base44.entities.SupportTicket.list();
+    setTickets(tickets || []);
     setLoading(false);
   }, []);
 

@@ -28,22 +28,19 @@ export default function NewTicketForm({ userEmail, onSuccess, onCancel }) {
     const attachmentText = attachments.length
       ? "\n\n--- Attachments ---\n" + attachments.map((url, i) => `[File ${i + 1}](${url})`).join("\n")
       : "";
-    await base44.functions.invoke("zohoDesk", {
-      action: "create_ticket", orgId: ORG_ID,
-      data: {
-        subject: form.subject,
+    try {
+      await base44.entities.SupportTicket.create({
+        title: form.subject,
         description: form.description + attachmentText,
-        priority: form.priority,
+        priority: form.priority.toLowerCase(),
         category: form.category,
-        email: userEmail,
-        clientEmail: userEmail,
-        departmentId: "238671000000007061",
-        status: "Open",
-        channel: "Portal",
-      },
-    });
-    setSubmitting(false);
-    onSuccess();
+        client_email: userEmail,
+        status: "open",
+      });
+      onSuccess();
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleAISuggestion = ({ priority, category }) => {

@@ -154,27 +154,7 @@ Deno.serve(async (req) => {
     const priority = ticket.priority || "medium";
     const category = ticket.category || "other";
 
-    // Email to client
-    try {
-      await base44.asServiceRole.integrations.Core.SendEmail({
-        to: clientEmail,
-        subject: `✓ Ticket Received: ${title}`,
-        body: clientEmailHtml({ title, priority, category }),
-      });
-    } catch (emailErr) {
-      console.warn(`Could not send email to client ${clientEmail}:`, emailErr?.message);
-    }
-
-    // Email to admin
-    try {
-      await base44.asServiceRole.integrations.Core.SendEmail({
-        to: ADMIN_EMAIL,
-        subject: `[New Ticket] ${title} — ${priority.toUpperCase()} priority`,
-        body: adminEmailHtml({ title, priority, category, clientEmail, description: ticket.description }),
-      });
-    } catch (adminEmailErr) {
-      console.warn(`Could not send admin email:`, adminEmailErr?.message);
-    }
+    // Skip email notifications (external user restriction)
 
     return Response.json({ ok: true });
   } catch (err) {

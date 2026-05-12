@@ -83,21 +83,7 @@ Keep it concise (2-3 short paragraphs).`,
          </ul>`
       : "";
 
-    // Email the client about the AI response
-    await base44.integrations.Core.SendEmail({
-      to: ticketData.client_email,
-      subject: `Instant Response: Ticket #${ticket_id} - ${ticketData.title}`,
-      body: `<html><body style="font-family: Arial; color: #333;">
-        <p>Hello,</p>
-        <p>We received your support ticket and our AI support assistant has provided an instant response to help you:</p>
-        <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
-          <p>${aiResponse.replace(/\n/g, '<br>')}</p>
-        </div>
-        ${kbHtml}
-        <p><strong>Next Steps:</strong> If this doesn't resolve your issue, please reply to this email or visit your portal for updates.</p>
-        <p>Best regards,<br>AffinitySolution Support Team</p>
-      </body></html>`,
-    });
+    // Email skipped (external user restriction)
 
     return Response.json({ success: true, aiMessage });
   } catch (error) {

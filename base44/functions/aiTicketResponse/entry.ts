@@ -20,11 +20,16 @@ Deno.serve(async (req) => {
     const threadHistory = threads.map(t => `${t.author_name || t.author_email}: ${t.content}`).join("\n");
 
     // Get KB suggestions for this ticket
-    const kbSuggestions = await base44.functions.invoke("kbSmartSuggest", {
-      action: "suggest_for_ticket",
-      ticket_id,
-    });
-    const suggestedArticles = kbSuggestions.data?.suggestions || [];
+    let suggestedArticles = [];
+    try {
+      const kbSuggestions = await base44.functions.invoke("kbSmartSuggest", {
+        action: "suggest_for_ticket",
+        ticket_id,
+      });
+      suggestedArticles = kbSuggestions.data?.suggestions || [];
+    } catch (kbError) {
+      console.log("KB suggestions skipped:", kbError.message);
+    }
 
     // Invoke LLM for AI response
     const aiResponse = await base44.integrations.Core.InvokeLLM({
@@ -96,6 +101,7 @@ Keep it concise (2-3 short paragraphs).`,
 
     return Response.json({ success: true, aiMessage });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error("AI response error:", error.message, error);
+    return Response.json({ error: error.message, stack: error.stack }, { status: 500 });
   }
 });

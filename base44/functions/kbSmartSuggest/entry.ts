@@ -11,9 +11,7 @@ Deno.serve(async (req) => {
         return Response.json({ articles: [] });
       }
 
-      const allArticles = await base44.asServiceRole.entities.KnowledgeBase.filter({
-        is_published: true,
-      });
+      const allArticles = (await base44.entities.KnowledgeBase.list() || []).filter(a => a.is_published);
 
       // Score articles based on relevance
       const scored = allArticles.map(article => {
@@ -62,11 +60,9 @@ Deno.serve(async (req) => {
       // Combine title, description, and category for better search
       const searchQuery = `${t.title} ${t.description || ""} ${t.category || ""}`;
 
-      const allArticles = await base44.asServiceRole.entities.KnowledgeBase.filter({
-        is_published: true,
-      });
+      const allArticles = await base44.entities.KnowledgeBase.list();
 
-      const scored = allArticles.map(article => {
+      const scored = (allArticles || []).map(article => {
         let score = 0;
         const words = searchQuery.toLowerCase().split(/\s+/);
 

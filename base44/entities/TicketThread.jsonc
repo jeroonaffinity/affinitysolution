@@ -27,6 +27,13 @@
       "type": "boolean",
       "default": true,
       "description": "If true, visible to the client; if false, admin-only internal note"
+    },
+    "kb_article_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs of KB articles referenced in this message"
     }
   },
   "required": [

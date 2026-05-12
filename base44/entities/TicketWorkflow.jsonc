@@ -1,0 +1,92 @@
+{
+  "name": "TicketWorkflow",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Workflow rule name"
+    },
+    "description": {
+      "type": "string",
+      "description": "What this workflow does"
+    },
+    "priority_trigger": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical",
+        "any"
+      ],
+      "description": "Trigger on specific priority level"
+    },
+    "category_trigger": {
+      "type": "string",
+      "enum": [
+        "hardware",
+        "software",
+        "network",
+        "email",
+        "security",
+        "data",
+        "other",
+        "any"
+      ],
+      "description": "Trigger on specific category"
+    },
+    "escalate_to_emails": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of admin emails to escalate to"
+    },
+    "action_type": {
+      "type": "string",
+      "enum": [
+        "escalate",
+        "remind",
+        "add_note",
+        "assign_team",
+        "flag"
+      ],
+      "description": "Type of action to trigger"
+    },
+    "action_params": {
+      "type": "object",
+      "description": "Additional parameters for the action (e.g., reminder_hours, note_text)"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this rule is enabled"
+    }
+  },
+  "required": [
+    "name",
+    "action_type"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

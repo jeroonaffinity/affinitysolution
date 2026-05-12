@@ -5,8 +5,9 @@ import {
   TicketCheck, Clock, CheckCircle2,
   ChevronDown, ChevronUp, Search, Plus, Send,
   Server, ArrowRight, MessageSquare, RefreshCw,
-  Paperclip, X, FileText, Image
+  Paperclip, X, FileText, Image, Settings, Trash2, AlertTriangle
 } from "lucide-react";
+import PullToRefreshWrapper from "@/components/PullToRefreshWrapper";
 import BillingTab from "@/components/dashboard/BillingTab";
 import SupportDocsTab from "@/components/dashboard/SupportDocsTab";
 import ClientABRTab from "@/components/dashboard/ClientABRTab";
@@ -20,6 +21,7 @@ const TABS = [
   { id: "docs",       label: "Support Docs"     },
   { id: "abr",        label: "Admin Access"     },
   { id: "endpoints",  label: "Endpoints"        },
+  { id: "settings",   label: "Account Settings" },
 ];
 
 // ─── Sub-components ─────────────────────────────────────────────────────────
@@ -273,7 +275,7 @@ function TicketsTab({ userEmail }) {
   };
 
   return (
-    <div className="flex flex-col gap-5">
+    <PullToRefreshWrapper onRefresh={loadTickets} className="flex flex-col gap-5">
       {submitSuccess && (
         <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4" /> Ticket submitted successfully! Our team will be in touch shortly.
@@ -390,6 +392,68 @@ function TicketsTab({ userEmail }) {
             <ZohoTicketRow key={t.id} t={t} expanded={expandedId === t.id}
               onToggle={() => setExpandedId(expandedId === t.id ? null : t.id)} />
           ))
+        )}
+      </div>
+    </PullToRefreshWrapper>
+  );
+}
+
+// ─── Account Settings Tab ───────────────────────────────────────────────────
+function AccountSettingsTab({ user }) {
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleted, setDeleted] = useState(false);
+
+  const handleDelete = async () => {
+    if (confirmText !== "DELETE") return;
+    setDeleting(true);
+    // Sign out and redirect — actual account removal requires admin action
+    await base44.auth.logout("/");
+  };
+
+  return (
+    <div className="flex flex-col gap-6 max-w-lg">
+      {/* Profile info */}
+      <div className="p-5 rounded-2xl border border-border/40 bg-card/50 flex flex-col gap-1.5">
+        <div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-2">Profile</div>
+        <div className="text-sm font-medium">{user?.full_name || "—"}</div>
+        <div className="text-sm text-muted-foreground">{user?.email}</div>
+        <div className="text-xs text-muted-foreground mt-1">Role: <span className="capitalize">{user?.role || "user"}</span></div>
+      </div>
+
+      {/* Danger zone */}
+      <div className="p-5 rounded-2xl border border-destructive/30 bg-destructive/5 flex flex-col gap-3">
+        <div className="flex items-center gap-2 text-destructive">
+          <AlertTriangle className="w-4 h-4" />
+          <span className="text-sm font-semibold">Danger Zone</span>
+        </div>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Deleting your account will sign you out immediately. To permanently remove your data, please contact your administrator after confirming below.
+        </p>
+        {!showConfirm ? (
+          <button onClick={() => setShowConfirm(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-destructive/40 text-destructive text-sm font-semibold hover:bg-destructive/10 transition-all w-fit">
+            <Trash2 className="w-3.5 h-3.5" /> Delete Account
+          </button>
+        ) : (
+          <div className="flex flex-col gap-3 bg-background/50 rounded-xl p-4 border border-destructive/20">
+            <p className="text-xs text-muted-foreground">Type <strong className="text-foreground">DELETE</strong> to confirm:</p>
+            <input value={confirmText} onChange={e => setConfirmText(e.target.value)}
+              placeholder="Type DELETE here"
+              className="px-3 py-2 rounded-lg border border-border/60 bg-background text-sm focus:outline-none focus:border-destructive/60" />
+            <div className="flex gap-2">
+              <button onClick={handleDelete} disabled={confirmText !== "DELETE" || deleting}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-destructive text-destructive-foreground text-sm font-semibold hover:bg-destructive/90 disabled:opacity-50 transition-all">
+                {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                Confirm Delete
+              </button>
+              <button onClick={() => { setShowConfirm(false); setConfirmText(""); }}
+                className="px-4 py-2 rounded-xl border border-border/50 text-sm hover:bg-card transition-all">
+                Cancel
+              </button>
+            </div>
+          </div>
         )}
       </div>
     </div>
@@ -551,6 +615,7 @@ export default function Dashboard() {
         {activeTab === "docs" && <SupportDocsTab />}
         {activeTab === "abr" && <ClientABRTab />}
         {activeTab === "endpoints" && <ClientEndpointsTab userEmail={user?.email} />}
+        {activeTab === "settings" && <AccountSettingsTab user={user} />}
       </div>
     </div>
   );

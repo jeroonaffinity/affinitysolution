@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Menu, X, Phone } from "lucide-react";
+import { Menu, X, ChevronLeft } from "lucide-react";
 import SupportChat from "./components/SupportChat";
+import MobileBottomTabs from "./components/MobileBottomTabs";
 
 const navLinks = [
   { label: "Home", page: "Home" },
@@ -17,6 +18,9 @@ const dashboardPath = "/dashboard";
 
 export default function Layout({ children, currentPageName }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isRoot = location.pathname === "/" || location.pathname === "/Home";
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -62,13 +66,21 @@ export default function Layout({ children, currentPageName }) {
             </Link>
           </div>
 
-          {/* Mobile hamburger */}
-          <button
-            className="md:hidden text-muted-foreground hover:text-foreground"
-            onClick={() => setMobileOpen(!mobileOpen)}
-          >
-            {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          {/* Mobile: back button or hamburger */}
+          <div className="md:hidden flex items-center gap-2">
+            {!isRoot && (
+              <button onClick={() => navigate(-1)}
+                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors select-none">
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+            )}
+            <button
+              className="text-muted-foreground hover:text-foreground"
+              onClick={() => setMobileOpen(!mobileOpen)}
+            >
+              {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile menu */}
@@ -105,11 +117,12 @@ export default function Layout({ children, currentPageName }) {
       </header>
 
       {/* Page content */}
-      <main className="flex-1 pt-[73px]">
+      <main className="flex-1 pt-[73px] pb-[calc(60px+env(safe-area-inset-bottom))] md:pb-0">
         {children}
       </main>
 
       <SupportChat />
+      <MobileBottomTabs />
 
       {/* Footer */}
       <footer className="border-t border-white/10 bg-black/95 py-10">

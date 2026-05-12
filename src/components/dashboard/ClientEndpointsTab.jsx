@@ -4,6 +4,7 @@ import {
   Loader2, Monitor, Wifi, WifiOff, ChevronDown, ChevronUp,
   RotateCcw, Download, Terminal, CheckCircle2, XCircle, Search, RefreshCw
 } from "lucide-react";
+import PullToRefreshWrapper from "@/components/PullToRefreshWrapper";
 
 const STATUS_STYLE = {
   Connected: { bg: "bg-emerald-500/15", color: "text-emerald-400", icon: Wifi },
@@ -215,7 +216,7 @@ export default function ClientEndpointsTab({ userEmail }) {
   }
 
   return (
-    <div className="flex flex-col gap-5">
+    <PullToRefreshWrapper onRefresh={() => loadEndpoints(team)} className="flex flex-col gap-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="font-bold text-base flex items-center gap-2">
@@ -246,6 +247,6 @@ export default function ClientEndpointsTab({ userEmail }) {
           {filtered.map(ep => <EndpointCard key={ep.id} ep={ep} orgId={team.action1_org_id} />)}
         </div>
       )}
-    </div>
+    </PullToRefreshWrapper>
   );
 }

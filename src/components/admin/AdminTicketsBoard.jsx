@@ -333,11 +333,33 @@ function ThreadPanel({ ticket, onClose }) {
 }
 
 function CreateTicketModal({ onClose, onCreated }) {
-  const [form, setForm] = useState({ subject: "", description: "", priority: "Medium", email: "", contactId: "" });
+  const [form, setForm] = useState({ subject: "", description: "", priority: "Medium" });
   const [saving, setSaving] = useState(false);
+  const [teams, setTeams] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [selectedTeam, setSelectedTeam] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
+
+  useEffect(() => {
+    Promise.all([
+      base44.entities.Team.list(),
+      base44.entities.User.list(),
+    ]).then(([t, u]) => { setTeams(t); setUsers(u); });
+  }, []);
+
+  const teamMembers = selectedTeam
+    ? users.filter(u => selectedTeam.member_emails?.includes(u.email))
+    : [];
+
+  const handleTeamChange = (teamId) => {
+    const team = teams.find(t => t.id === teamId) || null;
+    setSelectedTeam(team);
+    setSelectedUser(null);
+  };
 
   const handleCreate = async (e) => {
     e.preventDefault();
+    if (!selectedUser) return;
     setSaving(true);
     await base44.functions.invoke("zohoDesk", {
       action: "create_ticket", orgId: ORG_ID,
@@ -345,8 +367,8 @@ function CreateTicketModal({ onClose, onCreated }) {
         subject: form.subject,
         description: form.description,
         priority: form.priority,
-        email: form.email,
-        clientEmail: form.email,
+        email: selectedUser.email,
+        clientEmail: selectedUser.email,
         departmentId: "238671000000007061",
         status: "Open",
         channel: "Phone",
@@ -366,12 +388,33 @@ function CreateTicketModal({ onClose, onCreated }) {
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"><X className="w-4 h-4" /></button>
         </div>
         <form onSubmit={handleCreate} className="flex flex-col gap-3">
+
+          {/* Team picker */}
           <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Client Email *</label>
-            <input required type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})}
-              placeholder="client@company.com"
-              className="w-full px-3 py-2 rounded-lg border border-border/60 bg-background text-sm focus:outline-none" />
+            <label className="text-xs text-muted-foreground mb-1 block">Team *</label>
+            <select required value={selectedTeam?.id || ""} onChange={e => handleTeamChange(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg border border-border/60 bg-background text-sm focus:outline-none">
+              <option value="">Select a team...</option>
+              {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
           </div>
+
+          {/* Point of contact picker */}
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Point of Contact *</label>
+            <select required value={selectedUser?.id || ""} onChange={e => setSelectedUser(teamMembers.find(u => u.id === e.target.value) || null)}
+              disabled={!selectedTeam}
+              className="w-full px-3 py-2 rounded-lg border border-border/60 bg-background text-sm focus:outline-none disabled:opacity-50">
+              <option value="">{selectedTeam ? (teamMembers.length ? "Select a member..." : "No members in this team") : "Select a team first..."}</option>
+              {teamMembers.map(u => (
+                <option key={u.id} value={u.id}>{u.full_name || u.email} — {u.email}</option>
+              ))}
+            </select>
+            {selectedUser && (
+              <p className="text-xs text-primary mt-1">Ticket will be raised for: {selectedUser.email}</p>
+            )}
+          </div>
+
           <div>
             <label className="text-xs text-muted-foreground mb-1 block">Subject *</label>
             <input required value={form.subject} onChange={e => setForm({...form, subject: e.target.value})}
@@ -394,7 +437,7 @@ function CreateTicketModal({ onClose, onCreated }) {
             </select>
           </div>
           <div className="flex gap-3 pt-1">
-            <button type="submit" disabled={saving}
+            <button type="submit" disabled={saving || !selectedUser}
               className="flex items-center gap-2 px-5 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 disabled:opacity-60">
               {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
               Create Ticket

@@ -1,53 +1,35 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-const CLIENT_ID = "1000.IV4T37FGQ9KIGGHR52I5S1UUGEZ6TD";
-const CLIENT_SECRET = "d5f8654adf6d2ec14f5a3a8624e3033e5b8e4c8b41";
-const ZOHO_ACCOUNTS = "https://accounts.zoho.eu/oauth/v2/token";
-const DESK_BASE = "https://desk.zoho.eu/api/v1";
-
-async function getAccessToken() {
-  const res = await fetch(ZOHO_ACCOUNTS, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      refresh_token: Deno.env.get("ZOHO_REFRESH_TOKEN"),
-      client_id: CLIENT_ID,
-      client_secret: CLIENT_SECRET,
-      grant_type: "refresh_token",
-    }),
-  });
-  const data = await res.json();
-  if (!data.access_token) throw new Error(`Failed to get Zoho access token: ${JSON.stringify(data)}`);
-  return data.access_token;
-}
-
-async function deskFetch(accessToken, orgId, path, method = "GET", body = null) {
-  const opts = {
-    method,
-    headers: {
-      Authorization: `Zoho-oauthtoken ${accessToken}`,
-      orgId: orgId,
-      "Content-Type": "application/json",
-    },
-  };
-  if (body) opts.body = JSON.stringify(body);
+// AI keyword analysis for auto-tagging and priority
+function analyzeTicketContent(subject, description) {
+  const text = `${subject || ""} ${description || ""}`.toLowerCase();
   
-  let lastError;
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 25000);
-      const res = await fetch(`${DESK_BASE}${path}`, { ...opts, signal: controller.signal });
-      clearTimeout(timeout);
-      const text = await res.text();
-      if (!res.ok) throw new Error(`Zoho Desk ${res.status}: ${text}`);
-      try { return JSON.parse(text); } catch { return { raw: text }; }
-    } catch (err) {
-      lastError = err;
-      if (attempt < 3) await new Promise(r => setTimeout(r, 1000 * attempt));
-    }
+  // Priority rules (first match wins)
+  let priority = "medium";
+  const priorityRules = [
+    { keywords: ["critical", "emergency", "down", "ransomware", "breach", "outage", "not working", "server down", "cannot access", "locked out", "urgent", "asap"], priority: "critical" },
+    { keywords: ["slow", "intermittent", "degraded", "warning", "error", "failed", "issue", "problem", "broken", "high"], priority: "high" },
+    { keywords: ["question", "query", "how to", "guide", "information", "request", "change", "low"], priority: "low" },
+  ];
+  for (const rule of priorityRules) {
+    if (rule.keywords.some(k => text.includes(k))) { priority = rule.priority; break; }
   }
-  throw lastError || new Error("deskFetch failed after 3 attempts");
+
+  // Category classification
+  let category = "other";
+  const categoryRules = [
+    { keywords: ["network", "wifi", "internet", "vpn", "firewall", "connectivity", "dns", "ip", "connection"], tag: "network" },
+    { keywords: ["email", "outlook", "microsoft 365", "spam", "mailbox", "calendar", "teams", "mail"], tag: "email" },
+    { keywords: ["virus", "malware", "ransomware", "phishing", "breach", "security", "password", "mfa", "2fa", "hack"], tag: "security" },
+    { keywords: ["printer", "hardware", "laptop", "screen", "keyboard", "monitor", "device", "pc", "computer", "crash", "mouse"], tag: "hardware" },
+    { keywords: ["software", "install", "update", "application", "app", "license", "windows", "driver", "plugin"], tag: "software" },
+    { keywords: ["backup", "restore", "data", "file", "storage", "cloud", "sharepoint", "onedrive", "sync"], tag: "data" },
+  ];
+  for (const rule of categoryRules) {
+    if (rule.keywords.some(k => text.includes(k))) { category = rule.tag; break; }
+  }
+
+  return { priority, category };
 }
 
 Deno.serve(async (req) => {
@@ -56,171 +38,77 @@ Deno.serve(async (req) => {
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const payload = await req.json();
-  const { action, orgId, ticketId, data } = payload;
+  const { action, ticketId, data } = payload;
 
-  // Non-admins can only create tickets or list their own
+  // Non-admins can only create/list tickets
   const isAdmin = user.role === "admin";
-  const clientOnlyActions = ["create_ticket", "list_tickets", "get_ticket"];
+  const clientOnlyActions = ["create_ticket", "list_tickets", "get_ticket", "analyze"];
   if (!isAdmin && !clientOnlyActions.includes(action)) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const accessToken = await getAccessToken();
-
-  // Get organisations (use this first to find orgId)
-  if (action === "organizations") {
-    const result = await deskFetch(accessToken, "", "/organizations");
-    return Response.json({ data: result });
+  // Analyze ticket content for suggested priority & category (instant, no Zoho needed)
+  if (action === "analyze") {
+    const { subject, description } = payload;
+    const { priority, category } = analyzeTicketContent(subject, description);
+    return Response.json({ priority, category });
   }
 
-  if (!orgId) return Response.json({ error: "orgId required" }, { status: 400 });
-
-  // List tickets (admin — no email filter needed, clients use get_tickets_by_ids)
+  // List tickets (local database)
   if (action === "list_tickets") {
-    const { status, from = 0, limit = 50 } = payload;
-    const params = new URLSearchParams({ from, limit });
-    if (status) params.set("status", status);
-    const result = await deskFetch(accessToken, orgId, `/tickets?${params}`);
-    return Response.json({ data: result });
+    const { status } = payload;
+    let query = {};
+    if (status) query.status = status;
+    const tickets = await base44.asServiceRole.entities.SupportTicket.filter(query, "-created_date", 100);
+    return Response.json({ data: tickets });
   }
 
   // Get single ticket
   if (action === "get_ticket" && ticketId) {
-    const result = await deskFetch(accessToken, orgId, `/tickets/${ticketId}`);
-    return Response.json({ data: result });
+    const ticket = await base44.asServiceRole.entities.SupportTicket.filter({ id: ticketId });
+    return Response.json({ data: ticket[0] || null });
   }
 
-  // Get multiple tickets by IDs (for client portal)
-  if (action === "get_tickets_by_ids") {
-    const { ticketIds } = payload;
-    if (!ticketIds || !ticketIds.length) return Response.json({ data: { data: [] } });
-    
-    // Fetch in parallel (Zoho has rate limits but for small arrays this is fine, limit to 20 to be safe)
-    const toFetch = ticketIds.slice(0, 20);
-    const promises = toFetch.map(id => deskFetch(accessToken, orgId, `/tickets/${id}`).catch(() => null));
-    const results = await Promise.all(promises);
-    return Response.json({ data: { data: results.filter(Boolean) } });
-  }
-
-  // Create ticket
+  // Create ticket (local only)
   if (action === "create_ticket" && data) {
-    // Build payload — wrap email in contact object if no contactId provided
     const clientEmail = data.email || data.clientEmail;
-    const ticketPayload = { ...data };
-    delete ticketPayload.clientEmail;
-    if (!ticketPayload.contactId && ticketPayload.email) {
-      ticketPayload.contact = { email: ticketPayload.email };
-      delete ticketPayload.email;
-    }
-    const result = await deskFetch(accessToken, orgId, "/tickets", "POST", ticketPayload);
-    // Save Zoho ticket ID + client email + team_id locally
-    if (result?.id && clientEmail) {
-      // Look up the team this email belongs to
-      const teams = await base44.asServiceRole.entities.Team.list();
-      const team = teams.find(t => t.member_emails?.includes(clientEmail));
-      await base44.asServiceRole.entities.SupportTicket.create({
-        title: ticketPayload.subject || data.subject || "Support Ticket",
-        description: ticketPayload.description || "",
-        client_email: clientEmail,
-        team_id: team?.id || null,
-        status: "open",
-        priority: (ticketPayload.priority || "medium").toLowerCase(),
-        zoho_ticket_id: result.id,
-        zoho_ticket_number: result.ticketNumber ? String(result.ticketNumber) : null,
-        zoho_status: result.status || "Open",
-        zoho_priority: result.priority || ticketPayload.priority || "Medium",
-        zoho_channel: result.channel || ticketPayload.channel || null,
-        zoho_created_time: result.createdTime || new Date().toISOString(),
-      });
-    }
-    return Response.json({ data: result });
+    const { priority, category } = analyzeTicketContent(data.subject, data.description);
+    
+    // Look up the team this email belongs to
+    const teams = await base44.asServiceRole.entities.Team.list();
+    const team = teams.find(t => t.member_emails?.includes(clientEmail));
+    
+    const ticket = await base44.asServiceRole.entities.SupportTicket.create({
+      title: data.subject || "Support Ticket",
+      description: data.description || "",
+      client_email: clientEmail,
+      team_id: team?.id || null,
+      status: "open",
+      priority: priority,
+      category: category,
+    });
+    
+    return Response.json({ data: ticket, suggested: { priority, category } });
   }
 
-  // Update ticket
+  // Update ticket (local only)
   if (action === "update_ticket" && ticketId && data) {
-    const result = await deskFetch(accessToken, orgId, `/tickets/${ticketId}`, "PATCH", data);
-    return Response.json({ data: result });
+    const ticket = await base44.asServiceRole.entities.SupportTicket.update(ticketId, data);
+    return Response.json({ data: ticket });
   }
 
-  // Get ticket comments/threads
+  // Get ticket messages/threads (mock for now)
   if (action === "get_threads" && ticketId) {
-    const result = await deskFetch(accessToken, orgId, `/tickets/${ticketId}/threads`);
-    return Response.json({ data: result });
+    return Response.json({ data: { data: [] } });
   }
 
-  // Add comment/reply to ticket
+  // Add comment/reply (local only)
   if (action === "add_reply" && ticketId && data) {
-    const result = await deskFetch(accessToken, orgId, `/tickets/${ticketId}/sendReply`, "POST", data);
-    return Response.json({ data: result });
+    // TODO: Create a TicketComment entity if needed for full threading
+    return Response.json({ success: true });
   }
 
-  // ── SYNC LOCAL TICKETS FROM ZOHO ────────────────────────────────────────
-  // Pull latest status/priority for all local SupportTicket records from Zoho
-  if (action === "sync_all_tickets") {
-    if (!isAdmin) return Response.json({ error: "Forbidden" }, { status: 403 });
-    const localTickets = await base44.asServiceRole.entities.SupportTicket.list();
-    const withZohoId = localTickets.filter(t => t.zoho_ticket_id);
-    if (!withZohoId.length) return Response.json({ synced: 0 });
-
-    const updates = await Promise.allSettled(
-      withZohoId.map(async (lt) => {
-        const zt = await deskFetch(accessToken, orgId, `/tickets/${lt.zoho_ticket_id}`).catch(() => null);
-        if (!zt) return;
-        await base44.asServiceRole.entities.SupportTicket.update(lt.id, {
-          zoho_status: zt.status,
-          zoho_priority: zt.priority,
-          zoho_ticket_number: zt.ticketNumber ? String(zt.ticketNumber) : lt.zoho_ticket_number,
-          zoho_channel: zt.channel || lt.zoho_channel,
-          zoho_created_time: zt.createdTime || lt.zoho_created_time,
-        });
-      })
-    );
-    const synced = updates.filter(r => r.status === "fulfilled").length;
-    return Response.json({ synced });
-  }
-
-  // ── AUTO-ANALYZE TICKET ─────────────────────────────────────────────────
-  // Keyword-based priority + department tag assignment, then patches the ticket
-  if (action === "analyze_ticket" && ticketId) {
-    const ticket = await deskFetch(accessToken, orgId, `/tickets/${ticketId}`);
-    const text = `${ticket.subject || ""} ${ticket.description || ""}`.toLowerCase();
-
-    // Priority rules (first match wins)
-    let priority = ticket.priority || "Medium";
-    const priorityRules = [
-      { keywords: ["critical", "emergency", "down", "ransomware", "breach", "outage", "not working", "server down", "cannot access", "locked out"], priority: "High" },
-      { keywords: ["slow", "intermittent", "degraded", "warning", "error", "failed", "issue", "problem"], priority: "Medium" },
-      { keywords: ["question", "query", "how to", "guide", "information", "request", "change"], priority: "Low" },
-    ];
-    for (const rule of priorityRules) {
-      if (rule.keywords.some(k => text.includes(k))) { priority = rule.priority; break; }
-    }
-
-    // Department tag classification
-    let classification = "General";
-    const tagRules = [
-      { keywords: ["network", "wifi", "internet", "vpn", "firewall", "connectivity", "dns", "ip"], tag: "Network" },
-      { keywords: ["email", "outlook", "microsoft 365", "spam", "mailbox", "calendar", "teams"], tag: "Email & M365" },
-      { keywords: ["virus", "malware", "ransomware", "phishing", "breach", "security", "password", "mfa", "2fa"], tag: "Security" },
-      { keywords: ["printer", "hardware", "laptop", "screen", "keyboard", "monitor", "device", "pc", "computer", "crash"], tag: "Hardware" },
-      { keywords: ["software", "install", "update", "application", "app", "license", "windows", "driver"], tag: "Software" },
-      { keywords: ["backup", "restore", "data", "file", "storage", "cloud", "sharepoint", "onedrive"], tag: "Data & Backup" },
-    ];
-    for (const rule of tagRules) {
-      if (rule.keywords.some(k => text.includes(k))) { classification = rule.tag; break; }
-    }
-
-    // Patch the ticket with the determined priority
-    const shouldUpdate = !ticket.priority || ticket.priority !== priority;
-    if (shouldUpdate && ticket.contactId) {
-      await deskFetch(accessToken, orgId, `/tickets/${ticketId}`, "PATCH", { priority });
-    }
-
-    return Response.json({ priority, classification, changed: shouldUpdate });
-  }
-
-  // ── CUSTOMER 360 ─────────────────────────────────────────────────────────
-  // Fetch Action1 device info for the ticket's contact email via their team
+  // Fetch Action1 device info (still uses ACTION1 API)
   if (action === "customer_360") {
     const { email } = payload;
     if (!email) return Response.json({ error: "email required" }, { status: 400 });
@@ -241,7 +129,6 @@ Deno.serve(async (req) => {
       return d.access_token;
     }
 
-    // Look up which team this email belongs to, to find the group
     const teams = await base44.asServiceRole.entities.Team.list();
     const team = teams.find(t => t.member_emails?.includes(email));
 
@@ -251,7 +138,6 @@ Deno.serve(async (req) => {
 
     const a1Token = await getAction1Token();
 
-    // Fetch endpoints in this team's group
     const epRes = await fetch(
       `${ACTION1_BASE}/endpoints/managed/${team.action1_org_id}?endpoint_group_id=${team.action1_group_id}&fields=*`,
       { headers: { Authorization: `Bearer ${a1Token}` } }
@@ -270,7 +156,6 @@ Deno.serve(async (req) => {
       address: ep.address,
     }));
 
-    // Derive alerts from device states
     const alerts = [];
     for (const d of devices) {
       if (d.status === "Disconnected") alerts.push({ type: "offline", device: d.name, msg: "Device offline" });

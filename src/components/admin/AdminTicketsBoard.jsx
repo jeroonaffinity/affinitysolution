@@ -333,12 +333,14 @@ function ThreadPanel({ ticket, onClose }) {
 }
 
 function CreateTicketModal({ onClose, onCreated }) {
-  const [form, setForm] = useState({ subject: "", description: "", priority: "Medium" });
+  const [form, setForm] = useState({ subject: "", description: "", priority: "medium" });
   const [saving, setSaving] = useState(false);
   const [teams, setTeams] = useState([]);
   const [users, setUsers] = useState([]);
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [suggested, setSuggested] = useState(null);
+  const [analyzing, setAnalyzing] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -357,21 +359,33 @@ function CreateTicketModal({ onClose, onCreated }) {
     setSelectedUser(null);
   };
 
+  // Analyze content in real-time as user types
+  useEffect(() => {
+    if (!form.subject && !form.description) {
+      setSuggested(null);
+      return;
+    }
+    setAnalyzing(true);
+    base44.functions.invoke("zohoDesk", { action: "analyze", subject: form.subject, description: form.description })
+      .then(res => {
+        setSuggested(res.data);
+        // Auto-update priority based on suggestion
+        setForm(prev => ({ ...prev, priority: res.data.priority }));
+      })
+      .finally(() => setAnalyzing(false));
+  }, [form.subject, form.description]);
+
   const handleCreate = async (e) => {
     e.preventDefault();
     if (!selectedUser) return;
     setSaving(true);
     await base44.functions.invoke("zohoDesk", {
-      action: "create_ticket", orgId: ORG_ID,
+      action: "create_ticket",
       data: {
         subject: form.subject,
         description: form.description,
-        priority: form.priority,
         email: selectedUser.email,
         clientEmail: selectedUser.email,
-        departmentId: "238671000000007061",
-        status: "Open",
-        channel: "Phone",
       },
     });
     setSaving(false);
@@ -428,13 +442,17 @@ function CreateTicketModal({ onClose, onCreated }) {
               className="w-full px-3 py-2 rounded-lg border border-border/60 bg-background text-sm focus:outline-none resize-none" />
           </div>
           <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Priority</label>
+            <label className="text-xs text-muted-foreground mb-1 block">Priority {analyzing && <Loader2 className="w-3 h-3 animate-spin inline" />}</label>
             <select value={form.priority} onChange={e => setForm({...form, priority: e.target.value})}
               className="w-full px-3 py-2 rounded-lg border border-border/60 bg-background text-sm focus:outline-none">
-              <option value="High">High</option>
-              <option value="Medium">Medium</option>
-              <option value="Low">Low</option>
+              <option value="critical">Critical</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
             </select>
+            {suggested && (
+              <p className="text-xs text-primary mt-1">🤖 AI suggests: <strong>{suggested.priority}</strong> priority • <strong>{suggested.category}</strong> category</p>
+            )}
           </div>
           <div className="flex gap-3 pt-1">
             <button type="submit" disabled={saving || !selectedUser}

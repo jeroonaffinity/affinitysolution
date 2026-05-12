@@ -38,6 +38,7 @@
         "network",
         "email",
         "security",
+        "data",
         "other"
       ],
       "default": "other"
@@ -52,30 +53,6 @@
     },
     "resolution_notes": {
       "type": "string"
-    },
-    "zoho_ticket_id": {
-      "type": "string",
-      "description": "The Zoho Desk ticket ID linked to this record"
-    },
-    "zoho_ticket_number": {
-      "type": "string",
-      "description": "Human-readable Zoho ticket number e.g. #1234"
-    },
-    "zoho_status": {
-      "type": "string",
-      "description": "Raw status string from Zoho e.g. Open, In Progress, On Hold, Closed"
-    },
-    "zoho_priority": {
-      "type": "string",
-      "description": "Raw priority string from Zoho e.g. High, Medium, Low"
-    },
-    "zoho_channel": {
-      "type": "string",
-      "description": "Channel the ticket was raised via e.g. Portal, Phone, Email"
-    },
-    "zoho_created_time": {
-      "type": "string",
-      "description": "ISO timestamp from Zoho when ticket was created"
     }
   },
   "required": [

@@ -1,0 +1,92 @@
+{
+  "name": "TicketThread",
+  "type": "object",
+  "properties": {
+    "ticket_id": {
+      "type": "string",
+      "description": "ID of the parent SupportTicket"
+    },
+    "author_email": {
+      "type": "string",
+      "description": "Email of who wrote the message (admin or client)"
+    },
+    "author_name": {
+      "type": "string",
+      "description": "Display name of the author"
+    },
+    "is_ai_response": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if this message was AI-generated"
+    },
+    "content": {
+      "type": "string",
+      "description": "Message content"
+    },
+    "is_public": {
+      "type": "boolean",
+      "default": true,
+      "description": "If true, visible to the client; if false, admin-only internal note"
+    }
+  },
+  "required": [
+    "ticket_id",
+    "author_email",
+    "content"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "$or": [
+        {
+          "data.is_public": true,
+          "data.ticket_id": {
+            "$in": {
+              "entity": "SupportTicket",
+              "field": "id",
+              "filter": {
+                "client_email": "{{user.email}}"
+              }
+            }
+          }
+        },
+        {
+          "data.ticket_id": {
+            "$in": {
+              "entity": "SupportTicket",
+              "field": "id",
+              "filter": {
+                "team_id": {
+                  "$in": {
+                    "entity": "Team",
+                    "field": "id",
+                    "filter": {
+                      "member_emails": {
+                        "$contains": "{{user.email}}"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

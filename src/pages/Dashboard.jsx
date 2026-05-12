@@ -5,14 +5,19 @@ import {
   TicketCheck, Clock, CheckCircle2,
   ChevronDown, ChevronUp, Search, Plus, Send,
   Server, ArrowRight, MessageSquare, RefreshCw,
-  Paperclip, X, FileText, Image, Trash2, AlertTriangle
+  Paperclip, X, FileText, Image, Trash2, AlertTriangle,
+  Fingerprint, ShieldOff
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Toaster } from "@/components/ui/sonner";
 import PullToRefreshWrapper from "@/components/PullToRefreshWrapper";
 import BillingTab from "@/components/dashboard/BillingTab";
 import SupportDocsTab from "@/components/dashboard/SupportDocsTab";
 import ClientABRTab from "@/components/dashboard/ClientABRTab";
 import ClientEndpointsTab from "@/components/dashboard/ClientEndpointsTab";
+import BiometricLockScreen from "@/components/BiometricLockScreen";
+import { useBiometricLock } from "@/hooks/useBiometricLock";
+import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 
 // ─── Config ────────────────────────────────────────────────────────────────
 const TABS = [
@@ -404,16 +409,14 @@ function TicketsTab({ userEmail }) {
 }
 
 // ─── Account Settings Tab ───────────────────────────────────────────────────
-function AccountSettingsTab({ user }) {
+function AccountSettingsTab({ user, biometric }) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
-  const [deleted, setDeleted] = useState(false);
 
   const handleDelete = async () => {
     if (confirmText !== "DELETE") return;
     setDeleting(true);
-    // Sign out and redirect — actual account removal requires admin action
     await base44.auth.logout("/");
   };
 
@@ -426,6 +429,36 @@ function AccountSettingsTab({ user }) {
         <div className="text-sm text-muted-foreground">{user?.email}</div>
         <div className="text-xs text-muted-foreground mt-1">Role: <span className="capitalize">{user?.role || "user"}</span></div>
       </div>
+
+      {/* Biometric Security */}
+      {biometric.isSupported && (
+        <div className="p-5 rounded-2xl border border-border/40 bg-card/50 flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <Fingerprint className="w-4 h-4 text-primary" />
+            <span className="text-sm font-semibold">Biometric Lock</span>
+            {biometric.isRegistered && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 ml-auto">Active</span>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            {biometric.isRegistered
+              ? "Your portal will automatically lock after 5 minutes of inactivity and require biometric verification to unlock."
+              : "Enable Face ID or fingerprint unlock to secure your portal after periods of inactivity."
+            }
+          </p>
+          {biometric.isRegistered ? (
+            <button onClick={biometric.disable}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border/50 text-sm text-muted-foreground hover:text-foreground hover:border-border transition-all w-fit">
+              <ShieldOff className="w-3.5 h-3.5" /> Disable Biometric Lock
+            </button>
+          ) : (
+            <button onClick={biometric.register}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 border border-primary/30 text-primary text-sm font-semibold hover:bg-primary/20 transition-all w-fit">
+              <Fingerprint className="w-3.5 h-3.5" /> Enable Biometric Lock
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Danger zone */}
       <div className="p-5 rounded-2xl border border-destructive/30 bg-destructive/5 flex flex-col gap-3">
@@ -472,6 +505,10 @@ export default function Dashboard() {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
+  const [endpoints, setEndpoints] = useState([]);
+
+  const biometric = useBiometricLock();
+  useRealtimeNotifications({ userEmail: user?.email, endpoints });
 
   const fetchData = async (currentUser) => {
     const email = currentUser.email;
@@ -511,6 +548,18 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Toaster position="top-right" richColors closeButton />
+
+      {/* Biometric lock screen overlay */}
+      {biometric.isRegistered && biometric.isLocked && (
+        <BiometricLockScreen
+          unlocking={biometric.unlocking}
+          error={biometric.error}
+          onUnlock={biometric.unlock}
+          onSkip={biometric.disable}
+        />
+      )}
+
       {/* Top nav bar */}
       <div className="sticky top-0 z-30 border-b border-white/6 bg-black/80 backdrop-blur-2xl">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
@@ -620,7 +669,7 @@ export default function Dashboard() {
         {activeTab === "docs" && <SupportDocsTab />}
         {activeTab === "abr" && <ClientABRTab />}
         {activeTab === "endpoints" && <ClientEndpointsTab userEmail={user?.email} />}
-        {activeTab === "settings" && <AccountSettingsTab user={user} />}
+        {activeTab === "settings" && <AccountSettingsTab user={user} biometric={biometric} />}
       </div>
     </div>
   );

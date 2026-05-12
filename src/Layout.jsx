@@ -6,17 +6,17 @@ import SupportChat from "./components/SupportChat";
 import MobileBottomTabs from "./components/MobileBottomTabs";
 
 const navLinks = [
-  { label: "Home", page: "Home", title: "Go to the AffinitySolution homepage" },
-  { label: "About", page: "About", title: "Learn more about our company and team" },
-  { label: "Services", page: "Services", title: "Explore our managed IT service offerings" },
-  {
-    label: "Compliance",
-    page: "Compliance",
-    title: "View our regulatory and security compliance standards (GDPR, Cyber Essentials)",
-    icon: ShieldCheck,
-  },
-  { label: "Pricing", page: "Pricing", title: "See our transparent pricing and packages", badge: "Plans" },
-];
+{ label: "Home", page: "Home", title: "Go to the AffinitySolution homepage" },
+{ label: "About", page: "About", title: "Learn more about our company and team" },
+{ label: "Services", page: "Services", title: "Explore our managed IT service offerings" },
+{
+  label: "Compliance",
+  page: "Compliance",
+  title: "View our regulatory and security compliance standards (GDPR, Cyber Essentials)",
+  icon: ShieldCheck
+},
+{ label: "Pricing", page: "Pricing", title: "See our transparent pricing and packages", badge: "Plans" }];
+
 
 const dashboardPath = "/dashboard";
 
@@ -35,107 +35,107 @@ export default function Layout({ children, currentPageName }) {
             <img
               src="https://media.base44.com/images/public/69aa02e6ea92c996cd4d16f3/674ec2824_AbstractTechnologyProfileLinkedInBanner2.png"
               alt="AffinitySolution"
-              className="h-10 w-auto"
-            />
+              className="h-10 w-auto" />
+            
           </Link>
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-6" aria-label="Main Navigation">
-            {navLinks.map((link) => (
-              <Link
-                key={link.page}
-                to={createPageUrl(link.page)}
-                title={link.title}
-                className={`flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-primary ${
-                  currentPageName === link.page ? "text-primary" : "text-muted-foreground"
-                }`}
-              >
-                {link.icon && <link.icon className="w-3.5 h-3.5" />}
+            {navLinks.map((link) =>
+            <Link
+              key={link.page}
+              to={createPageUrl(link.page)}
+              title={link.title}
+              className={`flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-primary ${
+              currentPageName === link.page ? "text-primary" : "text-muted-foreground"}`
+              }>
+              
+                {link.icon && <link.icon className="w-3.5 h-3.5 hidden" />}
                 {link.label}
-                {link.badge && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary leading-none">
+                {link.badge &&
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary leading-none hidden">
                     {link.badge}
                   </span>
-                )}
+              }
               </Link>
-            ))}
+            )}
           </nav>
 
           <div className="hidden md:flex items-center gap-3">
             <Link
               to={dashboardPath}
               title="Access the AffinitySolution client portal"
-              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
-            >
+              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+              
               Client Portal
             </Link>
             <Link
               to={createPageUrl("Contact")}
               title="Get in touch for a free consultation"
-              className="px-5 py-2 text-sm font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all glow-blue"
-            >
+              className="px-5 py-2 text-sm font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all glow-blue">
+              
               Contact Us →
             </Link>
           </div>
 
           {/* Mobile: back button or hamburger */}
           <div className="md:hidden flex items-center gap-2">
-            {!isRoot && (
-              <button onClick={() => navigate(-1)}
-                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors select-none">
+            {!isRoot &&
+            <button onClick={() => navigate(-1)}
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors select-none">
                 <ChevronLeft className="w-5 h-5" />
               </button>
-            )}
+            }
             <button
               className="text-muted-foreground hover:text-foreground"
-              onClick={() => setMobileOpen(!mobileOpen)}
-            >
+              onClick={() => setMobileOpen(!mobileOpen)}>
+              
               {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
 
         {/* Mobile menu */}
-        {mobileOpen && (
-          <nav className="md:hidden border-t border-border/50 bg-background/95 backdrop-blur-xl px-6 py-4 flex flex-col gap-3" aria-label="Main Navigation">
-            {navLinks.map((link) => (
-              <Link
-                key={link.page}
-                to={createPageUrl(link.page)}
-                title={link.title}
-                onClick={() => setMobileOpen(false)}
-                className={`flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary ${
-                  currentPageName === link.page ? "text-primary" : "text-muted-foreground"
-                }`}
-              >
+        {mobileOpen &&
+        <nav className="md:hidden border-t border-border/50 bg-background/95 backdrop-blur-xl px-6 py-4 flex flex-col gap-3" aria-label="Main Navigation">
+            {navLinks.map((link) =>
+          <Link
+            key={link.page}
+            to={createPageUrl(link.page)}
+            title={link.title}
+            onClick={() => setMobileOpen(false)}
+            className={`flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary ${
+            currentPageName === link.page ? "text-primary" : "text-muted-foreground"}`
+            }>
+            
                 {link.icon && <link.icon className="w-3.5 h-3.5" />}
                 {link.label}
-                {link.badge && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary leading-none">
+                {link.badge &&
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary leading-none">
                     {link.badge}
                   </span>
-                )}
+            }
               </Link>
-            ))}
+          )}
             <div className="border-t border-border/30 pt-3 mt-1 flex flex-col gap-3">
               <Link
-                to={dashboardPath}
-                onClick={() => setMobileOpen(false)}
-                title="Access the AffinitySolution client portal"
-                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
-              >
+              to={dashboardPath}
+              onClick={() => setMobileOpen(false)}
+              title="Access the AffinitySolution client portal"
+              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+              
                 Client Portal
               </Link>
               <Link
-                to={createPageUrl("Contact")}
-                onClick={() => setMobileOpen(false)}
-                className="px-5 py-2.5 text-sm font-semibold rounded-lg bg-primary text-primary-foreground text-center"
-              >
+              to={createPageUrl("Contact")}
+              onClick={() => setMobileOpen(false)}
+              className="px-5 py-2.5 text-sm font-semibold rounded-lg bg-primary text-primary-foreground text-center">
+              
                 Contact Us →
               </Link>
             </div>
           </nav>
-        )}
+        }
       </header>
 
       {/* Page content */}
@@ -155,8 +155,8 @@ export default function Layout({ children, currentPageName }) {
               <img
                 src="https://media.base44.com/images/public/69aa02e6ea92c996cd4d16f3/674ec2824_AbstractTechnologyProfileLinkedInBanner2.png"
                 alt="AffinitySolution"
-                className="h-8 w-auto mb-3"
-              />
+                className="h-8 w-auto mb-3" />
+              
               <p className="text-xs text-muted-foreground leading-relaxed">
                 Your trusted IT &amp; cybersecurity partner for businesses across London and the UK.
               </p>
@@ -167,15 +167,15 @@ export default function Layout({ children, currentPageName }) {
               <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground/60 mb-4">Company</h3>
               <ul className="flex flex-col gap-2.5">
                 {[
-                  { label: "About Us", page: "About" },
-                  { label: "Services", page: "Services" },
-                  { label: "Pricing", page: "Pricing" },
-                  { label: "Compliance", page: "Compliance" },
-                ].map(l => (
-                  <li key={l.page}>
+                { label: "About Us", page: "About" },
+                { label: "Services", page: "Services" },
+                { label: "Pricing", page: "Pricing" },
+                { label: "Compliance", page: "Compliance" }].
+                map((l) =>
+                <li key={l.page}>
                     <Link to={createPageUrl(l.page)} className="text-xs text-muted-foreground hover:text-primary transition-colors">{l.label}</Link>
                   </li>
-                ))}
+                )}
               </ul>
             </div>
 
@@ -193,7 +193,7 @@ export default function Layout({ children, currentPageName }) {
               <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground/60 mb-4">Get in Touch</h3>
               <ul className="flex flex-col gap-2.5 text-xs text-muted-foreground">
                 <li><a href="mailto:info@affinitysolution.com" className="hover:text-primary transition-colors">info@affinitysolution.com</a></li>
-                <li><a href="tel:+442012345678" className="hover:text-primary transition-colors">+44 (0)20 1234 5678</a></li>
+                <li><a href="tel:+442012345678" className="hover:text-primary transition-colors hidden">+44 (0)20 1234 5678</a></li>
                 <li className="pt-1">
                   <Link to={createPageUrl("Contact")} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all">
                     Free Consultation →
@@ -211,6 +211,6 @@ export default function Layout({ children, currentPageName }) {
           </div>
         </div>
       </footer>
-    </div>
-  );
+    </div>);
+
 }

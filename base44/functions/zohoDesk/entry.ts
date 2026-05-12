@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
 
   if (!orgId) return Response.json({ error: "orgId required" }, { status: 400 });
 
-  // List tickets
+  // List tickets (admin — no email filter needed, clients use get_tickets_by_ids)
   if (action === "list_tickets") {
     const { status, from = 0, limit = 50 } = payload;
     const params = new URLSearchParams({ from, limit });
@@ -77,15 +77,40 @@ Deno.serve(async (req) => {
     return Response.json({ data: result });
   }
 
+  // Get multiple tickets by IDs (for client portal)
+  if (action === "get_tickets_by_ids") {
+    const { ticketIds } = payload;
+    if (!ticketIds || !ticketIds.length) return Response.json({ data: { data: [] } });
+    
+    // Fetch in parallel (Zoho has rate limits but for small arrays this is fine, limit to 20 to be safe)
+    const toFetch = ticketIds.slice(0, 20);
+    const promises = toFetch.map(id => deskFetch(accessToken, orgId, `/tickets/${id}`).catch(() => null));
+    const results = await Promise.all(promises);
+    return Response.json({ data: { data: results.filter(Boolean) } });
+  }
+
   // Create ticket
   if (action === "create_ticket" && data) {
     // Build payload — wrap email in contact object if no contactId provided
+    const clientEmail = data.email || data.clientEmail;
     const ticketPayload = { ...data };
+    delete ticketPayload.clientEmail;
     if (!ticketPayload.contactId && ticketPayload.email) {
       ticketPayload.contact = { email: ticketPayload.email };
       delete ticketPayload.email;
     }
     const result = await deskFetch(accessToken, orgId, "/tickets", "POST", ticketPayload);
+    // Save Zoho ticket ID + client email locally so clients can find their tickets
+    if (result?.id && clientEmail) {
+      await base44.asServiceRole.entities.SupportTicket.create({
+        title: ticketPayload.subject || data.subject || "Support Ticket",
+        description: ticketPayload.description || "",
+        client_email: clientEmail,
+        status: "open",
+        priority: (ticketPayload.priority || "medium").toLowerCase(),
+        zoho_ticket_id: result.id,
+      });
+    }
     return Response.json({ data: result });
   }
 

@@ -256,6 +256,7 @@ function CreateTicketModal({ onClose, onCreated }) {
         description: form.description,
         priority: form.priority,
         email: form.email,
+        clientEmail: form.email,
         departmentId: "238671000000007061",
         status: "Open",
         channel: "Phone",
@@ -398,9 +399,9 @@ export default function AdminTicketsBoard() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-xl font-extrabold flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-primary" /> Zoho Desk Tickets
+            <MessageSquare className="w-5 h-5 text-primary" /> Support Tickets
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Live from Zoho Desk — all client tickets in one view.</p>
+          <p className="text-sm text-muted-foreground mt-0.5">All client support tickets in one view.</p>
         </div>
         <div className="flex gap-2">
           <button onClick={loadTickets} className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border/50 text-sm text-muted-foreground hover:text-foreground hover:border-border transition-all">

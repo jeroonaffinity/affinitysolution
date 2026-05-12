@@ -155,14 +155,21 @@ function TicketsTab({ userEmail }) {
 
   const loadTickets = useCallback(async () => {
     setLoading(true);
+    // Use local SupportTicket records as an index to find this user's Zoho ticket IDs
+    const localTickets = await base44.entities.SupportTicket.filter({ client_email: userEmail });
+    const zohoIds = localTickets.map(t => t.zoho_ticket_id).filter(Boolean);
+
+    if (zohoIds.length === 0) {
+      setTickets([]);
+      setLoading(false);
+      return;
+    }
+
     const res = await base44.functions.invoke("zohoDesk", {
-      action: "list_tickets", orgId: ORG_ID, limit: 100,
+      action: "get_tickets_by_ids", orgId: ORG_ID, ticketIds: zohoIds,
     });
     const all = res.data?.data?.data || [];
-    setTickets(all.filter(t =>
-      t.email?.toLowerCase() === userEmail?.toLowerCase() ||
-      t.contact?.email?.toLowerCase() === userEmail?.toLowerCase()
-    ));
+    setTickets(all);
     setLoading(false);
   }, [userEmail]);
 
@@ -179,6 +186,7 @@ function TicketsTab({ userEmail }) {
           description: form.description,
           priority: form.priority,
           email: userEmail,
+          clientEmail: userEmail,
           departmentId: "238671000000007061",
           status: "Open",
           channel: "Portal",

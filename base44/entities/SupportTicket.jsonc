@@ -18,8 +18,7 @@
         "resolved",
         "closed"
       ],
-      "default": "open",
-      "description": "Current ticket status"
+      "default": "open"
     },
     "priority": {
       "type": "string",
@@ -29,8 +28,7 @@
         "high",
         "critical"
       ],
-      "default": "medium",
-      "description": "Ticket priority level"
+      "default": "medium"
     },
     "category": {
       "type": "string",
@@ -42,16 +40,18 @@
         "security",
         "other"
       ],
-      "default": "other",
-      "description": "Type of issue"
+      "default": "other"
     },
     "client_email": {
       "type": "string",
       "description": "Email of the client who raised the ticket"
     },
     "resolution_notes": {
+      "type": "string"
+    },
+    "zoho_ticket_id": {
       "type": "string",
-      "description": "Notes on how the ticket was resolved"
+      "description": "The Zoho Desk ticket ID linked to this record"
     }
   },
   "required": [

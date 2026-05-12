@@ -530,9 +530,18 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-5 relative overflow-hidden">
+        <div className="absolute inset-0 bg-grid opacity-20 pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-primary/5 blur-3xl pointer-events-none" />
+        <img
+          src="https://media.base44.com/images/public/69aa02e6ea92c996cd4d16f3/674ec2824_AbstractTechnologyProfileLinkedInBanner2.png"
+          alt="AffinitySolution"
+          className="h-9 w-auto relative z-10"
+        />
+        <div className="relative z-10 flex flex-col items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-primary/15 border border-primary/25 flex items-center justify-center">
+            <Loader2 className="w-5 h-5 animate-spin text-primary" />
+          </div>
           <p className="text-sm text-muted-foreground">Loading your portal...</p>
         </div>
       </div>

@@ -4,7 +4,8 @@ import {
   Ticket, CreditCard, Loader2, LogOut,
   TicketCheck, Clock, CheckCircle2,
   ChevronDown, ChevronUp, Search, Plus, Send,
-  Server, ArrowRight, MessageSquare, RefreshCw
+  Server, ArrowRight, MessageSquare, RefreshCw,
+  Paperclip, X, FileText, Image
 } from "lucide-react";
 import BillingTab from "@/components/dashboard/BillingTab";
 import SupportDocsTab from "@/components/dashboard/SupportDocsTab";
@@ -72,6 +73,31 @@ function localToDisplay(lt) {
   };
 }
 
+function ThreadContent({ content }) {
+  const plain = content.replace(/<[^>]*>/g, "");
+  const parts = plain.split(/(--- Attachments ---[\s\S]*)/);
+  const bodyText = parts[0].trim();
+  const attachSection = parts[1] || "";
+  const links = [...attachSection.matchAll(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g)].map(m => ({ label: m[1], url: m[2] }));
+  const isImg = (url) => /\.(png|jpe?g|gif|webp)(\?|$)/i.test(url);
+  return (
+    <div className="flex flex-col gap-2">
+      {bodyText && <p>{bodyText}</p>}
+      {links.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mt-1">
+          {links.map((l, i) => (
+            <a key={i} href={l.url} target="_blank" rel="noreferrer"
+              className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 transition-colors">
+              {isImg(l.url) ? <Image className="w-3 h-3" /> : <FileText className="w-3 h-3" />}
+              {l.label}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function TicketThreads({ ticketId }) {
   const [threads, setThreads] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -108,7 +134,7 @@ function TicketThreads({ ticketId }) {
             <div className={`max-w-[90%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
               isAgent ? "bg-primary/15 text-foreground rounded-tr-sm" : "bg-card border border-border/50 rounded-tl-sm"
             }`}>
-              {thread.content?.replace(/<[^>]*>/g, '') || thread.summary || ""}
+              <ThreadContent content={thread.content || thread.summary || ""} />
             </div>
           </div>
         );
@@ -167,6 +193,8 @@ function TicketsTab({ userEmail }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [form, setForm] = useState({ subject: "", description: "", priority: "Medium" });
+  const [attachments, setAttachments] = useState([]);
+  const [uploading, setUploading] = useState(false);
 
   const loadTickets = useCallback(async () => {
     setLoading(true);
@@ -186,15 +214,30 @@ function TicketsTab({ userEmail }) {
 
   useEffect(() => { loadTickets(); }, [loadTickets]);
 
+  const handleFileChange = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    setUploading(true);
+    const uploaded = await Promise.all(
+      files.map(f => base44.integrations.Core.UploadFile({ file: f }))
+    );
+    setAttachments(prev => [...prev, ...uploaded.map(r => r.file_url)]);
+    setUploading(false);
+    e.target.value = "";
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     try {
+      const attachmentText = attachments.length
+        ? "\n\n--- Attachments ---\n" + attachments.map((url, i) => `[File ${i + 1}](${url})`).join("\n")
+        : "";
       await base44.functions.invoke("zohoDesk", {
         action: "create_ticket", orgId: ORG_ID,
         data: {
           subject: form.subject,
-          description: form.description,
+          description: form.description + attachmentText,
           priority: form.priority,
           email: userEmail,
           clientEmail: userEmail,
@@ -204,6 +247,7 @@ function TicketsTab({ userEmail }) {
         },
       });
       setForm({ subject: "", description: "", priority: "Medium" });
+      setAttachments([]);
       setShowForm(false);
       setSubmitSuccess(true);
       setTimeout(() => setSubmitSuccess(false), 4000);
@@ -291,6 +335,29 @@ function TicketsTab({ userEmail }) {
                 <option value="Medium">Medium</option>
                 <option value="High">High</option>
               </select>
+            </div>
+            {/* Attachments */}
+            <div className="flex flex-col gap-2">
+              <label className="text-xs text-muted-foreground">Attachments</label>
+              <label className={`flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-border/60 bg-background text-sm text-muted-foreground cursor-pointer hover:border-primary/50 hover:text-foreground transition-all w-fit ${uploading ? "opacity-60 pointer-events-none" : ""}`}>
+                {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Paperclip className="w-3.5 h-3.5" />}
+                {uploading ? "Uploading..." : "Attach files"}
+                <input type="file" multiple className="hidden" onChange={handleFileChange} accept="image/*,.pdf,.txt,.log,.zip,.docx,.xlsx" />
+              </label>
+              {attachments.length > 0 && (
+                <div className="flex flex-col gap-1.5">
+                  {attachments.map((url, i) => {
+                    const isImage = /\.(png|jpe?g|gif|webp)$/i.test(url);
+                    return (
+                      <div key={i} className="flex items-center gap-2 text-xs bg-muted/40 rounded-lg px-3 py-1.5">
+                        {isImage ? <Image className="w-3 h-3 text-primary/60" /> : <FileText className="w-3 h-3 text-primary/60" />}
+                        <a href={url} target="_blank" rel="noreferrer" className="flex-1 truncate text-primary hover:underline">File {i + 1}</a>
+                        <button type="button" onClick={() => setAttachments(a => a.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive transition-colors"><X className="w-3 h-3" /></button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
             <div className="flex gap-3">
               <button type="submit" disabled={submitting}

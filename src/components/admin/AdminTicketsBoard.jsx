@@ -4,7 +4,8 @@ import Customer360Panel from "@/components/admin/Customer360Panel";
 import {
   Loader2, RefreshCw, Search, Plus, ChevronDown,
   Send, X, MessageSquare,
-  User, Calendar, Tag, Filter, Sparkles, Monitor
+  User, Calendar, Tag, Filter, Sparkles, Monitor,
+  Paperclip, FileText, Image
 } from "lucide-react";
 
 const ORG_ID = "20114459933";
@@ -40,11 +41,39 @@ function PriorityBadge({ priority }) {
   );
 }
 
+function ThreadContent({ content }) {
+  const plain = content.replace(/<[^>]*>/g, "");
+  const parts = plain.split(/(--- Attachments ---[\s\S]*)/);
+  const bodyText = parts[0].trim();
+  // Extract markdown links from attachment section
+  const attachSection = parts[1] || "";
+  const links = [...attachSection.matchAll(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g)].map(m => ({ label: m[1], url: m[2] }));
+  const isImage = (url) => /\.(png|jpe?g|gif|webp)(\?|$)/i.test(url);
+  return (
+    <div className="flex flex-col gap-2">
+      {bodyText && <p>{bodyText}</p>}
+      {links.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mt-1">
+          {links.map((l, i) => (
+            <a key={i} href={l.url} target="_blank" rel="noreferrer"
+              className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors border border-primary/20">
+              {isImage(l.url) ? <Image className="w-3 h-3" /> : <FileText className="w-3 h-3" />}
+              {l.label}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ThreadPanel({ ticket, onClose }) {
   const [threads, setThreads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [reply, setReply] = useState("");
   const [sending, setSending] = useState(false);
+  const [attachments, setAttachments] = useState([]);
+  const [uploading, setUploading] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [status, setStatus] = useState(ticket.status);
   const [priority, setPriority] = useState(ticket.priority || "");
@@ -86,14 +115,28 @@ function ThreadPanel({ ticket, onClose }) {
     runAnalysis();
   }, [loadThreads, runAnalysis]);
 
+  const handleAttachFiles = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    setUploading(true);
+    const uploaded = await Promise.all(files.map(f => base44.integrations.Core.UploadFile({ file: f })));
+    setAttachments(prev => [...prev, ...uploaded.map(r => r.file_url)]);
+    setUploading(false);
+    e.target.value = "";
+  };
+
   const sendReply = async () => {
-    if (!reply.trim()) return;
+    if (!reply.trim() && !attachments.length) return;
     setSending(true);
+    const attachmentText = attachments.length
+      ? "\n\n--- Attachments ---\n" + attachments.map((url, i) => `[File ${i + 1}](${url})`).join("\n")
+      : "";
     await base44.functions.invoke("zohoDesk", {
       action: "add_reply", orgId: ORG_ID, ticketId: ticket.id,
-      data: { content: reply, isPublic: true, channel: "EMAIL" },
+      data: { content: reply + attachmentText, isPublic: true, channel: "EMAIL" },
     });
     setReply("");
+    setAttachments([]);
     setSending(false);
     loadThreads();
   };
@@ -221,7 +264,7 @@ function ThreadPanel({ ticket, onClose }) {
                       <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                         isAgent ? "bg-primary/15 text-foreground rounded-tr-sm" : "bg-card border border-border/50 rounded-tl-sm"
                       }`}>
-                        <div dangerouslySetInnerHTML={{ __html: thread.content?.replace(/<[^>]*>/g, '') || thread.summary || "" }} />
+                        <ThreadContent content={thread.content || thread.summary || ""} />
                       </div>
                     </div>
                   );
@@ -236,9 +279,30 @@ function ThreadPanel({ ticket, onClose }) {
                 onChange={e => setReply(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-border/50 bg-background text-sm focus:outline-none focus:border-primary/60 resize-none"
               />
+              {attachments.length > 0 && (
+                <div className="flex flex-col gap-1 mt-2">
+                  {attachments.map((url, i) => {
+                    const isImage = /\.(png|jpe?g|gif|webp)$/i.test(url);
+                    return (
+                      <div key={i} className="flex items-center gap-2 text-xs bg-muted/40 rounded-lg px-3 py-1.5">
+                        {isImage ? <Image className="w-3 h-3 text-primary/60" /> : <FileText className="w-3 h-3 text-primary/60" />}
+                        <a href={url} target="_blank" rel="noreferrer" className="flex-1 truncate text-primary hover:underline">File {i + 1}</a>
+                        <button onClick={() => setAttachments(a => a.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive"><X className="w-3 h-3" /></button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
               <div className="flex justify-between items-center mt-2">
-                <span className="text-xs text-muted-foreground">Reply will be sent via Email</span>
-                <button onClick={sendReply} disabled={sending || !reply.trim()}
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-muted-foreground">Reply will be sent via Email</span>
+                  <label className={`flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground cursor-pointer transition-colors ${uploading ? "opacity-60 pointer-events-none" : ""}`}>
+                    {uploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Paperclip className="w-3 h-3" />}
+                    {uploading ? "Uploading..." : "Attach"}
+                    <input type="file" multiple className="hidden" onChange={handleAttachFiles} accept="image/*,.pdf,.txt,.log,.zip,.docx,.xlsx" />
+                  </label>
+                </div>
+                <button onClick={sendReply} disabled={sending || (!reply.trim() && !attachments.length)}
                   className="flex items-center gap-2 px-5 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 disabled:opacity-60">
                   {sending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                   Send Reply

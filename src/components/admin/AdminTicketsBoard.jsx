@@ -374,14 +374,12 @@ function CreateTicketModal({ onClose, onCreated }) {
     e.preventDefault();
     if (!selectedUser) return;
     setSaving(true);
-    await base44.functions.invoke("zohoDesk", {
-      action: "create_ticket",
-      data: {
-        subject: form.subject,
-        description: form.description,
-        email: selectedUser.email,
-        clientEmail: selectedUser.email,
-      },
+    await ticketService.createTicket({
+      title: form.subject,
+      description: form.description,
+      client_email: selectedUser.email,
+      team_id: selectedTeam.id,
+      priority: form.priority,
     });
     setSaving(false);
     onCreated();

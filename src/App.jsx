@@ -25,13 +25,7 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
-
-  // Redirect to login once when auth is required — not on every render
-  React.useEffect(() => {
-    if (!isLoadingAuth && !isLoadingPublicSettings && authError?.type === 'auth_required') {
-      navigateToLogin();
-    }
-  }, [authError, isLoadingAuth, isLoadingPublicSettings]);
+  const redirectedRef = React.useRef(false);
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
@@ -47,7 +41,17 @@ const AuthenticatedApp = () => {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
-      return null;
+      // Only redirect once to avoid loops
+      if (!redirectedRef.current) {
+        redirectedRef.current = true;
+        navigateToLogin();
+      }
+      return (
+        <div className="fixed inset-0 flex items-center justify-center flex-col gap-4">
+          <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+          <p className="text-sm text-muted-foreground">Redirecting to login...</p>
+        </div>
+      );
     }
   }
 

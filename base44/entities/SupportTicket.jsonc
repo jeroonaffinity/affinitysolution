@@ -13,12 +13,19 @@
     "status": {
       "type": "string",
       "enum": [
+        "new",
+        "acknowledged",
         "open",
         "in_progress",
+        "waiting_on_client",
+        "waiting_on_vendor",
+        "escalated",
+        "pending_approval",
         "on_hold",
+        "resolved",
         "closed"
       ],
-      "default": "open"
+      "default": "new"
     },
     "priority": {
       "type": "string",
@@ -51,8 +58,60 @@
       "type": "string",
       "description": "ID of the Team this ticket belongs to \u2014 all team members can see it"
     },
+    "assigned_to_email": {
+      "type": "string",
+      "description": "Email of the technician assigned to this ticket"
+    },
+    "assigned_to_name": {
+      "type": "string",
+      "description": "Display name of the assigned technician"
+    },
+    "sla_due_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "SLA resolution deadline based on priority"
+    },
+    "first_response_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of first technician response"
+    },
+    "sla_breached": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the SLA has been breached"
+    },
+    "time_spent_minutes": {
+      "type": "number",
+      "description": "Total billable minutes logged on this ticket",
+      "default": 0
+    },
     "resolution_notes": {
       "type": "string"
+    },
+    "affected_users_count": {
+      "type": "number",
+      "default": 1,
+      "description": "Number of users affected by this issue"
+    },
+    "device_asset": {
+      "type": "string",
+      "description": "Device or asset name/ID linked to this ticket"
+    },
+    "department": {
+      "type": "string",
+      "description": "Department that raised the ticket"
+    },
+    "location": {
+      "type": "string",
+      "description": "Site or location related to the issue"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Tags for grouping and filtering"
     }
   },
   "required": [

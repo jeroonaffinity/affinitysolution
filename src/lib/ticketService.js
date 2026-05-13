@@ -33,7 +33,7 @@ export const ticketService = {
       category: category || "other",
       client_email,
       team_id: team_id || undefined,
-      status: "open",
+      status: "new",
     });
   },
 

@@ -7,28 +7,17 @@ import {
   Loader2, RefreshCw, Search, Plus,
   Send, X, MessageSquare,
   Filter, Sparkles, Monitor,
-  Paperclip, FileText, Image, Bot
+  Paperclip, FileText, Image, Bot, UserCheck
 } from "lucide-react";
-
-const STATUS_CONFIG = {
-  Open:        { color: "text-amber-400",  bg: "bg-amber-500/15",   border: "border-amber-500/30",   dot: "bg-amber-400"   },
-  "In Progress":{ color: "text-blue-400",  bg: "bg-blue-500/15",    border: "border-blue-500/30",    dot: "bg-blue-400"    },
-  "On Hold":   { color: "text-purple-400", bg: "bg-purple-500/15",  border: "border-purple-500/30",  dot: "bg-purple-400"  },
-  Closed:      { color: "text-slate-400",  bg: "bg-slate-500/15",   border: "border-slate-500/30",   dot: "bg-slate-400"   },
-};
-
-const PRIORITY_CONFIG = {
-  High:    { color: "text-red-400",    bg: "bg-red-500/15"    },
-  Medium:  { color: "text-amber-400",  bg: "bg-amber-500/15"  },
-  Low:     { color: "text-emerald-400",bg: "bg-emerald-500/15"},
-};
+import { TICKET_STATUSES, PRIORITY_CONFIG } from "@/lib/slaConfig";
+import SlaTimer from "@/components/admin/SlaTimer";
 
 function StatusBadge({ status }) {
-  const cfg = STATUS_CONFIG[status] || { color: "text-muted-foreground", bg: "bg-muted", dot: "bg-muted-foreground" };
+  const cfg = TICKET_STATUSES[status] || { color: "text-muted-foreground", bg: "bg-muted", dot: "bg-muted-foreground" };
   return (
     <span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium ${cfg.bg} ${cfg.color}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-      {status}
+      {cfg.label || status}
     </span>
   );
 }
@@ -37,7 +26,7 @@ function PriorityBadge({ priority }) {
   if (!priority) return null;
   const cfg = PRIORITY_CONFIG[priority] || { color: "text-muted-foreground", bg: "bg-muted" };
   return (
-    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${cfg.bg} ${cfg.color}`}>{priority}</span>
+    <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${cfg.bg} ${cfg.color}`}>{cfg.label || priority}</span>
   );
 }
 
@@ -78,8 +67,14 @@ function ThreadPanel({ ticket, onClose }) {
   const [updating, setUpdating] = useState(false);
   const [status, setStatus] = useState(ticket.status);
   const [priority, setPriority] = useState(ticket.priority || "");
+  const [assignedTo, setAssignedTo] = useState(ticket.assigned_to_email || "");
+  const [adminUsers, setAdminUsers] = useState([]);
   const [activeTab, setActiveTab] = useState("thread");
   const clientEmail = ticket.client_email;
+
+  useEffect(() => {
+    base44.entities.User.list().then(users => setAdminUsers(users.filter(u => u.role === "admin")));
+  }, []);
 
   const loadThreads = useCallback(async () => {
     setLoading(true);
@@ -136,7 +131,13 @@ function ThreadPanel({ ticket, onClose }) {
 
   const updateTicket = async () => {
     setUpdating(true);
-    await ticketService.updateTicket(ticket.id, { status, priority });
+    const adminUser = adminUsers.find(u => u.email === assignedTo);
+    await ticketService.updateTicket(ticket.id, {
+      status,
+      priority,
+      assigned_to_email: assignedTo || null,
+      assigned_to_name: adminUser?.full_name || assignedTo || null,
+    });
     setUpdating(false);
   };
 
@@ -179,6 +180,9 @@ function ThreadPanel({ ticket, onClose }) {
 
         {/* Ticket meta + description */}
         <div className="px-6 py-4 border-b border-border/30 flex flex-col gap-3 text-sm">
+          {/* SLA Timer */}
+          <SlaTimer ticket={ticket} />
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <div className="text-xs text-muted-foreground mb-1">Contact</div>
@@ -192,10 +196,9 @@ function ThreadPanel({ ticket, onClose }) {
               <div className="text-xs text-muted-foreground mb-1">Status</div>
               <select value={status} onChange={e => setStatus(e.target.value)}
                 className="w-full px-2 py-1.5 rounded-lg border border-border/60 bg-background text-xs focus:outline-none">
-                <option value="open">Open</option>
-                <option value="in_progress">In Progress</option>
-                <option value="on_hold">On Hold</option>
-                <option value="closed">Closed</option>
+                {Object.entries(TICKET_STATUSES).map(([val, cfg]) => (
+                  <option key={val} value={val}>{cfg.label}</option>
+                ))}
               </select>
             </div>
             <div>
@@ -207,6 +210,16 @@ function ThreadPanel({ ticket, onClose }) {
                 <option value="high">High</option>
                 <option value="medium">Medium</option>
                 <option value="low">Low</option>
+              </select>
+            </div>
+            <div className="col-span-2">
+              <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><UserCheck className="w-3 h-3" /> Assigned Technician</div>
+              <select value={assignedTo} onChange={e => setAssignedTo(e.target.value)}
+                className="w-full px-2 py-1.5 rounded-lg border border-border/60 bg-background text-xs focus:outline-none">
+                <option value="">Unassigned</option>
+                {adminUsers.map(u => (
+                  <option key={u.id} value={u.email}>{u.full_name || u.email}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -531,9 +544,17 @@ export default function AdminTicketsBoard() {
         <select value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)}
           className="px-3 py-2 rounded-xl border border-border/40 bg-background text-sm focus:outline-none">
           <option value="all">All Priorities</option>
-          <option value="High">High</option>
-          <option value="Medium">Medium</option>
-          <option value="Low">Low</option>
+          <option value="critical">Critical</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
+        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
+          className="px-3 py-2 rounded-xl border border-border/40 bg-background text-sm focus:outline-none">
+          <option value="all">All Statuses</option>
+          {Object.entries(TICKET_STATUSES).map(([val, cfg]) => (
+            <option key={val} value={val}>{cfg.label}</option>
+          ))}
         </select>
       </div>
 

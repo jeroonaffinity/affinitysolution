@@ -1,15 +1,19 @@
-import { Ticket, Server, MessageSquare, Users, TrendingUp, Clock, AlertTriangle, CheckCircle2, ArrowRight } from "lucide-react";
+import { Ticket, Server, MessageSquare, Users, TrendingUp, Clock, AlertTriangle, CheckCircle2, ArrowRight, ShieldCheck } from "lucide-react";
+import { TICKET_STATUSES } from "@/lib/slaConfig";
 
 export default function AdminOverview({ tickets, services, leads, users, setActiveSection }) {
-  const openTickets = tickets.filter(t => t.status === "open").length;
+  const closedStatuses = ["resolved", "closed"];
+  const openTickets = tickets.filter(t => !closedStatuses.includes(t.status)).length;
   const inProgressTickets = tickets.filter(t => t.status === "in_progress").length;
   const resolvedToday = tickets.filter(t => {
-    if (t.status !== "resolved") return false;
+    if (!closedStatuses.includes(t.status)) return false;
     const d = new Date(t.updated_date);
     const today = new Date();
     return d.toDateString() === today.toDateString();
   }).length;
-  const criticalOpen = tickets.filter(t => t.priority === "critical" && (t.status === "open" || t.status === "in_progress")).length;
+  const criticalOpen = tickets.filter(t => t.priority === "critical" && !closedStatuses.includes(t.status)).length;
+  const breached = tickets.filter(t => t.sla_breached).length;
+  const slaCompliance = tickets.length > 0 ? Math.round(((tickets.length - breached) / tickets.length) * 100) : 100;
 
   const activeServices = services.filter(s => s.status === "active");
   const totalMRR = activeServices.reduce((sum, s) => sum + (s.monthly_cost || 0), 0);
@@ -34,8 +38,8 @@ export default function AdminOverview({ tickets, services, leads, users, setActi
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
         <KpiCard icon={Ticket} label="Open Tickets" value={openTickets} sub={`${inProgressTickets} in progress`} accent="yellow" onClick={() => setActiveSection("tickets")} />
         <KpiCard icon={AlertTriangle} label="Critical Issues" value={criticalOpen} sub="Needs immediate action" accent={criticalOpen > 0 ? "red" : "green"} onClick={() => setActiveSection("tickets")} />
+        <KpiCard icon={ShieldCheck} label="SLA Compliance" value={`${slaCompliance}%`} sub={`${breached} breach${breached !== 1 ? "es" : ""}`} accent={slaCompliance >= 90 ? "green" : slaCompliance >= 70 ? "yellow" : "red"} onClick={() => setActiveSection("reporting")} />
         <KpiCard icon={TrendingUp} label="Monthly Revenue" value={`£${totalMRR.toLocaleString()}`} sub={`${activeServices.length} active services`} accent="primary" onClick={() => setActiveSection("services")} />
-        <KpiCard icon={Users} label="Clients" value={activeUsers} sub={`${adminUsers} admin${adminUsers !== 1 ? "s" : ""}`} accent="primary" onClick={() => setActiveSection("users")} />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -149,14 +153,18 @@ function StatRow({ label, value, icon: Icon, iconColor }) {
 
 function BreakdownBar({ tickets }) {
   const total = tickets.length || 1;
-  const counts = {
-    open: tickets.filter(t => t.status === "open").length,
-    in_progress: tickets.filter(t => t.status === "in_progress").length,
-    resolved: tickets.filter(t => t.status === "resolved").length,
-    closed: tickets.filter(t => t.status === "closed").length,
+  const allStatuses = Object.keys(TICKET_STATUSES);
+  const counts = allStatuses.reduce((acc, s) => {
+    acc[s] = tickets.filter(t => t.status === s).length;
+    return acc;
+  }, {});
+  const colors = {
+    new: "bg-slate-400", acknowledged: "bg-cyan-400", open: "bg-amber-400",
+    in_progress: "bg-blue-400", waiting_on_client: "bg-violet-400", waiting_on_vendor: "bg-orange-400",
+    escalated: "bg-red-400", pending_approval: "bg-yellow-400", on_hold: "bg-purple-400",
+    resolved: "bg-emerald-400", closed: "bg-slate-600"
   };
-  const colors = { open: "bg-yellow-400", in_progress: "bg-blue-400", resolved: "bg-green-400", closed: "bg-muted-foreground" };
-  const labels = { open: "Open", in_progress: "In Progress", resolved: "Resolved", closed: "Closed" };
+  const labels = Object.fromEntries(Object.entries(TICKET_STATUSES).map(([k, v]) => [k, v.label]));
 
   return (
     <div className="flex flex-col gap-2">
@@ -165,11 +173,11 @@ function BreakdownBar({ tickets }) {
           <div key={key} className={`${colors[key]} rounded-full`} style={{ width: `${(count / total) * 100}%` }} />
         ))}
       </div>
-      <div className="grid grid-cols-2 gap-1.5 mt-1">
-        {Object.entries(counts).map(([key, count]) => (
-          <div key={key} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className={`w-2 h-2 rounded-full ${colors[key]}`} />
-            {labels[key]}: <span className="text-foreground font-medium">{count}</span>
+      <div className="grid grid-cols-2 gap-1 mt-2">
+        {Object.entries(counts).filter(([, c]) => c > 0).map(([key, count]) => (
+          <div key={key} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+            <span className={`w-2 h-2 rounded-full shrink-0 ${colors[key]}`} />
+            <span className="truncate">{labels[key]}: <span className="text-foreground font-medium">{count}</span></span>
           </div>
         ))}
       </div>

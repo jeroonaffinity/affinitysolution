@@ -3,23 +3,35 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+    const body = await req.json();
 
-    const { ticket_id } = await req.json();
+    // Automation payloads have body.event.entity_id; direct calls have body.ticket_id
+    const isAutomation = !!body?.event?.entity_id;
+    const ticket_id = isAutomation ? body.event.entity_id : body.ticket_id;
+    const preview_only = !isAutomation && !!body.preview_only;
+
+    // Enforce auth only for direct (non-automation) calls
+    if (!isAutomation) {
+      const user = await base44.auth.me();
+      if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     if (!ticket_id) return Response.json({ error: "ticket_id required" }, { status: 400 });
 
-    // Fetch the ticket and its threads
-    const ticket = await base44.asServiceRole.entities.SupportTicket.filter({ id: ticket_id });
-    if (!ticket[0]) return Response.json({ error: "Ticket not found" }, { status: 404 });
+    // Fetch ticket
+    const ticketRows = await base44.asServiceRole.entities.SupportTicket.filter({ id: ticket_id });
+    if (!ticketRows[0]) return Response.json({ error: "Ticket not found" }, { status: 404 });
+    const ticketData = ticketRows[0];
 
-    const ticketData = ticket[0];
+    // Fetch thread history (last 10)
     const threads = await base44.asServiceRole.entities.TicketThread.filter({ ticket_id }, "-created_date", 10);
+    const threadHistory = threads
+      .slice()
+      .sort((a, b) => new Date(a.created_date) - new Date(b.created_date))
+      .map(t => `${t.author_name || t.author_email}: ${t.content}`)
+      .join("\n");
 
-    // Build context from threads
-    const threadHistory = threads.map(t => `${t.author_name || t.author_email}: ${t.content}`).join("\n");
-
-    // Get KB suggestions for this ticket
+    // KB suggestions
     let suggestedArticles = [];
     try {
       const kbSuggestions = await base44.functions.invoke("kbSmartSuggest", {
@@ -27,67 +39,59 @@ Deno.serve(async (req) => {
         ticket_id,
       });
       suggestedArticles = kbSuggestions.data?.suggestions || [];
-    } catch (kbError) {
-      console.log("KB suggestions skipped:", kbError.message);
+    } catch (e) {
+      console.log("KB suggestions skipped:", e.message);
     }
 
-    // Invoke LLM for AI response
+    // Build LLM prompt
     const aiResponse = await base44.integrations.Core.InvokeLLM({
-      prompt: `You are a professional IT support assistant. A support ticket has been raised. Your job is to provide an instant helpful response to help resolve the issue.
+      prompt: `You are a professional IT support technician at AffinitySolution. A support ticket has been raised. Write a helpful first response to the client.
 
-Ticket: ${ticketData.title}
+Ticket Title: ${ticketData.title}
 Priority: ${ticketData.priority}
 Category: ${ticketData.category}
-Description: ${ticketData.description}
+Description: ${ticketData.description || "(none provided)"}
+Affected Users: ${ticketData.affected_users_count || 1}
+${ticketData.device_asset ? `Device/Asset: ${ticketData.device_asset}` : ""}
+${ticketData.department ? `Department: ${ticketData.department}` : ""}
 
-Previous conversation:
-${threadHistory || "(No previous messages)"}
+${threadHistory ? `Previous messages:\n${threadHistory}` : ""}
 
-${suggestedArticles.length > 0 ? `
-Related Knowledge Base Articles:
-${suggestedArticles.map((a, i) => `${i + 1}. "${a.title}" (${a.category}) - ${a.summary}`).join("\n")}
+${suggestedArticles.length > 0 ? `Related Knowledge Base Articles:\n${suggestedArticles.map((a, i) => `${i + 1}. "${a.title}" (${a.category}) - ${a.summary}`).join("\n")}\nReference these if relevant.` : ""}
 
-Reference these articles if relevant to your response.
-` : ""}
+Write a professional, friendly response (2-3 short paragraphs) that:
+1. Acknowledges the issue and confirms receipt
+2. Suggests immediate troubleshooting steps specific to this issue
+3. States the next action and sets expectations
 
-Provide a helpful, friendly response that:
-1. Acknowledges the issue
-2. Asks clarifying questions if needed
-3. Suggests initial troubleshooting steps
-4. Offers next steps for resolution
-
-Keep it concise (2-3 short paragraphs).`,
+Do NOT use placeholder text like [Your Name] or [Technician Name]. Sign off as "The AffinitySolution Support Team".`,
     });
 
-    // Build KB articles section for thread content
     const kbSection = suggestedArticles.length > 0
-      ? `\n\n--- RELATED KNOWLEDGE BASE ARTICLES ---\n${suggestedArticles.map(a => `• "${a.title}" (${a.category}): ${a.summary}`).join("\n")}`
+      ? `\n\n--- Related Knowledge Base Articles ---\n${suggestedArticles.map(a => `• "${a.title}" (${a.category}): ${a.summary}`).join("\n")}`
       : "";
 
-    // Save AI response as a thread message
+    const fullContent = aiResponse + kbSection;
+
+    // If preview_only, just return the text — don't save it
+    if (preview_only) {
+      return Response.json({ success: true, preview: fullContent });
+    }
+
+    // Save to thread
     const aiMessage = await base44.asServiceRole.entities.TicketThread.create({
       ticket_id,
       author_email: "ai-support@affinitysolution.com",
       author_name: "AffinitySolution AI Support",
       is_ai_response: true,
-      content: aiResponse + kbSection,
+      content: fullContent,
       is_public: true,
       kb_article_ids: suggestedArticles.map(a => a.id),
     });
 
-    // Build KB articles HTML for email
-    const kbHtml = suggestedArticles.length > 0
-      ? `<p><strong>📚 Related Resources:</strong></p>
-         <ul style="margin: 10px 0; padding-left: 20px;">
-           ${suggestedArticles.map(a => `<li>${a.title} <em style="color: #666;">(${a.category})</em></li>`).join("")}
-         </ul>`
-      : "";
-
-    // Email skipped (external user restriction)
-
     return Response.json({ success: true, aiMessage });
   } catch (error) {
-    console.error("AI response error:", error.message, error);
-    return Response.json({ error: error.message, stack: error.stack }, { status: 500 });
+    console.error("AI response error:", error.message);
+    return Response.json({ error: error.message }, { status: 500 });
   }
 });

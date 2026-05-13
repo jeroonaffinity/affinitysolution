@@ -6,7 +6,7 @@ import TicketKanban from "@/components/admin/TicketKanban";
 import TicketCreationWizard from "@/components/admin/TicketCreationWizard";
 import {
   Loader2, RefreshCw, Search, Plus,
-  Send, X, MessageSquare,
+  Send, X, MessageSquare, Check,
   Filter, Sparkles, Monitor,
   Paperclip, FileText, Image, Bot, UserCheck
 } from "lucide-react";
@@ -63,6 +63,7 @@ function ThreadPanel({ ticket, onClose }) {
   const [reply, setReply] = useState("");
   const [sending, setSending] = useState(false);
   const [generatingAI, setGeneratingAI] = useState(false);
+  const [aiPreview, setAiPreview] = useState(null);
   const [attachments, setAttachments] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [updating, setUpdating] = useState(false);
@@ -132,10 +133,14 @@ function ThreadPanel({ ticket, onClose }) {
 
   const generateAIReply = async () => {
     setGeneratingAI(true);
-    await base44.functions.invoke("aiTicketResponse", { ticket_id: ticket.id });
-    // The function saves the AI reply as a thread message directly — reload to show it
-    await loadThreads();
+    const res = await base44.functions.invoke("aiTicketResponse", { ticket_id: ticket.id, preview_only: true });
+    setAiPreview(res.data?.preview || "");
     setGeneratingAI(false);
+  };
+
+  const acceptAIDraft = () => {
+    setReply(aiPreview);
+    setAiPreview(null);
   };
 
   const updateTicket = async () => {
@@ -288,6 +293,20 @@ function ThreadPanel({ ticket, onClose }) {
               )}
             </div>
             <div className="px-6 py-4 border-t border-border/40 flex-shrink-0">
+              {/* AI Preview card */}
+              {aiPreview && (
+                <div className="mb-3 p-3 rounded-xl border border-primary/30 bg-primary/5 flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-primary flex items-center gap-1"><Sparkles className="w-3 h-3" /> AI Draft Preview</span>
+                    <button onClick={() => setAiPreview(null)} className="text-muted-foreground hover:text-foreground"><X className="w-3 h-3" /></button>
+                  </div>
+                  <p className="text-xs text-foreground/80 whitespace-pre-wrap leading-relaxed max-h-32 overflow-y-auto">{aiPreview}</p>
+                  <button onClick={acceptAIDraft}
+                    className="self-start flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-semibold">
+                    <Check className="w-3 h-3" /> Use this draft
+                  </button>
+                </div>
+              )}
               <textarea
                 rows={3}
                 placeholder="Write a reply to the customer..."
@@ -350,6 +369,10 @@ function ThreadPanel({ ticket, onClose }) {
     </div>
   );
 }
+
+
+
+
 
 export default function AdminTicketsBoard() {
   const [tickets, setTickets] = useState([]);

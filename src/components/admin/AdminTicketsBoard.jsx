@@ -70,10 +70,18 @@ function ThreadPanel({ ticket, onClose }) {
   const [assignedTo, setAssignedTo] = useState(ticket.assigned_to_email || "");
   const [adminUsers, setAdminUsers] = useState([]);
   const [activeTab, setActiveTab] = useState("thread");
+  const [teams, setTeams] = useState([]);
   const clientEmail = ticket.client_email;
+  const ticketTeam = teams.find(t => t.id === ticket.team_id);
 
   useEffect(() => {
-    base44.entities.User.list().then(users => setAdminUsers(users.filter(u => u.role === "admin")));
+    Promise.all([
+      base44.entities.User.list(),
+      base44.entities.Team.list(),
+    ]).then(([users, ts]) => {
+      setAdminUsers(users.filter(u => u.role === "admin"));
+      setTeams(ts);
+    });
   }, []);
 
   const loadThreads = useCallback(async () => {
@@ -187,6 +195,15 @@ function ThreadPanel({ ticket, onClose }) {
             <div>
               <div className="text-xs text-muted-foreground mb-1">Contact</div>
               <div className="font-medium truncate">{clientEmail || "—"}</div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Team</div>
+              <div className="font-medium truncate flex items-center gap-1">
+                {ticketTeam
+                  ? <><span className="w-2 h-2 rounded-full bg-primary inline-block" />{ticketTeam.name}</>
+                  : <span className="text-muted-foreground text-xs">No team linked</span>
+                }
+              </div>
             </div>
             <div>
               <div className="text-xs text-muted-foreground mb-1">Created</div>
@@ -317,8 +334,8 @@ function ThreadPanel({ ticket, onClose }) {
         {/* Customer 360 tab */}
         {activeTab === "customer360" && (
           <div className="flex-1 overflow-y-auto">
-            {clientEmail
-              ? <Customer360Panel email={clientEmail} />
+            {clientEmail || ticket.team_id
+              ? <Customer360Panel email={clientEmail} teamId={ticket.team_id} />
               : (
                 <div className="flex flex-col items-center gap-2 py-12 text-center px-4">
                   <Monitor className="w-8 h-8 text-primary/20" />

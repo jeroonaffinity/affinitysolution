@@ -77,20 +77,20 @@ function DeviceCard({ device }) {
   );
 }
 
-export default function Customer360Panel({ email }) {
+export default function Customer360Panel({ email, teamId }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!email) return;
+    if (!email && !teamId) return;
     setLoading(true);
     base44.functions.invoke("zohoDesk", {
-      action: "customer_360", orgId: ORG_ID, email,
+      action: "customer_360", orgId: ORG_ID, email, teamId,
     }).then(res => {
       setData(res.data);
       setLoading(false);
     });
-  }, [email]);
+  }, [email, teamId]);
 
   if (loading) {
     return (

@@ -110,8 +110,8 @@ Deno.serve(async (req) => {
 
   // Fetch Action1 device info (still uses ACTION1 API)
   if (action === "customer_360") {
-    const { email } = payload;
-    if (!email) return Response.json({ error: "email required" }, { status: 400 });
+    const { email, teamId } = payload;
+    if (!email && !teamId) return Response.json({ error: "email or teamId required" }, { status: 400 });
 
     const ACTION1_BASE = "https://app.eu.action1.com/api/3.0";
 
@@ -130,7 +130,10 @@ Deno.serve(async (req) => {
     }
 
     const teams = await base44.asServiceRole.entities.Team.list();
-    const team = teams.find(t => t.member_emails?.includes(email));
+    // Prefer direct teamId lookup (from ticket), fall back to email lookup
+    const team = teamId
+      ? teams.find(t => t.id === teamId)
+      : teams.find(t => t.member_emails?.includes(email));
 
     if (!team?.action1_org_id || !team?.action1_group_id) {
       return Response.json({ devices: [], alerts: [], teamName: team?.name || null, noAction1: true });

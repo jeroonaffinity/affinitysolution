@@ -167,17 +167,11 @@ export default function AdminABRPanel({ users }) {
 
   const handleAction = async (req, action) => {
     setActionLoading(req.id);
-    // Find the API key for this source from clientKeys (now teams, passed via the request's _source_label)
-    const keyRecord = clientKeys.find(k => k.client_email === req._source_email || k.label === req._source_label);
-    const apiKey = keyRecord?.abr_api_key || null;
-    const dc = keyRecord?.abr_datacenter || "dc3";
-
-    // We pass key + dc via payload for admin actions on merged view
     await base44.functions.invoke("abrRequests", {
       action,
       requestId: req.id,
-      apiKey: keyRecord?.abr_api_key || null,
-      dc,
+      apiKey: req._api_key,
+      dc: req._dc || "dc3",
     });
     setActionLoading(null);
     fetchRequests(activeTab);

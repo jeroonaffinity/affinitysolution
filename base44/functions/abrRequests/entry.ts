@@ -58,6 +58,8 @@ Deno.serve(async (req) => {
             ...r,
             _source_label: src.label,
             _source_email: src.client_email,
+            _api_key: src.abr_api_key,
+            _dc: src.abr_datacenter || "dc3",
           }));
         })
       );

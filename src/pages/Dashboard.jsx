@@ -426,7 +426,7 @@ export default function Dashboard() {
       try {
         const authed = await base44.auth.isAuthenticated();
         if (!authed) { 
-          base44.auth.redirectToLogin(window.location.href); 
+          base44.auth.redirectToLogin(window.location.pathname); 
           return; 
         }
         const me = await base44.auth.me();
@@ -434,7 +434,7 @@ export default function Dashboard() {
         await fetchData(me);
       } catch (error) {
         console.error("Dashboard init error:", error);
-        base44.auth.redirectToLogin(window.location.href);
+        base44.auth.redirectToLogin(window.location.pathname);
       } finally {
         setLoading(false);
       }

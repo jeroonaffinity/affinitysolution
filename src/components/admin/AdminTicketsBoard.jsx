@@ -351,10 +351,6 @@ function ThreadPanel({ ticket, onClose }) {
   );
 }
 
-
-
-
-
 export default function AdminTicketsBoard() {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);

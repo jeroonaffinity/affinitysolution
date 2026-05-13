@@ -16,6 +16,7 @@ import BillingTab from "@/components/dashboard/BillingTab";
 import SupportDocsTab from "@/components/dashboard/SupportDocsTab";
 import ClientABRTab from "@/components/dashboard/ClientABRTab";
 import ClientEndpointsTab from "@/components/dashboard/ClientEndpointsTab";
+import DiagnosticsOverview from "@/components/dashboard/DiagnosticsOverview";
 import BiometricLockScreen from "@/components/BiometricLockScreen";
 import { useBiometricLock } from "@/hooks/useBiometricLock";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
@@ -559,6 +560,12 @@ export default function Dashboard() {
                 View Tickets <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
+
+            {/* Diagnostics / Endpoint Health */}
+            <DiagnosticsOverview
+              userEmail={user?.email}
+              onGoToEndpoints={() => setActiveTab("endpoints")}
+            />
 
             {/* Active Services */}
             {services.filter(s => s.status === "active").length > 0 && (

@@ -52,8 +52,10 @@ export const AuthProvider = ({ children }) => {
         if (appError.status === 403 && appError.data?.extra_data?.reason) {
           const reason = appError.data.extra_data.reason;
           if (reason === 'auth_required') {
-            // Redirect directly — don't set authError to avoid loops
-            base44.auth.redirectToLogin(window.location.pathname);
+            // App is private — redirect to login. Don't use current pathname to avoid loops.
+            setIsLoadingPublicSettings(false);
+            setIsLoadingAuth(false);
+            base44.auth.redirectToLogin();
             return;
           } else if (reason === 'user_not_registered') {
             setAuthError({

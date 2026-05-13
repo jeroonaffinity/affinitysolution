@@ -424,11 +424,17 @@ export default function Dashboard() {
   useEffect(() => {
     const init = async () => {
       try {
+        const authed = await base44.auth.isAuthenticated();
+        if (!authed) {
+          base44.auth.redirectToLogin("/dashboard");
+          return;
+        }
         const me = await base44.auth.me();
         setUser(me);
         await fetchData(me);
       } catch (error) {
         console.error("Dashboard init error:", error);
+        base44.auth.redirectToLogin("/dashboard");
       } finally {
         setLoading(false);
       }

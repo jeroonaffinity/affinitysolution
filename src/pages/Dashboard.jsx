@@ -59,27 +59,38 @@ function StatCard({ icon: Icon, label, value, sub, accent = false, warning = fal
   );
 }
 
-const ORG_ID = "20114459933";
-
 const STATUS_CONFIG = {
-  "Open":        { label: "Open",        color: "text-amber-400",   bg: "bg-amber-500/15",   dot: "bg-amber-400"   },
-  "In Progress": { label: "In Progress", color: "text-blue-400",    bg: "bg-blue-500/15",    dot: "bg-blue-400"    },
-  "On Hold":     { label: "On Hold",     color: "text-purple-400",  bg: "bg-purple-500/15",  dot: "bg-purple-400"  },
-  "Closed":      { label: "Closed",      color: "text-slate-400",   bg: "bg-slate-500/15",   dot: "bg-slate-400"   },
+  "new":               { label: "New",                color: "text-sky-400",     bg: "bg-sky-500/15",     dot: "bg-sky-400"     },
+  "acknowledged":      { label: "Acknowledged",       color: "text-indigo-400",  bg: "bg-indigo-500/15",  dot: "bg-indigo-400"  },
+  "open":              { label: "Open",               color: "text-amber-400",   bg: "bg-amber-500/15",   dot: "bg-amber-400"   },
+  "in_progress":       { label: "In Progress",        color: "text-blue-400",    bg: "bg-blue-500/15",    dot: "bg-blue-400"    },
+  "waiting_on_client": { label: "Waiting on You",     color: "text-orange-400",  bg: "bg-orange-500/15",  dot: "bg-orange-400"  },
+  "waiting_on_vendor": { label: "Waiting on Vendor",  color: "text-yellow-400",  bg: "bg-yellow-500/15",  dot: "bg-yellow-400"  },
+  "escalated":         { label: "Escalated",          color: "text-red-400",     bg: "bg-red-500/15",     dot: "bg-red-400"     },
+  "on_hold":           { label: "On Hold",            color: "text-purple-400",  bg: "bg-purple-500/15",  dot: "bg-purple-400"  },
+  "pending_approval":  { label: "Pending Approval",   color: "text-violet-400",  bg: "bg-violet-500/15",  dot: "bg-violet-400"  },
+  "resolved":          { label: "Resolved",           color: "text-emerald-400", bg: "bg-emerald-500/15", dot: "bg-emerald-400" },
+  "closed":            { label: "Closed",             color: "text-slate-400",   bg: "bg-slate-500/15",   dot: "bg-slate-400"   },
+};
+
+// Group statuses into display buckets for the filter pills
+const FILTER_GROUPS = {
+  "Active":   ["new", "acknowledged", "open", "in_progress", "escalated", "pending_approval"],
+  "Waiting":  ["waiting_on_client", "waiting_on_vendor", "on_hold"],
+  "Resolved": ["resolved", "closed"],
 };
 
 // Map local SupportTicket record to a display-friendly object
 function localToDisplay(lt) {
   return {
-    id: lt.zoho_ticket_id || lt.id,
-    _localId: lt.id,
+    id: lt.id,
     subject: lt.title,
     description: lt.description,
-    status: lt.zoho_status || (lt.status === "open" ? "Open" : lt.status === "in_progress" ? "In Progress" : lt.status === "on_hold" ? "On Hold" : "Closed"),
-    priority: lt.zoho_priority || (lt.priority ? lt.priority.charAt(0).toUpperCase() + lt.priority.slice(1) : "Medium"),
-    ticketNumber: lt.zoho_ticket_number,
-    channel: lt.zoho_channel,
-    createdTime: lt.zoho_created_time || lt.created_date,
+    status: lt.status || "new",   // use the raw entity status value directly
+    priority: lt.priority ? lt.priority.charAt(0).toUpperCase() + lt.priority.slice(1) : "Medium",
+    ticketNumber: lt.id?.slice(-6).toUpperCase(),
+    createdTime: lt.created_date,
+    assigned_to_name: lt.assigned_to_name,
   };
 }
 
@@ -113,12 +124,12 @@ function TicketThreads({ ticketId }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    base44.functions.invoke("zohoDesk", {
-      action: "get_threads", orgId: ORG_ID, ticketId,
-    }).then(res => {
-      setThreads(res.data?.data?.data || []);
-      setLoading(false);
-    });
+    base44.entities.TicketThread.filter({ ticket_id: ticketId }, "created_date", 50)
+      .then(data => {
+        setThreads(data.filter(t => t.is_public !== false));
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, [ticketId]);
 
   if (loading) return <div className="flex justify-center py-3"><Loader2 className="w-4 h-4 animate-spin text-primary" /></div>;
@@ -135,16 +146,17 @@ function TicketThreads({ ticketId }) {
         <MessageSquare className="w-3 h-3" /> Conversation
       </div>
       {threads.map((thread, i) => {
-        const isAgent = thread.type === "agentReply";
+        const isAgent = thread.author_email !== thread.author_email?.match(/affinitysolution/i) ? false : true;
+        const isAdmin = thread.is_ai_response || thread.author_email?.includes("affinitysolution");
         return (
-          <div key={i} className={`flex flex-col gap-1 ${isAgent ? "items-end" : "items-start"}`}>
+          <div key={i} className={`flex flex-col gap-1 ${isAdmin ? "items-end" : "items-start"}`}>
             <div className="text-xs text-muted-foreground px-1">
-              {isAgent ? "AffinitySolution" : "You"} · {new Date(thread.createdTime).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+              {thread.author_name || thread.author_email} · {new Date(thread.created_date).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
             </div>
             <div className={`max-w-[90%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-              isAgent ? "bg-primary/15 text-foreground rounded-tr-sm" : "bg-card border border-border/50 rounded-tl-sm"
+              isAdmin ? "bg-primary/15 text-foreground rounded-tr-sm" : "bg-card border border-border/50 rounded-tl-sm"
             }`}>
-              <ThreadContent content={thread.content || thread.summary || ""} />
+              <ThreadContent content={thread.content || ""} />
             </div>
           </div>
         );
@@ -154,7 +166,7 @@ function TicketThreads({ ticketId }) {
 }
 
 function ZohoTicketRow({ t, expanded, onToggle }) {
-  const status = STATUS_CONFIG[t.status] || STATUS_CONFIG["Open"];
+  const status = STATUS_CONFIG[t.status] || STATUS_CONFIG["new"];
   const priorityMap = { High: "text-red-400 bg-red-500/15", Medium: "text-amber-400 bg-amber-500/15", Low: "text-emerald-400 bg-emerald-500/15" };
   const priorityCls = priorityMap[t.priority] || "text-muted-foreground bg-muted";
 
@@ -174,7 +186,7 @@ function ZohoTicketRow({ t, expanded, onToggle }) {
             <span>#{t.ticketNumber}</span>
             <span>·</span>
             <span>{new Date(t.createdTime).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
-            {t.channel && <><span>·</span><span>{t.channel}</span></>}
+            {t.assigned_to_name && <><span>·</span><span className="text-primary/70">Assigned: {t.assigned_to_name}</span></>}
           </div>
         </div>
         <div className="text-muted-foreground flex-shrink-0">
@@ -220,17 +232,18 @@ function TicketsTab({ userEmail }) {
   };
 
   const filtered = tickets.filter(t => {
-    const matchFilter = filter === "all" || t.status === filter;
+    const matchFilter = filter === "all" || (FILTER_GROUPS[filter] && FILTER_GROUPS[filter].includes(t.status));
     const matchSearch = !search || t.subject?.toLowerCase().includes(search.toLowerCase());
     return matchFilter && matchSearch;
   });
 
-  const counts = {
-    Open: tickets.filter(t => t.status === "Open").length,
-    "In Progress": tickets.filter(t => t.status === "In Progress").length,
-    "On Hold": tickets.filter(t => t.status === "On Hold").length,
-    Closed: tickets.filter(t => t.status === "Closed").length,
+  const groupCounts = {
+    Active:   tickets.filter(t => FILTER_GROUPS.Active.includes(t.status)).length,
+    Waiting:  tickets.filter(t => FILTER_GROUPS.Waiting.includes(t.status)).length,
+    Resolved: tickets.filter(t => FILTER_GROUPS.Resolved.includes(t.status)).length,
   };
+
+  const groupDots = { Active: "bg-amber-400", Waiting: "bg-purple-400", Resolved: "bg-emerald-400" };
 
   return (
     <PullToRefreshWrapper onRefresh={loadTickets} className="flex flex-col gap-5">
@@ -241,17 +254,17 @@ function TicketsTab({ userEmail }) {
       )}
 
       {/* Status filter pills */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {Object.entries(STATUS_CONFIG).map(([key, cfg]) => {
-          const active = filter === key;
+      <div className="grid grid-cols-3 gap-3">
+        {Object.entries(groupCounts).map(([group, count]) => {
+          const active = filter === group;
           return (
-            <button key={key} onClick={() => setFilter(active ? "all" : key)}
-              className={`p-3.5 rounded-xl border text-left transition-all ${active ? "border-primary/40 bg-primary/8" : "border-border/30 bg-card/30 hover:border-border/60"}`}>
+            <button key={group} onClick={() => setFilter(active ? "all" : group)}
+              className={`p-3.5 rounded-xl border text-left transition-all ${active ? "border-primary/40 bg-primary/10" : "border-border/30 bg-card/30 hover:border-border/60"}`}>
               <div className="flex items-center justify-between mb-1.5">
-                <div className={`w-2 h-2 rounded-full ${cfg.dot}`} />
-                <span className="text-lg font-extrabold">{counts[key] || 0}</span>
+                <div className={`w-2 h-2 rounded-full ${groupDots[group]}`} />
+                <span className="text-lg font-extrabold">{count}</span>
               </div>
-              <div className="text-xs text-muted-foreground">{cfg.label}</div>
+              <div className="text-xs text-muted-foreground">{group}</div>
             </button>
           );
         })}

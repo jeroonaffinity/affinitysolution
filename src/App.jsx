@@ -24,27 +24,14 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   : <>{children}</>;
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError } = useAuth();
+  const { authError } = useAuth();
 
-  // Show loading spinner while checking app public settings or auth
-  if (isLoadingPublicSettings || isLoadingAuth) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
-      </div>
-    );
+  // Only block rendering for user_not_registered — everything else renders normally.
+  // Public pages don't need auth. Protected pages (Dashboard, Admin) handle their own auth.
+  if (authError?.type === 'user_not_registered') {
+    return <UserNotRegisteredError />;
   }
 
-  // Handle authentication errors
-  if (authError) {
-    if (authError.type === 'user_not_registered') {
-      return <UserNotRegisteredError />;
-    }
-    // For auth_required or unknown errors on public pages, just render normally.
-    // Pages that require auth (like Dashboard) handle their own redirect.
-  }
-
-  // Render the main app
   return (
     <PageTransition>
       <Routes>
@@ -67,7 +54,6 @@ const AuthenticatedApp = () => {
         <Route path="/About" element={<LayoutWrapper currentPageName="About"><About /></LayoutWrapper>} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/admin" element={<LayoutWrapper currentPageName="Admin"><Admin /></LayoutWrapper>} />
-
         <Route path="/zoho-callback" element={<ZohoCallback />} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>

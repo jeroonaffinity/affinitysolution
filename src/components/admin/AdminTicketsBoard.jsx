@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { ticketService } from "@/lib/ticketService";
 import Customer360Panel from "@/components/admin/Customer360Panel";
 import TicketKanban from "@/components/admin/TicketKanban";
+import TicketCreationWizard from "@/components/admin/TicketCreationWizard";
 import {
   Loader2, RefreshCw, Search, Plus,
   Send, X, MessageSquare,
@@ -350,140 +351,7 @@ function ThreadPanel({ ticket, onClose }) {
   );
 }
 
-function CreateTicketModal({ onClose, onCreated }) {
-  const [form, setForm] = useState({ subject: "", description: "", priority: "medium" });
-  const [saving, setSaving] = useState(false);
-  const [teams, setTeams] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [selectedTeam, setSelectedTeam] = useState(null);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [suggested, setSuggested] = useState(null);
-  const [analyzing, setAnalyzing] = useState(false);
 
-  useEffect(() => {
-    Promise.all([
-      base44.entities.Team.list(),
-      base44.entities.User.list(),
-    ]).then(([t, u]) => { setTeams(t); setUsers(u); });
-  }, []);
-
-  const teamMembers = selectedTeam
-    ? users.filter(u => selectedTeam.member_emails?.includes(u.email))
-    : [];
-
-  const handleTeamChange = (teamId) => {
-    const team = teams.find(t => t.id === teamId) || null;
-    setSelectedTeam(team);
-    setSelectedUser(null);
-  };
-
-  // Analyze content in real-time as user types
-  useEffect(() => {
-    if (!form.subject && !form.description) {
-      setSuggested(null);
-      return;
-    }
-    setAnalyzing(true);
-    base44.integrations.Core.InvokeLLM({
-      prompt: `Analyze this IT support ticket and suggest a priority (critical/high/medium/low) and category (hardware/software/network/email/security/data/other).\n\nSubject: ${form.subject}\nDescription: ${form.description}\n\nRespond with JSON only.`,
-      response_json_schema: { type: "object", properties: { priority: { type: "string" }, category: { type: "string" } } }
-    }).then(res => {
-        setSuggested(res);
-        setForm(prev => ({ ...prev, priority: res.priority || prev.priority }));
-      })
-      .finally(() => setAnalyzing(false));
-  }, [form.subject, form.description]);
-
-  const handleCreate = async (e) => {
-    e.preventDefault();
-    if (!selectedUser) return;
-    setSaving(true);
-    await ticketService.createTicket({
-      title: form.subject,
-      description: form.description,
-      client_email: selectedUser.email,
-      team_id: selectedTeam.id,
-      priority: form.priority,
-    });
-    setSaving(false);
-    onCreated();
-    onClose();
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-card border border-border/50 rounded-2xl p-6 w-full max-w-lg shadow-2xl flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <h3 className="font-bold text-base">Create Ticket</h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"><X className="w-4 h-4" /></button>
-        </div>
-        <form onSubmit={handleCreate} className="flex flex-col gap-3">
-
-          {/* Team picker */}
-          <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Team *</label>
-            <select required value={selectedTeam?.id || ""} onChange={e => handleTeamChange(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-border/60 bg-background text-sm focus:outline-none">
-              <option value="">Select a team...</option>
-              {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-            </select>
-          </div>
-
-          {/* Point of contact picker */}
-          <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Point of Contact *</label>
-            <select required value={selectedUser?.id || ""} onChange={e => setSelectedUser(teamMembers.find(u => u.id === e.target.value) || null)}
-              disabled={!selectedTeam}
-              className="w-full px-3 py-2 rounded-lg border border-border/60 bg-background text-sm focus:outline-none disabled:opacity-50">
-              <option value="">{selectedTeam ? (teamMembers.length ? "Select a member..." : "No members in this team") : "Select a team first..."}</option>
-              {teamMembers.map(u => (
-                <option key={u.id} value={u.id}>{u.full_name || u.email} — {u.email}</option>
-              ))}
-            </select>
-            {selectedUser && (
-              <p className="text-xs text-primary mt-1">Ticket will be raised for: {selectedUser.email}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Subject *</label>
-            <input required value={form.subject} onChange={e => setForm({...form, subject: e.target.value})}
-              placeholder="Brief summary of the issue"
-              className="w-full px-3 py-2 rounded-lg border border-border/60 bg-background text-sm focus:outline-none" />
-          </div>
-          <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Description</label>
-            <textarea rows={3} value={form.description} onChange={e => setForm({...form, description: e.target.value})}
-              placeholder="Detailed description..."
-              className="w-full px-3 py-2 rounded-lg border border-border/60 bg-background text-sm focus:outline-none resize-none" />
-          </div>
-          <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Priority {analyzing && <Loader2 className="w-3 h-3 animate-spin inline" />}</label>
-            <select value={form.priority} onChange={e => setForm({...form, priority: e.target.value})}
-              className="w-full px-3 py-2 rounded-lg border border-border/60 bg-background text-sm focus:outline-none">
-              <option value="critical">Critical</option>
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
-            </select>
-            {suggested && (
-              <p className="text-xs text-primary mt-1">🤖 AI suggests: <strong>{suggested.priority}</strong> priority • <strong>{suggested.category}</strong> category</p>
-            )}
-          </div>
-          <div className="flex gap-3 pt-1">
-            <button type="submit" disabled={saving || !selectedUser}
-              className="flex items-center gap-2 px-5 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 disabled:opacity-60">
-              {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-              Create Ticket
-            </button>
-            <button type="button" onClick={onClose} className="px-5 py-2 rounded-xl border border-border/50 text-sm hover:bg-muted">Cancel</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
 
 
 
@@ -524,7 +392,7 @@ export default function AdminTicketsBoard() {
         />
       )}
       {showCreate && (
-        <CreateTicketModal
+        <TicketCreationWizard
           onClose={() => setShowCreate(false)}
           onCreated={loadTickets}
         />

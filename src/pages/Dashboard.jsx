@@ -204,19 +204,11 @@ function TicketsTab({ userEmail }) {
 
   const loadTickets = useCallback(async () => {
     setLoading(true);
-    // Find the user's team, then load all tickets for that team
-    const teams = await base44.entities.Team.list();
-    const myTeam = teams.find(t => t.member_emails?.includes(userEmail));
-    let localTickets = [];
-    if (myTeam) {
-      localTickets = await base44.entities.SupportTicket.filter({ team_id: myTeam.id }, "-created_date");
-    } else {
-      // Fallback: load by email if not in a team
-      localTickets = await base44.entities.SupportTicket.filter({ client_email: userEmail }, "-created_date");
-    }
+    // RLS on SupportTicket already filters to tickets the user can see (by team or email)
+    const localTickets = await base44.entities.SupportTicket.list("-created_date");
     setTickets(localTickets.map(localToDisplay));
     setLoading(false);
-  }, [userEmail]);
+  }, []);
 
   useEffect(() => { loadTickets(); }, [loadTickets]);
 

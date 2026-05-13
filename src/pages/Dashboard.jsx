@@ -425,17 +425,20 @@ export default function Dashboard() {
   useEffect(() => {
     const init = async () => {
       try {
-        const authed = await base44.auth.isAuthenticated();
-        if (!authed) {
+        const me = await base44.auth.me();
+        if (!me) {
           base44.auth.redirectToLogin("/dashboard");
           return;
         }
-        const me = await base44.auth.me();
         setUser(me);
         await fetchData(me);
       } catch (error) {
+        // Only redirect if genuinely unauthenticated (401), not on every error
+        if (error?.status === 401 || error?.response?.status === 401) {
+          base44.auth.redirectToLogin("/dashboard");
+          return;
+        }
         console.error("Dashboard init error:", error);
-        base44.auth.redirectToLogin("/dashboard");
       } finally {
         setLoading(false);
       }

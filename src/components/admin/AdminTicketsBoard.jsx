@@ -4,13 +4,11 @@ import { ticketService } from "@/lib/ticketService";
 import Customer360Panel from "@/components/admin/Customer360Panel";
 import TicketKanban from "@/components/admin/TicketKanban";
 import {
-  Loader2, RefreshCw, Search, Plus, ChevronDown,
+  Loader2, RefreshCw, Search, Plus,
   Send, X, MessageSquare,
-  User, Calendar, Tag, Filter, Sparkles, Monitor,
-  Paperclip, FileText, Image
+  Filter, Sparkles, Monitor,
+  Paperclip, FileText, Image, Bot
 } from "lucide-react";
-
-const ORG_ID = "20114459933";
 
 const STATUS_CONFIG = {
   Open:        { color: "text-amber-400",  bg: "bg-amber-500/15",   border: "border-amber-500/30",   dot: "bg-amber-400"   },
@@ -74,48 +72,30 @@ function ThreadPanel({ ticket, onClose }) {
   const [loading, setLoading] = useState(true);
   const [reply, setReply] = useState("");
   const [sending, setSending] = useState(false);
+  const [generatingAI, setGeneratingAI] = useState(false);
   const [attachments, setAttachments] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [status, setStatus] = useState(ticket.status);
   const [priority, setPriority] = useState(ticket.priority || "");
   const [activeTab, setActiveTab] = useState("thread");
-  const [analysis, setAnalysis] = useState(null);
-  const [analyzing, setAnalyzing] = useState(false);
-  const [clientEmail, setClientEmail] = useState(ticket.email || ticket.contact?.email || null);
-
-  // Resolve client email from local SupportTicket index (Zoho doesn't return email on ticket objects)
-  useEffect(() => {
-    if (clientEmail) return;
-    base44.entities.SupportTicket.filter({ zoho_ticket_id: ticket.id })
-      .then(records => {
-        if (records?.[0]?.client_email) setClientEmail(records[0].client_email);
-      });
-  }, [ticket.id]);
+  const clientEmail = ticket.client_email;
 
   const loadThreads = useCallback(async () => {
     setLoading(true);
-    const res = await base44.functions.invoke("zohoDesk", {
-      action: "get_threads", orgId: ORG_ID, ticketId: ticket.id,
-    });
-    setThreads(res.data?.data?.data || []);
+    const msgs = await ticketService.getTicketMessages(ticket.id);
+    // Sort oldest first for display
+    setThreads((msgs || []).slice().sort((a, b) => new Date(a.created_date) - new Date(b.created_date)));
     setLoading(false);
-  }, [ticket.id]);
-
-  const runAnalysis = useCallback(async () => {
-    setAnalyzing(true);
-    const res = await base44.functions.invoke("zohoDesk", {
-      action: "analyze_ticket", orgId: ORG_ID, ticketId: ticket.id,
-    });
-    setAnalysis(res.data);
-    if (res.data?.changed) setPriority(res.data.priority);
-    setAnalyzing(false);
   }, [ticket.id]);
 
   useEffect(() => {
     loadThreads();
-    runAnalysis();
-  }, [loadThreads, runAnalysis]);
+    const unsub = base44.entities.TicketThread.subscribe((event) => {
+      if (event.data?.ticket_id === ticket.id) loadThreads();
+    });
+    return unsub;
+  }, [loadThreads]);
 
   const handleAttachFiles = async (e) => {
     const files = Array.from(e.target.files);
@@ -133,9 +113,12 @@ function ThreadPanel({ ticket, onClose }) {
     const attachmentText = attachments.length
       ? "\n\n--- Attachments ---\n" + attachments.map((url, i) => `[File ${i + 1}](${url})`).join("\n")
       : "";
-    await base44.functions.invoke("zohoDesk", {
-      action: "add_reply", orgId: ORG_ID, ticketId: ticket.id,
-      data: { content: reply + attachmentText, isPublic: true, channel: "EMAIL" },
+    const user = await base44.auth.me();
+    await ticketService.addTicketMessage(ticket.id, {
+      author_email: user.email,
+      author_name: user.full_name || "Support Team",
+      content: reply + attachmentText,
+      is_public: true,
     });
     setReply("");
     setAttachments([]);
@@ -143,14 +126,17 @@ function ThreadPanel({ ticket, onClose }) {
     loadThreads();
   };
 
+  const generateAIReply = async () => {
+    setGeneratingAI(true);
+    await base44.functions.invoke("aiTicketResponse", { ticket_id: ticket.id });
+    // The function saves the AI reply as a thread message directly — reload to show it
+    await loadThreads();
+    setGeneratingAI(false);
+  };
+
   const updateTicket = async () => {
     setUpdating(true);
-    const updateData = {};
-    if (status !== ticket.status) updateData.status = status;
-    if (priority !== ticket.priority) updateData.priority = priority;
-    await base44.functions.invoke("zohoDesk", {
-      action: "update_ticket", orgId: ORG_ID, ticketId: ticket.id, data: updateData,
-    });
+    await ticketService.updateTicket(ticket.id, { status, priority });
     setUpdating(false);
   };
 
@@ -166,22 +152,14 @@ function ThreadPanel({ ticket, onClose }) {
             <div className="flex items-center gap-2 mt-2 flex-wrap">
               <StatusBadge status={ticket.status} />
               <PriorityBadge priority={ticket.priority} />
-              {ticket.channel && (
-                <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{ticket.channel}</span>
+              {ticket.category && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground capitalize">{ticket.category}</span>
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {analysis && (
-              <span className="text-xs px-2 py-1 rounded-lg bg-primary/15 text-primary font-medium flex items-center gap-1">
-                <Sparkles className="w-3 h-3" /> {analysis.classification}
-              </span>
-            )}
-            {analyzing && <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />}
-            <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all">
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
         {/* Tabs */}
@@ -199,45 +177,50 @@ function ThreadPanel({ ticket, onClose }) {
           ))}
         </div>
 
-        {/* Ticket meta */}
-        <div className="px-6 py-4 border-b border-border/30 grid grid-cols-2 gap-3 text-sm">
-          <div>
-            <div className="text-xs text-muted-foreground mb-1">Contact</div>
-            <div className="font-medium truncate">{clientEmail || ticket.client_email || "—"}</div>
+        {/* Ticket meta + description */}
+        <div className="px-6 py-4 border-b border-border/30 flex flex-col gap-3 text-sm">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Contact</div>
+              <div className="font-medium truncate">{clientEmail || "—"}</div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Created</div>
+              <div className="font-medium">{new Date(ticket.created_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Status</div>
+              <select value={status} onChange={e => setStatus(e.target.value)}
+                className="w-full px-2 py-1.5 rounded-lg border border-border/60 bg-background text-xs focus:outline-none">
+                <option value="open">Open</option>
+                <option value="in_progress">In Progress</option>
+                <option value="on_hold">On Hold</option>
+                <option value="closed">Closed</option>
+              </select>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Priority</div>
+              <select value={priority} onChange={e => setPriority(e.target.value)}
+                className="w-full px-2 py-1.5 rounded-lg border border-border/60 bg-background text-xs focus:outline-none">
+                <option value="">None</option>
+                <option value="critical">Critical</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
           </div>
-          <div>
-            <div className="text-xs text-muted-foreground mb-1">Created</div>
-            <div className="font-medium">{new Date(ticket.created_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</div>
-          </div>
-
-          {/* Inline controls */}
-          <div>
-            <div className="text-xs text-muted-foreground mb-1">Status</div>
-            <select value={status} onChange={e => setStatus(e.target.value)}
-              className="w-full px-2 py-1.5 rounded-lg border border-border/60 bg-background text-xs focus:outline-none">
-              <option value="Open">Open</option>
-              <option value="In Progress">In Progress</option>
-              <option value="On Hold">On Hold</option>
-              <option value="Closed">Closed</option>
-            </select>
-          </div>
-          <div>
-            <div className="text-xs text-muted-foreground mb-1">Priority</div>
-            <select value={priority} onChange={e => setPriority(e.target.value)}
-              className="w-full px-2 py-1.5 rounded-lg border border-border/60 bg-background text-xs focus:outline-none">
-              <option value="">None</option>
-              <option value="High">High</option>
-              <option value="Medium">Medium</option>
-              <option value="Low">Low</option>
-            </select>
-          </div>
-          <div className="col-span-2">
-            <button onClick={updateTicket} disabled={updating}
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 disabled:opacity-60">
-              {updating ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
-              Save Changes
-            </button>
-          </div>
+          {ticket.description && (
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Description</div>
+              <div className="text-sm bg-muted/30 rounded-lg px-3 py-2 text-foreground/80 whitespace-pre-wrap">{ticket.description}</div>
+            </div>
+          )}
+          <button onClick={updateTicket} disabled={updating}
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 disabled:opacity-60 self-start">
+            {updating ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+            Save Changes
+          </button>
         </div>
 
         {/* Thread tab */}
@@ -247,20 +230,27 @@ function ThreadPanel({ ticket, onClose }) {
               {loading ? (
                 <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
               ) : threads.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground text-sm">No thread history yet.</div>
+                <div className="text-center py-8 text-muted-foreground text-sm">No messages yet.</div>
               ) : (
-                threads.map((thread, i) => {
-                  const isAgent = thread.type === "agentReply";
+                threads.map((thread) => {
+                  const isAdmin = thread.author_email !== clientEmail;
+                  const isAI = thread.is_ai_response;
                   return (
-                    <div key={i} className={`flex flex-col gap-1.5 ${isAgent ? "items-end" : "items-start"}`}>
-                      <div className="text-xs text-muted-foreground px-1">
-                        {isAgent ? "You (AffinitySolution)" : thread.author?.name || "Customer"} · {new Date(thread.createdTime).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                    <div key={thread.id} className={`flex flex-col gap-1.5 ${isAdmin ? "items-end" : "items-start"}`}>
+                      <div className="text-xs text-muted-foreground px-1 flex items-center gap-1">
+                        {isAI && <Sparkles className="w-3 h-3 text-primary" />}
+                        {thread.author_name || thread.author_email} · {new Date(thread.created_date).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                       </div>
-                      <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                        isAgent ? "bg-primary/15 text-foreground rounded-tr-sm" : "bg-card border border-border/50 rounded-tl-sm"
+                      <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
+                        isAI ? "bg-primary/15 text-foreground rounded-tr-sm" :
+                        isAdmin ? "bg-primary/20 text-foreground rounded-tr-sm" :
+                        "bg-card border border-border/50 rounded-tl-sm"
                       }`}>
-                        <ThreadContent content={thread.content || thread.summary || ""} />
+                        {thread.content}
                       </div>
+                      {!thread.is_public && (
+                        <span className="text-xs text-muted-foreground italic">(Internal note)</span>
+                      )}
                     </div>
                   );
                 })
@@ -288,9 +278,13 @@ function ThreadPanel({ ticket, onClose }) {
                   })}
                 </div>
               )}
-              <div className="flex justify-between items-center mt-2">
+              <div className="flex justify-between items-center mt-2 flex-wrap gap-2">
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-muted-foreground">Reply will be sent via Email</span>
+                  <button onClick={generateAIReply} disabled={generatingAI}
+                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-primary/40 text-primary hover:bg-primary/10 disabled:opacity-60 transition-colors">
+                    {generatingAI ? <Loader2 className="w-3 h-3 animate-spin" /> : <Bot className="w-3 h-3" />}
+                    {generatingAI ? "Generating..." : "AI Draft"}
+                  </button>
                   <label className={`flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground cursor-pointer transition-colors ${uploading ? "opacity-60 pointer-events-none" : ""}`}>
                     {uploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Paperclip className="w-3 h-3" />}
                     {uploading ? "Uploading..." : "Attach"}
@@ -316,7 +310,6 @@ function ThreadPanel({ ticket, onClose }) {
                 <div className="flex flex-col items-center gap-2 py-12 text-center px-4">
                   <Monitor className="w-8 h-8 text-primary/20" />
                   <p className="text-sm text-muted-foreground">No client email linked to this ticket.</p>
-                  <p className="text-xs text-muted-foreground/60">Only tickets created via the portal or admin board are linked.</p>
                 </div>
               )
             }
@@ -361,11 +354,12 @@ function CreateTicketModal({ onClose, onCreated }) {
       return;
     }
     setAnalyzing(true);
-    base44.functions.invoke("zohoDesk", { action: "analyze", subject: form.subject, description: form.description })
-      .then(res => {
-        setSuggested(res.data);
-        // Auto-update priority based on suggestion
-        setForm(prev => ({ ...prev, priority: res.data.priority }));
+    base44.integrations.Core.InvokeLLM({
+      prompt: `Analyze this IT support ticket and suggest a priority (critical/high/medium/low) and category (hardware/software/network/email/security/data/other).\n\nSubject: ${form.subject}\nDescription: ${form.description}\n\nRespond with JSON only.`,
+      response_json_schema: { type: "object", properties: { priority: { type: "string" }, category: { type: "string" } } }
+    }).then(res => {
+        setSuggested(res);
+        setForm(prev => ({ ...prev, priority: res.priority || prev.priority }));
       })
       .finally(() => setAnalyzing(false));
   }, [form.subject, form.description]);

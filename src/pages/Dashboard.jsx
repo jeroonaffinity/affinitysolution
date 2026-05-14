@@ -216,10 +216,14 @@ function TicketsTab({ userEmail }) {
 
   const loadTickets = useCallback(async () => {
     setLoading(true);
-    // RLS on SupportTicket already filters to tickets the user can see (by team or email)
-    const localTickets = await base44.entities.SupportTicket.list("-created_date");
-    setTickets(localTickets.map(localToDisplay));
-    setLoading(false);
+    try {
+      const localTickets = await base44.entities.SupportTicket.list("-created_date");
+      setTickets(localTickets.map(localToDisplay));
+    } catch (err) {
+      console.error("Failed to load tickets:", err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { loadTickets(); }, [loadTickets]);

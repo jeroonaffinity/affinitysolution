@@ -2,15 +2,11 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import {
   Ticket, CreditCard, Loader2, LogOut,
-  TicketCheck, Clock, CheckCircle2,
-  ChevronDown, ChevronUp, Search, Plus, Send,
-  Server, ArrowRight, MessageSquare, RefreshCw,
-  FileText, Image, Trash2, AlertTriangle,
+  Server, ArrowRight, Trash2, AlertTriangle,
   Fingerprint, ShieldOff
 } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
-import PullToRefreshWrapper from "@/components/PullToRefreshWrapper";
-import NewTicketForm from "@/components/dashboard/NewTicketForm";
+import TicketsTab from "@/components/tickets/TicketsTab";
 import BillingTab from "@/components/dashboard/BillingTab";
 import SupportDocsTab from "@/components/dashboard/SupportDocsTab";
 import ClientABRTab from "@/components/dashboard/ClientABRTab";
@@ -30,25 +26,7 @@ const TABS = [
   { id: "settings",  label: "Account Settings" },
 ];
 
-const STATUS_CONFIG = {
-  "new":               { label: "New",               color: "text-sky-400",     bg: "bg-sky-500/15",     dot: "bg-sky-400"     },
-  "acknowledged":      { label: "Acknowledged",      color: "text-indigo-400",  bg: "bg-indigo-500/15",  dot: "bg-indigo-400"  },
-  "open":              { label: "Open",              color: "text-amber-400",   bg: "bg-amber-500/15",   dot: "bg-amber-400"   },
-  "in_progress":       { label: "In Progress",       color: "text-blue-400",    bg: "bg-blue-500/15",    dot: "bg-blue-400"    },
-  "waiting_on_client": { label: "Waiting on You",    color: "text-orange-400",  bg: "bg-orange-500/15",  dot: "bg-orange-400"  },
-  "waiting_on_vendor": { label: "Waiting on Vendor", color: "text-yellow-400",  bg: "bg-yellow-500/15",  dot: "bg-yellow-400"  },
-  "escalated":         { label: "Escalated",         color: "text-red-400",     bg: "bg-red-500/15",     dot: "bg-red-400"     },
-  "on_hold":           { label: "On Hold",           color: "text-purple-400",  bg: "bg-purple-500/15",  dot: "bg-purple-400"  },
-  "pending_approval":  { label: "Pending Approval",  color: "text-violet-400",  bg: "bg-violet-500/15",  dot: "bg-violet-400"  },
-  "resolved":          { label: "Resolved",          color: "text-emerald-400", bg: "bg-emerald-500/15", dot: "bg-emerald-400" },
-  "closed":            { label: "Closed",            color: "text-slate-400",   bg: "bg-slate-500/15",   dot: "bg-slate-400"   },
-};
-
-const FILTER_GROUPS = {
-  "Active":   ["new", "acknowledged", "open", "in_progress", "escalated", "pending_approval"],
-  "Waiting":  ["waiting_on_client", "waiting_on_vendor", "on_hold"],
-  "Resolved": ["resolved", "closed"],
-};
+const ACTIVE_STATUSES = ["new", "acknowledged", "open", "in_progress", "escalated", "pending_approval"];
 
 function StatCard({ icon: Icon, label, value, sub, accent = false, onClick }) {
   return (
@@ -62,210 +40,6 @@ function StatCard({ icon: Icon, label, value, sub, accent = false, onClick }) {
         {sub && <div className="text-xs text-muted-foreground/60 mt-1">{sub}</div>}
       </div>
     </div>
-  );
-}
-
-function ThreadContent({ content }) {
-  const plain = (content || "").replace(/<[^>]*>/g, "");
-  const parts = plain.split(/(--- Attachments ---[\s\S]*)/);
-  const bodyText = parts[0].trim();
-  const attachSection = parts[1] || "";
-  const links = [...attachSection.matchAll(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g)].map(m => ({ label: m[1], url: m[2] }));
-  const isImg = (url) => /\.(png|jpe?g|gif|webp)(\?|$)/i.test(url);
-  return (
-    <div className="flex flex-col gap-2">
-      {bodyText && <p>{bodyText}</p>}
-      {links.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mt-1">
-          {links.map((l, i) => (
-            <a key={i} href={l.url} target="_blank" rel="noreferrer"
-              className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 transition-colors">
-              {isImg(l.url) ? <Image className="w-3 h-3" /> : <FileText className="w-3 h-3" />}
-              {l.label}
-            </a>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function TicketThreads({ ticketId }) {
-  const [threads, setThreads] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    base44.entities.TicketThread.filter({ ticket_id: ticketId }, "created_date", 50)
-      .then(data => { setThreads(data.filter(t => t.is_public !== false)); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, [ticketId]);
-
-  if (loading) return <div className="flex justify-center py-3"><Loader2 className="w-4 h-4 animate-spin text-primary" /></div>;
-  if (threads.length === 0) return (
-    <div className="flex items-center gap-2 text-xs text-muted-foreground bg-background/30 rounded-xl px-4 py-3 border border-border/15">
-      <Clock className="w-3.5 h-3.5 flex-shrink-0" />
-      Our team will review this shortly and respond via email.
-    </div>
-  );
-
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-        <MessageSquare className="w-3 h-3" /> Conversation
-      </div>
-      {threads.map((thread, i) => {
-        const isAdmin = thread.is_ai_response || thread.author_email?.includes("affinitysolution");
-        return (
-          <div key={i} className={`flex flex-col gap-1 ${isAdmin ? "items-end" : "items-start"}`}>
-            <div className="text-xs text-muted-foreground px-1">
-              {thread.author_name || thread.author_email} · {new Date(thread.created_date).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-            </div>
-            <div className={`max-w-[90%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${isAdmin ? "bg-primary/15 text-foreground rounded-tr-sm" : "bg-card border border-border/50 rounded-tl-sm"}`}>
-              <ThreadContent content={thread.content || ""} />
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function TicketRow({ t, expanded, onToggle }) {
-  const status = STATUS_CONFIG[t.status] || STATUS_CONFIG["new"];
-  const priorityMap = { high: "text-red-400 bg-red-500/15", critical: "text-red-400 bg-red-500/15", medium: "text-amber-400 bg-amber-500/15", low: "text-emerald-400 bg-emerald-500/15" };
-  const priorityCls = priorityMap[t.priority?.toLowerCase()] || "text-muted-foreground bg-muted";
-  const priorityLabel = t.priority ? t.priority.charAt(0).toUpperCase() + t.priority.slice(1) : null;
-
-  return (
-    <div className={`rounded-2xl border overflow-hidden transition-all ${expanded ? "border-primary/30 bg-card/70" : "border-border/30 bg-card/30 hover:border-border/60 hover:bg-card/50"}`}>
-      <button className="w-full text-left px-5 py-4 flex items-center gap-4" onClick={onToggle}>
-        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${status.dot}`} />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-3 mb-1.5">
-            <span className="font-semibold text-sm truncate">{t.title}</span>
-            <div className="flex items-center gap-1.5 flex-shrink-0">
-              {priorityLabel && <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${priorityCls}`}>{priorityLabel}</span>}
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${status.bg} ${status.color}`}>{status.label}</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>#{t.id?.slice(-6).toUpperCase()}</span>
-            <span>·</span>
-            <span>{new Date(t.created_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
-            {t.assigned_to_name && <><span>·</span><span className="text-primary/70">Assigned: {t.assigned_to_name}</span></>}
-          </div>
-        </div>
-        <div className="text-muted-foreground flex-shrink-0">
-          {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        </div>
-      </button>
-      {expanded && (
-        <div className="px-5 pb-5 border-t border-border/20 pt-4 flex flex-col gap-4">
-          {t.description && (
-            <p className="text-sm text-foreground/75 leading-relaxed bg-background/40 rounded-xl px-4 py-3 border border-border/20">{t.description}</p>
-          )}
-          <TicketThreads ticketId={t.id} />
-        </div>
-      )}
-    </div>
-  );
-}
-
-function TicketsTab({ userEmail, teamId, tickets, loadingTickets, reloadTickets }) {
-  const [expandedId, setExpandedId] = useState(null);
-  const [filter, setFilter] = useState("all");
-  const [search, setSearch] = useState("");
-  const [showForm, setShowForm] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
-
-  const handleTicketSuccess = () => {
-    setShowForm(false);
-    setSubmitSuccess(true);
-    setTimeout(() => setSubmitSuccess(false), 4000);
-    reloadTickets();
-  };
-
-  const filtered = tickets.filter(t => {
-    const matchFilter = filter === "all" || (FILTER_GROUPS[filter] && FILTER_GROUPS[filter].includes(t.status));
-    const matchSearch = !search || t.title?.toLowerCase().includes(search.toLowerCase());
-    return matchFilter && matchSearch;
-  });
-
-  const groupCounts = {
-    Active:   tickets.filter(t => FILTER_GROUPS.Active.includes(t.status)).length,
-    Waiting:  tickets.filter(t => FILTER_GROUPS.Waiting.includes(t.status)).length,
-    Resolved: tickets.filter(t => FILTER_GROUPS.Resolved.includes(t.status)).length,
-  };
-  const groupDots = { Active: "bg-amber-400", Waiting: "bg-purple-400", Resolved: "bg-emerald-400" };
-
-  return (
-    <PullToRefreshWrapper onRefresh={reloadTickets} className="flex flex-col gap-5">
-      {submitSuccess && (
-        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4" /> Ticket submitted! Our team will be in touch shortly.
-        </div>
-      )}
-
-      <div className="grid grid-cols-3 gap-3">
-        {Object.entries(groupCounts).map(([group, count]) => {
-          const active = filter === group;
-          return (
-            <button key={group} onClick={() => setFilter(active ? "all" : group)}
-              className={`p-3.5 rounded-xl border text-left transition-all ${active ? "border-primary/40 bg-primary/10" : "border-border/30 bg-card/30 hover:border-border/60"}`}>
-              <div className="flex items-center justify-between mb-1.5">
-                <div className={`w-2 h-2 rounded-full ${groupDots[group]}`} />
-                <span className="text-lg font-extrabold">{count}</span>
-              </div>
-              <div className="text-xs text-muted-foreground">{group}</div>
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="flex gap-3 items-center flex-wrap">
-        <div className="relative flex-1 min-w-44">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-          <input placeholder="Search tickets..." value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 rounded-xl border border-border/40 bg-background/50 text-sm focus:outline-none focus:border-primary/50 transition-colors" />
-        </div>
-        <button onClick={reloadTickets} className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border/40 text-sm text-muted-foreground hover:text-foreground transition-all">
-          <RefreshCw className="w-3.5 h-3.5" />
-        </button>
-        <button onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-all glow-blue">
-          <Plus className="w-3.5 h-3.5" /> New Ticket
-        </button>
-      </div>
-
-      {showForm && (
-        <NewTicketForm
-          userEmail={userEmail}
-          teamId={teamId}
-          onSuccess={handleTicketSuccess}
-          onCancel={() => setShowForm(false)}
-        />
-      )}
-
-      <div className="flex flex-col gap-2.5">
-        {loadingTickets ? (
-          <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
-        ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-primary/8 border border-primary/15 flex items-center justify-center">
-              <TicketCheck className="w-6 h-6 text-primary/40" />
-            </div>
-            <p className="text-muted-foreground text-sm max-w-xs">
-              {tickets.length === 0 ? "No support tickets yet. Hit 'New Ticket' when you need help." : "No tickets match your filter."}
-            </p>
-          </div>
-        ) : (
-          filtered.map(t => (
-            <TicketRow key={t.id} t={t} expanded={expandedId === t.id}
-              onToggle={() => setExpandedId(expandedId === t.id ? null : t.id)} />
-          ))
-        )}
-      </div>
-    </PullToRefreshWrapper>
   );
 }
 
@@ -349,11 +123,12 @@ export default function Dashboard() {
   const biometric = useBiometricLock();
   useRealtimeNotifications({ userEmail: user?.email, endpoints });
 
-  const reloadTickets = async () => {
-    if (!user?.email) return;
+  const reloadTickets = async (email) => {
+    const targetEmail = email || user?.email;
+    if (!targetEmail) return;
     setLoadingTickets(true);
     try {
-      const data = await base44.entities.SupportTicket.filter({ client_email: user.email });
+      const data = await base44.entities.SupportTicket.filter({ client_email: targetEmail });
       setTickets(data);
     } catch (err) {
       console.error("Failed to reload tickets:", err);
@@ -390,15 +165,10 @@ export default function Dashboard() {
       }
     })();
 
-    // Real-time: reflect ticket changes instantly
     const unsub = base44.entities.SupportTicket.subscribe((event) => {
-      if (event.type === "create") {
-        setTickets(prev => [event.data, ...prev]);
-      } else if (event.type === "update") {
-        setTickets(prev => prev.map(t => t.id === event.id ? event.data : t));
-      } else if (event.type === "delete") {
-        setTickets(prev => prev.filter(t => t.id !== event.id));
-      }
+      if (event.type === "create") setTickets(prev => [event.data, ...prev]);
+      else if (event.type === "update") setTickets(prev => prev.map(t => t.id === event.id ? event.data : t));
+      else if (event.type === "delete") setTickets(prev => prev.filter(t => t.id !== event.id));
     });
 
     return () => unsub();
@@ -472,8 +242,11 @@ export default function Dashboard() {
         {activeTab === "overview" && (
           <div className="flex flex-col gap-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <StatCard icon={Ticket} label="Support Tickets" value={tickets.length} sub={`${tickets.filter(t => FILTER_GROUPS.Active.includes(t.status)).length} active`} onClick={() => setActiveTab("tickets")} />
-              <StatCard icon={CreditCard} label="Monthly Spend" value={`£${totalMonthly.toLocaleString()}`} sub={`${activeServices} active service${activeServices !== 1 ? "s" : ""}`} accent />
+              <StatCard icon={Ticket} label="Support Tickets" value={tickets.length}
+                sub={`${tickets.filter(t => ACTIVE_STATUSES.includes(t.status)).length} active`}
+                onClick={() => setActiveTab("tickets")} />
+              <StatCard icon={CreditCard} label="Monthly Spend" value={`£${totalMonthly.toLocaleString()}`}
+                sub={`${activeServices} active service${activeServices !== 1 ? "s" : ""}`} accent />
             </div>
 
             <div className="p-4 rounded-2xl border border-primary/20 bg-primary/5 flex items-center justify-between">
@@ -517,10 +290,11 @@ export default function Dashboard() {
         {activeTab === "tickets" && (
           <TicketsTab
             userEmail={user.email}
+            userName={user.full_name || user.email}
             teamId={team?.id}
             tickets={tickets}
             loadingTickets={loadingTickets}
-            reloadTickets={reloadTickets}
+            reloadTickets={() => reloadTickets(user.email)}
           />
         )}
         {activeTab === "billing" && <BillingTab services={services} userName={user?.full_name || user?.email} />}

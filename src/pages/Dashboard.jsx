@@ -217,7 +217,7 @@ function TicketsTab({ userEmail }) {
   const loadTickets = useCallback(async () => {
     setLoading(true);
     try {
-      const localTickets = await base44.entities.SupportTicket.list("-created_date");
+      const localTickets = await base44.entities.SupportTicket.filter({ client_email: userEmail }, "-created_date");
       setTickets(localTickets.map(localToDisplay));
     } catch (err) {
       console.error("Failed to load tickets:", err);

@@ -171,7 +171,7 @@ function TicketRow({ t, expanded, onToggle }) {
   );
 }
 
-function TicketsTab({ userEmail, tickets, loadingTickets, reloadTickets }) {
+function TicketsTab({ userEmail, teamId, tickets, loadingTickets, reloadTickets }) {
   const [expandedId, setExpandedId] = useState(null);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
@@ -240,6 +240,7 @@ function TicketsTab({ userEmail, tickets, loadingTickets, reloadTickets }) {
       {showForm && (
         <NewTicketForm
           userEmail={userEmail}
+          teamId={teamId}
           onSuccess={handleTicketSuccess}
           onCancel={() => setShowForm(false)}
         />
@@ -337,6 +338,7 @@ function AccountSettingsTab({ user, biometric }) {
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
+  const [team, setTeam] = useState(null);
   const [services, setServices] = useState([]);
   const [tickets, setTickets] = useState([]);
   const [loadingPage, setLoadingPage] = useState(true);
@@ -351,7 +353,8 @@ export default function Dashboard() {
     if (!email) return;
     setLoadingTickets(true);
     try {
-      const data = await base44.entities.SupportTicket.filter({ client_email: email }, "-created_date");
+      // RLS already filters to tickets this user can see (by email or team membership)
+      const data = await base44.entities.SupportTicket.list("-created_date");
       setTickets(data);
     } catch (err) {
       console.error("Failed to load tickets:", err);
@@ -366,11 +369,14 @@ export default function Dashboard() {
         const me = await base44.auth.me();
         if (!me) { base44.auth.redirectToLogin("/dashboard"); return; }
         setUser(me);
-        // Load services and tickets in parallel
-        const [s] = await Promise.all([
+        // Load services, team, and tickets in parallel
+        const [s, teams] = await Promise.all([
           base44.entities.ServiceUsage.list("-created_date"),
+          base44.entities.Team.list(),
           loadTickets(me.email),
         ]);
+        const userTeam = teams.find(t => t.member_emails?.includes(me.email)) || null;
+        setTeam(userTeam);
         setServices(s);
       } catch (error) {
         if (error?.status === 401 || error?.response?.status === 401) {
@@ -498,6 +504,7 @@ export default function Dashboard() {
         {activeTab === "tickets" && (
           <TicketsTab
             userEmail={user.email}
+            teamId={team?.id}
             tickets={tickets}
             loadingTickets={loadingTickets}
             reloadTickets={() => loadTickets(user.email)}

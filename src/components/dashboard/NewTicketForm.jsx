@@ -5,7 +5,7 @@ import { Loader2, Send, Paperclip, X, FileText, Image, Plus } from "lucide-react
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AITicketAssistant from "./AITicketAssistant";
 
-export default function NewTicketForm({ userEmail, onSuccess, onCancel }) {
+export default function NewTicketForm({ userEmail, teamId, onSuccess, onCancel }) {
   const [form, setForm] = useState({ subject: "", description: "", priority: "Medium", category: "other" });
   const [attachments, setAttachments] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -34,6 +34,7 @@ export default function NewTicketForm({ userEmail, onSuccess, onCancel }) {
         priority: form.priority,
         category: form.category,
         client_email: userEmail,
+        team_id: teamId || undefined,
       });
       onSuccess();
     } finally {

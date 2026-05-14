@@ -352,7 +352,7 @@ export default function Dashboard() {
   const reloadTickets = async () => {
     setLoadingTickets(true);
     try {
-      const data = await base44.entities.SupportTicket.list("-created_date");
+      const data = await base44.entities.SupportTicket.list();
       setTickets(data);
     } catch (err) {
       console.error("Failed to reload tickets:", err);
@@ -369,8 +369,8 @@ export default function Dashboard() {
         setUser(me);
 
         const [ticketData, serviceData, teamData] = await Promise.all([
-          base44.entities.SupportTicket.list("-created_date"),
-          base44.entities.ServiceUsage.list("-created_date"),
+          base44.entities.SupportTicket.list(),
+          base44.entities.ServiceUsage.list(),
           base44.entities.Team.list(),
         ]);
 

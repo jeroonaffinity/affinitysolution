@@ -52,7 +52,7 @@ const FILTER_GROUPS = {
 
 function StatCard({ icon: Icon, label, value, sub, accent = false, onClick }) {
   return (
-    <div onClick={onClick} className={`relative p-5 rounded-2xl border overflow-hidden group transition-all hover:-translate-y-0.5 ${onClick ? "cursor-pointer" : ""} ${accent ? "border-primary/30 bg-primary/5" : "border-border/40 bg-card/50"}`}>
+    <div onClick={onClick} className={`relative p-5 rounded-2xl border overflow-hidden transition-all hover:-translate-y-0.5 ${onClick ? "cursor-pointer" : ""} ${accent ? "border-primary/30 bg-primary/5" : "border-border/40 bg-card/50"}`}>
       <div className="relative">
         <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${accent ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>
           <Icon className="w-4 h-4" />
@@ -349,34 +349,35 @@ export default function Dashboard() {
   const biometric = useBiometricLock();
   useRealtimeNotifications({ userEmail: user?.email, endpoints });
 
-  const loadTickets = async () => {
+  const reloadTickets = async () => {
     setLoadingTickets(true);
     try {
       const data = await base44.entities.SupportTicket.list("-created_date");
       setTickets(data);
     } catch (err) {
-      console.error("Failed to load tickets:", err);
+      console.error("Failed to reload tickets:", err);
     } finally {
       setLoadingTickets(false);
     }
   };
 
   useEffect(() => {
-    const init = async () => {
+    (async () => {
       try {
         const me = await base44.auth.me();
         if (!me) { base44.auth.redirectToLogin("/dashboard"); return; }
         setUser(me);
-        // Load all data in parallel, including tickets
-        const [s, teams, ticketData] = await Promise.all([
+
+        const [ticketData, serviceData, teamData] = await Promise.all([
+          base44.entities.SupportTicket.list("-created_date"),
           base44.entities.ServiceUsage.list("-created_date"),
           base44.entities.Team.list(),
-          base44.entities.SupportTicket.list("-created_date"),
         ]);
-        const userTeam = teams.find(t => t.member_emails?.includes(me.email)) || null;
-        setTeam(userTeam);
-        setServices(s);
+
         setTickets(ticketData);
+        setServices(serviceData);
+        const userTeam = teamData.find(t => t.member_emails?.includes(me.email)) || null;
+        setTeam(userTeam);
       } catch (error) {
         if (error?.status === 401 || error?.response?.status === 401) {
           base44.auth.redirectToLogin("/dashboard");
@@ -386,10 +387,9 @@ export default function Dashboard() {
       } finally {
         setLoadingPage(false);
       }
-    };
-    init();
+    })();
 
-    // Real-time subscription so ticket updates appear instantly
+    // Real-time: reflect ticket changes instantly
     const unsub = base44.entities.SupportTicket.subscribe((event) => {
       if (event.type === "create") {
         setTickets(prev => [event.data, ...prev]);
@@ -399,6 +399,7 @@ export default function Dashboard() {
         setTickets(prev => prev.filter(t => t.id !== event.id));
       }
     });
+
     return () => unsub();
   }, []);
 
@@ -518,7 +519,7 @@ export default function Dashboard() {
             teamId={team?.id}
             tickets={tickets}
             loadingTickets={loadingTickets}
-            reloadTickets={loadTickets}
+            reloadTickets={reloadTickets}
           />
         )}
         {activeTab === "billing" && <BillingTab services={services} userName={user?.full_name || user?.email} />}

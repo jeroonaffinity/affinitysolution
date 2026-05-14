@@ -610,7 +610,9 @@ export default function Dashboard() {
           </div>
         )}
 
-        {activeTab === "tickets" && <TicketsTab userEmail={user?.email} />}
+        <div className={activeTab === "tickets" ? "" : "hidden"}>
+          {user?.email && <TicketsTab userEmail={user.email} />}
+        </div>
         {activeTab === "billing" && <BillingTab services={services} userName={user?.full_name || user?.email} />}
         {activeTab === "docs" && <SupportDocsTab />}
         {activeTab === "abr" && <ClientABRTab />}

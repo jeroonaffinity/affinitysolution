@@ -215,7 +215,10 @@ function TicketsTab({ userEmail }) {
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
   const loadTickets = useCallback(async () => {
-    if (!userEmail) return;
+    if (!userEmail) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const localTickets = await base44.entities.SupportTicket.filter({ client_email: userEmail }, "-created_date");

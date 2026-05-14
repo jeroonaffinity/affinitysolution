@@ -350,9 +350,10 @@ export default function Dashboard() {
   useRealtimeNotifications({ userEmail: user?.email, endpoints });
 
   const reloadTickets = async () => {
+    if (!user?.email) return;
     setLoadingTickets(true);
     try {
-      const data = await base44.entities.SupportTicket.list();
+      const data = await base44.entities.SupportTicket.filter({ client_email: user.email });
       setTickets(data);
     } catch (err) {
       console.error("Failed to reload tickets:", err);
@@ -369,9 +370,9 @@ export default function Dashboard() {
         setUser(me);
 
         const [ticketData, serviceData, teamData] = await Promise.all([
-          base44.entities.SupportTicket.list(),
-          base44.entities.ServiceUsage.list(),
-          base44.entities.Team.list(),
+          base44.entities.SupportTicket.filter({ client_email: me.email }).catch(() => []),
+          base44.entities.ServiceUsage.list().catch(() => []),
+          base44.entities.Team.list().catch(() => []),
         ]);
 
         setTickets(ticketData);

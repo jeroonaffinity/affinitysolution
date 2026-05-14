@@ -349,11 +349,9 @@ export default function Dashboard() {
   const biometric = useBiometricLock();
   useRealtimeNotifications({ userEmail: user?.email, endpoints });
 
-  const loadTickets = async (email) => {
-    if (!email) return;
+  const loadTickets = async () => {
     setLoadingTickets(true);
     try {
-      // RLS already filters to tickets this user can see (by email or team membership)
       const data = await base44.entities.SupportTicket.list("-created_date");
       setTickets(data);
     } catch (err) {
@@ -369,15 +367,16 @@ export default function Dashboard() {
         const me = await base44.auth.me();
         if (!me) { base44.auth.redirectToLogin("/dashboard"); return; }
         setUser(me);
-        // Load services, team, and tickets in parallel
-        const [s, teams] = await Promise.all([
+        // Load all data in parallel, including tickets
+        const [s, teams, ticketData] = await Promise.all([
           base44.entities.ServiceUsage.list("-created_date"),
           base44.entities.Team.list(),
-          loadTickets(me.email),
+          base44.entities.SupportTicket.list("-created_date"),
         ]);
         const userTeam = teams.find(t => t.member_emails?.includes(me.email)) || null;
         setTeam(userTeam);
         setServices(s);
+        setTickets(ticketData);
       } catch (error) {
         if (error?.status === 401 || error?.response?.status === 401) {
           base44.auth.redirectToLogin("/dashboard");
@@ -389,6 +388,18 @@ export default function Dashboard() {
       }
     };
     init();
+
+    // Real-time subscription so ticket updates appear instantly
+    const unsub = base44.entities.SupportTicket.subscribe((event) => {
+      if (event.type === "create") {
+        setTickets(prev => [event.data, ...prev]);
+      } else if (event.type === "update") {
+        setTickets(prev => prev.map(t => t.id === event.id ? event.data : t));
+      } else if (event.type === "delete") {
+        setTickets(prev => prev.filter(t => t.id !== event.id));
+      }
+    });
+    return () => unsub();
   }, []);
 
   if (loadingPage) {
@@ -507,7 +518,7 @@ export default function Dashboard() {
             teamId={team?.id}
             tickets={tickets}
             loadingTickets={loadingTickets}
-            reloadTickets={() => loadTickets(user.email)}
+            reloadTickets={loadTickets}
           />
         )}
         {activeTab === "billing" && <BillingTab services={services} userName={user?.full_name || user?.email} />}

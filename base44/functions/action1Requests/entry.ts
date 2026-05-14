@@ -42,10 +42,15 @@ Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
   const user = await base44.auth.me();
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
-  if (user.role !== "admin") return Response.json({ error: "Forbidden" }, { status: 403 });
 
   const payload = await req.json();
   const { action, orgId, path, controlAction, endpointIds, scriptId, scriptText } = payload;
+
+  // Non-admin users can only do read-only fetch actions
+  const isAdmin = user.role === "admin";
+  if (!isAdmin && action !== "fetch") {
+    return Response.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const token = await getToken();
 

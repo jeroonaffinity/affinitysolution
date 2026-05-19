@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const ADMIN_EMAIL = "info@affinitysolution.com";
+const ADMIN_SMS_EMAIL = "447947992054@eetexts.com"; // EE email-to-SMS
 const PORTAL_URL = "https://affinitysolution.base44.app/dashboard";
 const ADMIN_URL = "https://affinitysolution.base44.app/admin";
 
@@ -350,6 +351,15 @@ Deno.serve(async (req) => {
       subject: adminMail.subject,
       body: adminMail.body,
       from_name: "AffinitySolution Portal",
+    });
+
+    // 4. Send free SMS via EE email-to-SMS gateway
+    const isUrgent = priority === "critical" || priority === "high";
+    await base44.asServiceRole.integrations.Core.SendEmail({
+      to: ADMIN_SMS_EMAIL,
+      subject: "",
+      body: `${isUrgent ? "🚨 URGENT" : "🎫 New"} ticket [${priority.toUpperCase()}]: ${title} — from ${client_email}`,
+      from_name: "AffinitySolution",
     });
 
     return Response.json({ ok: true, zohoTicketId });

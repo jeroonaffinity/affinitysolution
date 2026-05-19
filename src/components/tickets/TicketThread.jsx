@@ -44,13 +44,17 @@ export default function TicketThread({ ticket, userEmail, userName }) {
 
   const loadThreads = async () => {
     setLoading(true);
-    const data = await base44.entities.TicketThread.filter({ ticket_id: ticket.id });
-    // Show only public messages to clients, sorted oldest-first
-    const sorted = (data || [])
-      .filter(t => t.is_public !== false)
-      .sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
-    setThreads(sorted);
-    setLoading(false);
+    try {
+      const data = await base44.entities.TicketThread.filter({ ticket_id: ticket.id });
+      const sorted = (data || [])
+        .filter(t => t.is_public !== false)
+        .sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
+      setThreads(sorted);
+    } catch (err) {
+      console.error("Failed to load threads:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {

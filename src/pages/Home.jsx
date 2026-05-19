@@ -1,6 +1,8 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ArrowRight, Shield, Server, Cloud, Headphones, BarChart3, Lock, CheckCircle2, ChevronRight, Wifi, AlertTriangle, PhoneCall, Clock } from "lucide-react";
+import { ArrowRight, Shield, Server, Cloud, Headphones, BarChart3, Lock, CheckCircle2, ChevronRight, Wifi, AlertTriangle, PhoneCall, Clock, X, LogIn } from "lucide-react";
+import { base44 } from "@/api/base44Client";
 
 const stats = [
 { value: "99.9%", label: "Uptime Guaranteed" },
@@ -117,8 +119,40 @@ const howItWorks = [
 
 
 export default function Home() {
+  const [showLoginBanner, setShowLoginBanner] = useState(false);
+
+  useEffect(() => {
+    // Show the portal login banner if the user is not authenticated
+    base44.auth.isAuthenticated().then(authed => {
+      if (!authed) setShowLoginBanner(true);
+    });
+  }, []);
+
   return (
     <div className="bg-background">
+      {/* Client Portal Login Banner */}
+      {showLoginBanner && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl border border-primary/30 bg-card/95 backdrop-blur-xl shadow-2xl shadow-black/40 max-w-xs">
+          <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
+            <LogIn className="w-4 h-4 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-semibold">Client Portal</div>
+            <div className="text-xs text-muted-foreground">Sign in to manage your IT services</div>
+          </div>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <button
+              onClick={() => base44.auth.redirectToLogin("/dashboard")}
+              className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all">
+              Sign In
+            </button>
+            <button onClick={() => setShowLoginBanner(false)} className="p-1 rounded-lg text-muted-foreground hover:text-foreground transition-colors">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Hero */}
       <section className="relative min-h-[92vh] flex items-center justify-center overflow-hidden bg-grid">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-primary/10 blur-[120px] pointer-events-none" />

@@ -112,15 +112,20 @@ export default function ClientABRTab() {
     setLoading(true);
     setError(null);
     setNoKey(false);
-    const res = await base44.functions.invoke("abrRequests", { action: "list", status: tab });
-    if (res.data?.error === "No ABR key assigned") {
-      setNoKey(true);
-    } else if (res.data?.error) {
-      setError(res.data.error);
-    } else {
-      setRequests(res.data?.requests || []);
+    try {
+      const res = await base44.functions.invoke("abrRequests", { action: "list", status: tab });
+      if (res.data?.error === "No ABR key assigned") {
+        setNoKey(true);
+      } else if (res.data?.error) {
+        setError(res.data.error);
+      } else {
+        setRequests(res.data?.requests || []);
+      }
+    } catch (err) {
+      setError("Failed to load requests. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [activeTab]);
 
   useEffect(() => { fetchRequests(activeTab); }, [activeTab]);

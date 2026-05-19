@@ -25,6 +25,21 @@ async function actionABR(apiKey, dc = "dc3", method, requestId) {
   return true;
 }
 
+// Fetch all endpoints in a team's Action1 group to get computer names for filtering
+async function getTeamEndpointNames(base44, orgId, groupId) {
+  if (!orgId || !groupId) return null;
+  try {
+    const res = await base44.asServiceRole.functions.invoke("action1Requests", {
+      action: "fetch",
+      path: `/endpoints/groups/${orgId}/${groupId}/contents`,
+    });
+    const items = res?.data?.items || [];
+    return new Set(items.map(e => (e.name || "").toLowerCase().trim()));
+  } catch {
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
   const user = await base44.auth.me();
@@ -36,17 +51,18 @@ Deno.serve(async (req) => {
 
   // ── LIST ──────────────────────────────────────────────────────────────────
   if (action === "list") {
+
+    // ── ADMIN: merged view across all teams ──────────────────────────────────
     if (isAdmin && !clientEmail) {
-      // Merged view: fetch from all teams + master key
       const teams = await base44.asServiceRole.entities.Team.list();
       const masterKey = Deno.env.get("abr_key");
 
       const sources = teams
         .filter(t => t.abr_api_key)
-        .map(t => ({ abr_api_key: t.abr_api_key, abr_datacenter: t.abr_datacenter || "dc3", label: t.name, client_email: null }));
+        .map(t => ({ abr_api_key: t.abr_api_key, abr_datacenter: t.abr_datacenter || "dc3", label: t.name }));
 
       if (masterKey) {
-        sources.unshift({ abr_api_key: masterKey, label: "Master Account", client_email: null, abr_datacenter: "dc3" });
+        sources.unshift({ abr_api_key: masterKey, label: "Master Account", abr_datacenter: "dc3" });
       }
 
       const results = await Promise.allSettled(
@@ -57,7 +73,6 @@ Deno.serve(async (req) => {
           return list.map(r => ({
             ...r,
             _source_label: src.label,
-            _source_email: src.client_email,
             _api_key: src.abr_api_key,
             _dc: src.abr_datacenter || "dc3",
           }));
@@ -71,35 +86,51 @@ Deno.serve(async (req) => {
       return Response.json({ requests: merged });
     }
 
-    // Fetch for a specific client (admin viewing one client, or the client themselves)
-    // Look up via Team entity
-    let keyRecord = null;
+    // ── ADMIN: viewing a specific client ─────────────────────────────────────
     if (isAdmin && clientEmail) {
       const allTeams = await base44.asServiceRole.entities.Team.list();
       const team = allTeams.find(t => t.member_emails?.includes(clientEmail));
-      if (team) keyRecord = { abr_api_key: team.abr_api_key, abr_datacenter: team.abr_datacenter || "dc3" };
-    } else {
-      // Client fetching their own team
-      const allTeams = await base44.entities.Team.list();
-      const team = allTeams.find(t => t.member_emails?.includes(user.email));
-      if (team) keyRecord = { abr_api_key: team.abr_api_key, abr_datacenter: team.abr_datacenter || "dc3" };
+      if (!team?.abr_api_key) return Response.json({ requests: [], error: "No ABR key assigned" });
+      const url = status ? `/requests?status=${status}` : "/requests";
+      const data = await fetchABR(team.abr_api_key, team.abr_datacenter || "dc3", url);
+      return Response.json({ requests: Array.isArray(data) ? data : [] });
     }
 
-    if (!keyRecord?.abr_api_key) return Response.json({ requests: [], error: "No ABR key assigned" });
+    // ── CLIENT: fetch own team's ABR requests, filtered by their endpoints ────
+    const allTeams = await base44.entities.Team.list();
+    const team = allTeams.find(t => t.member_emails?.includes(user.email));
+
+    // Use master key if team has no dedicated ABR key
+    const abrKey = team?.abr_api_key || Deno.env.get("abr_key");
+    const abrDc = team?.abr_datacenter || "dc3";
+
+    if (!abrKey) return Response.json({ requests: [], error: "No ABR key assigned" });
 
     const url = status ? `/requests?status=${status}` : "/requests";
-    const data = await fetchABR(keyRecord.abr_api_key, keyRecord.abr_datacenter || "dc3", url);
-    return Response.json({ requests: Array.isArray(data) ? data : [] });
+    const data = await fetchABR(abrKey, abrDc, url);
+    const allRequests = Array.isArray(data) ? data : [];
+
+    // If team has Action1 configured, filter requests to only those from team endpoints
+    if (team?.action1_org_id && team?.action1_group_id) {
+      const endpointNames = await getTeamEndpointNames(base44, team.action1_org_id, team.action1_group_id);
+      if (endpointNames && endpointNames.size > 0) {
+        const filtered = allRequests.filter(r => {
+          const computerName = (r.computer?.name || "").toLowerCase().trim();
+          return computerName && endpointNames.has(computerName);
+        });
+        return Response.json({ requests: filtered });
+      }
+    }
+
+    return Response.json({ requests: allRequests });
   }
 
   // ── APPROVE / DENY ────────────────────────────────────────────────────────
   if ((action === "approve" || action === "deny") && requestId) {
     if (!isAdmin) return Response.json({ error: "Forbidden" }, { status: 403 });
 
-    // Must supply apiKey + dc when actioning from merged view
     const key = payloadKey;
     const dc = payloadDc || "dc3";
-
     if (!key) return Response.json({ error: "No API key provided for action" }, { status: 400 });
 
     const method = action === "approve" ? "PUT" : "DELETE";

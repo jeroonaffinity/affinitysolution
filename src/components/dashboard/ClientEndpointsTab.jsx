@@ -166,26 +166,37 @@ export default function ClientEndpointsTab({ userEmail }) {
   const [noTeam, setNoTeam] = useState(false);
   const [search, setSearch] = useState("");
 
-  const loadTeam = useCallback(async () => {
-    setLoading(true);
-    const teams = await base44.entities.Team.list();
-    const myTeam = teams.find(t => t.member_emails?.includes(userEmail));
-    if (!myTeam) { setNoTeam(true); setLoading(false); return; }
-    setTeam(myTeam);
-    await loadEndpoints(myTeam);
-    setLoading(false);
-  }, [userEmail]);
-
-  const loadEndpoints = async (t) => {
+  const loadEndpoints = useCallback(async (t) => {
     if (!t?.action1_org_id || !t?.action1_group_id) return;
     setLoadingEndpoints(true);
-    const res = await base44.functions.invoke("action1Requests", {
-      action: "fetch",
-      path: `/endpoints/groups/${t.action1_org_id}/${t.action1_group_id}/contents`,
-    });
-    setEndpoints(res.data?.data?.items || []);
-    setLoadingEndpoints(false);
-  };
+    try {
+      const res = await base44.functions.invoke("action1Requests", {
+        action: "fetch",
+        path: `/endpoints/managed/${t.action1_org_id}?endpoint_group_id=${t.action1_group_id}&fields=*`,
+      });
+      setEndpoints(res.data?.data?.items || []);
+    } catch (err) {
+      console.error("Failed to load endpoints:", err);
+    } finally {
+      setLoadingEndpoints(false);
+    }
+  }, []);
+
+  const loadTeam = useCallback(async () => {
+    setLoading(true);
+    try {
+      const teams = await base44.entities.Team.list();
+      const myTeam = teams.find(t => t.member_emails?.includes(userEmail));
+      if (!myTeam) { setNoTeam(true); return; }
+      setTeam(myTeam);
+      await loadEndpoints(myTeam);
+    } catch (err) {
+      console.error("Failed to load team:", err);
+      setNoTeam(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [userEmail, loadEndpoints]);
 
   useEffect(() => { loadTeam(); }, [loadTeam]);
 

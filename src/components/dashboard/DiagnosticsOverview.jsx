@@ -76,23 +76,28 @@ export default function DiagnosticsOverview({ userEmail, onGoToEndpoints }) {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const teams = await base44.entities.Team.list();
-    const myTeam = teams.find(t => t.member_emails?.includes(userEmail));
+    try {
+      const teams = await base44.entities.Team.list();
+      const myTeam = teams.find(t => t.member_emails?.includes(userEmail));
 
-    if (!myTeam?.action1_org_id || !myTeam?.action1_group_id) {
+      if (!myTeam?.action1_org_id || !myTeam?.action1_group_id) {
+        setNoConfig(true);
+        return;
+      }
+
+      const res = await base44.functions.invoke("action1Requests", {
+        action: "fetch",
+        path: `/endpoints/managed/${myTeam.action1_org_id}?endpoint_group_id=${myTeam.action1_group_id}&fields=*`,
+      });
+
+      setEndpoints(res.data?.data?.items || []);
+      setLastUpdated(new Date());
+    } catch (err) {
+      console.error("DiagnosticsOverview load error:", err);
       setNoConfig(true);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const res = await base44.functions.invoke("action1Requests", {
-      action: "fetch",
-      path: `/endpoints/groups/${myTeam.action1_org_id}/${myTeam.action1_group_id}/contents`,
-    });
-
-    setEndpoints(res.data?.data?.items || []);
-    setLastUpdated(new Date());
-    setLoading(false);
   }, [userEmail]);
 
   useEffect(() => { load(); }, [load]);

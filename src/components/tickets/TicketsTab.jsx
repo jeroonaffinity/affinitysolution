@@ -12,7 +12,7 @@ const FILTER_GROUPS = {
 
 const GROUP_DOTS = { Active: "bg-amber-400", Waiting: "bg-purple-400", Resolved: "bg-emerald-400" };
 
-export default function TicketsTab({ userEmail, userName, teamId, tickets, loadingTickets, reloadTickets }) {
+export default function TicketsTab({ userEmail, userName, teamId, tickets, loadingTickets, reloadTickets, endpoints = [] }) {
   const [expandedId, setExpandedId] = useState(null);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
@@ -114,6 +114,7 @@ export default function TicketsTab({ userEmail, userName, teamId, tickets, loadi
               onToggle={() => setExpandedId(expandedId === t.id ? null : t.id)}
               userEmail={userEmail}
               userName={userName}
+              endpoints={endpoints}
             />
           ))
         )}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp, Clock } from "lucide-react";
 import TicketThread from "./TicketThread";
+import AIQuickActions from "./AIQuickActions";
 
 const STATUS_CONFIG = {
   "new":               { label: "New",               color: "text-sky-400",     bg: "bg-sky-500/15",     dot: "bg-sky-400"     },
@@ -23,7 +24,7 @@ const PRIORITY_CONFIG = {
   critical: "text-red-400 bg-red-500/15",
 };
 
-export default function TicketCard({ ticket, expanded, onToggle, userEmail, userName }) {
+export default function TicketCard({ ticket, expanded, onToggle, userEmail, userName, endpoints = [] }) {
   const status = STATUS_CONFIG[ticket.status] || STATUS_CONFIG["new"];
   const priorityCls = PRIORITY_CONFIG[ticket.priority?.toLowerCase()] || "text-muted-foreground bg-muted";
 
@@ -75,6 +76,7 @@ export default function TicketCard({ ticket, expanded, onToggle, userEmail, user
               {ticket.affected_users_count > 1 && <span>👥 {ticket.affected_users_count} users affected</span>}
             </div>
           )}
+          <AIQuickActions ticket={ticket} endpoints={endpoints} />
           <TicketThread ticket={ticket} userEmail={userEmail} userName={userName} />
         </div>
       )}

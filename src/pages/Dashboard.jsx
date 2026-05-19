@@ -341,6 +341,7 @@ export default function Dashboard() {
             tickets={tickets}
             loadingTickets={loadingTickets}
             reloadTickets={() => reloadTickets(user.email)}
+            endpoints={endpoints}
           />
         )}
         {activeTab === "billing" && <BillingTab services={services} userName={user?.full_name || user?.email} />}

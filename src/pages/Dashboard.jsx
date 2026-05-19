@@ -16,6 +16,10 @@ import BiometricLockScreen from "@/components/BiometricLockScreen";
 import { useBiometricLock } from "@/hooks/useBiometricLock";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import KBSearchBar from "@/components/dashboard/KBSearchBar";
+import SecurityScoreRing from "@/components/dashboard/SecurityScoreRing";
+import ActivityFeed from "@/components/dashboard/ActivityFeed";
+import QuickActions from "@/components/dashboard/QuickActions";
+import TicketSparkline from "@/components/dashboard/TicketSparkline";
 
 const TABS = [
   { id: "overview",  label: "Overview"        },
@@ -226,43 +230,72 @@ export default function Dashboard() {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-8">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight">
+            {new Date().getHours() < 12 ? "🌤️" : new Date().getHours() < 18 ? "☀️" : "🌙"}{" "}
             Good {new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening"},{" "}
             <span className="text-gradient">{user?.full_name?.split(" ")[0] || "there"}</span>
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">Here's a live view of your IT environment.</p>
+          <div className="flex items-center gap-2 mt-1">
+            <div className="flex items-center gap-1.5">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              <p className="text-muted-foreground text-sm">Live view of your IT environment</p>
+            </div>
+          </div>
         </div>
 
-        <div className="flex gap-1 bg-card/40 border border-border/30 rounded-xl p-1 w-fit flex-wrap">
-          {TABS.map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        {(() => {
+          const activeTicketCount = tickets.filter(t => ACTIVE_STATUSES.includes(t.status)).length;
+          return (
+            <div className="flex gap-1 bg-card/40 border border-border/30 rounded-xl p-1 w-fit flex-wrap">
+              {TABS.map(tab => (
+                <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                  className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+                  {tab.label}
+                  {tab.id === "tickets" && activeTicketCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                      {activeTicketCount > 9 ? "9+" : activeTicketCount}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          );
+        })()}
 
         {activeTab === "overview" && (
           <div className="flex flex-col gap-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <StatCard icon={Ticket} label="Support Tickets" value={tickets.length}
-                sub={`${tickets.filter(t => ACTIVE_STATUSES.includes(t.status)).length} active`}
-                onClick={() => setActiveTab("tickets")} />
-              <StatCard icon={CreditCard} label="Monthly Spend" value={`£${totalMonthly.toLocaleString()}`}
-                sub={`${activeServices} active service${activeServices !== 1 ? "s" : ""}`} accent />
-            </div>
 
-            <div className="p-4 rounded-2xl border border-primary/20 bg-primary/5 flex items-center justify-between">
-              <div>
-                <div className="font-semibold text-sm">Support Tickets</div>
-                <div className="text-xs text-muted-foreground mt-0.5">View and manage your support requests</div>
+            {/* Quick Actions */}
+            <QuickActions
+              onNewTicket={() => setActiveTab("tickets")}
+              onGoTo={(tab) => setActiveTab(tab)}
+            />
+
+            {/* Top stats row */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="sm:col-span-2 grid grid-cols-2 gap-4">
+                <StatCard icon={Ticket} label="Support Tickets" value={tickets.length}
+                  sub={`${tickets.filter(t => ACTIVE_STATUSES.includes(t.status)).length} active`}
+                  onClick={() => setActiveTab("tickets")} />
+                <StatCard icon={CreditCard} label="Monthly Spend" value={`£${totalMonthly.toLocaleString()}`}
+                  sub={`${activeServices} active service${activeServices !== 1 ? "s" : ""}`} accent
+                  onClick={() => setActiveTab("billing")} />
               </div>
-              <button onClick={() => setActiveTab("tickets")} className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90">
-                View Tickets <ArrowRight className="w-3.5 h-3.5" />
-              </button>
+              <SecurityScoreRing tickets={tickets} endpoints={endpoints} />
             </div>
 
+            {/* Sparkline + Activity side by side on larger screens */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <TicketSparkline tickets={tickets} />
+              <ActivityFeed tickets={tickets} />
+            </div>
+
+            {/* Endpoint Health */}
             <DiagnosticsOverview userEmail={user?.email} onGoToEndpoints={() => setActiveTab("endpoints")} />
 
+            {/* Active Services */}
             {activeServices > 0 && (
               <div className="flex flex-col gap-3">
                 <div className="flex items-center justify-between">

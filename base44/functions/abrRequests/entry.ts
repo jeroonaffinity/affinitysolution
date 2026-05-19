@@ -6,6 +6,8 @@ const DC_BASE = {
   dc3: "https://dc3api.adminbyrequest.com",
 };
 
+const ACTION1_BASE = "https://app.eu.action1.com/api/3.0";
+
 async function fetchABR(apiKey, dc = "dc3", path = "/requests") {
   const base = DC_BASE[dc] || DC_BASE.dc3;
   const res = await fetch(`${base}${path}`, { headers: { apikey: apiKey } });
@@ -25,15 +27,32 @@ async function actionABR(apiKey, dc = "dc3", method, requestId) {
   return true;
 }
 
-// Fetch all endpoints in a team's Action1 group to get computer names for filtering
-async function getTeamEndpointNames(base44, orgId, groupId) {
+async function getAction1Token() {
+  const res = await fetch(`${ACTION1_BASE}/oauth2/token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: Deno.env.get("ACTION1_CLIENT_ID"),
+      client_secret: Deno.env.get("ACTION1_CLIENT_SECRET"),
+    }),
+  });
+  const data = await res.json();
+  if (!data.access_token) throw new Error("Failed to get Action1 token");
+  return data.access_token;
+}
+
+// Fetch endpoint names from Action1 group directly (no cross-function call)
+async function getTeamEndpointNames(orgId, groupId) {
   if (!orgId || !groupId) return null;
   try {
-    const res = await base44.asServiceRole.functions.invoke("action1Requests", {
-      action: "fetch",
-      path: `/endpoints/groups/${orgId}/${groupId}/contents`,
-    });
-    const items = res?.data?.items || [];
+    const token = await getAction1Token();
+    const res = await fetch(
+      `${ACTION1_BASE}/endpoints/managed/${orgId}?endpoint_group_id=${groupId}&fields=name`,
+      { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const items = data?.items || [];
     return new Set(items.map(e => (e.name || "").toLowerCase().trim()));
   } catch {
     return null;
@@ -110,9 +129,9 @@ Deno.serve(async (req) => {
     const data = await fetchABR(abrKey, abrDc, url);
     const allRequests = Array.isArray(data) ? data : [];
 
-    // If team has Action1 configured, filter requests to only those from team endpoints
+    // If team has Action1 configured, filter ABR requests to only those from team's endpoints
     if (team?.action1_org_id && team?.action1_group_id) {
-      const endpointNames = await getTeamEndpointNames(base44, team.action1_org_id, team.action1_group_id);
+      const endpointNames = await getTeamEndpointNames(team.action1_org_id, team.action1_group_id);
       if (endpointNames && endpointNames.size > 0) {
         const filtered = allRequests.filter(r => {
           const computerName = (r.computer?.name || "").toLowerCase().trim();

@@ -20,6 +20,8 @@ import SecurityScoreRing from "@/components/dashboard/SecurityScoreRing";
 import ActivityFeed from "@/components/dashboard/ActivityFeed";
 import QuickActions from "@/components/dashboard/QuickActions";
 import TicketSparkline from "@/components/dashboard/TicketSparkline";
+import SLAWidget from "@/components/dashboard/SLAWidget";
+import UptimeSummary from "@/components/dashboard/UptimeSummary";
 
 const TABS = [
   { id: "overview",  label: "Overview"        },
@@ -230,7 +232,6 @@ export default function Dashboard() {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-8">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight">
-            {new Date().getHours() < 12 ? "🌤️" : new Date().getHours() < 18 ? "☀️" : "🌙"}{" "}
             Good {new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening"},{" "}
             <span className="text-gradient">{user?.full_name?.split(" ")[0] || "there"}</span>
           </h1>
@@ -292,8 +293,18 @@ export default function Dashboard() {
               <ActivityFeed tickets={tickets} />
             </div>
 
+            {/* SLA Status */}
+            <SLAWidget tickets={tickets} onViewAll={() => setActiveTab("tickets")} />
+
+            {/* Uptime Summary */}
+            <UptimeSummary endpoints={endpoints} />
+
             {/* Endpoint Health */}
-            <DiagnosticsOverview userEmail={user?.email} onGoToEndpoints={() => setActiveTab("endpoints")} />
+            <DiagnosticsOverview
+              userEmail={user?.email}
+              onGoToEndpoints={() => setActiveTab("endpoints")}
+              onEndpointsLoaded={(eps) => setEndpoints(eps)}
+            />
 
             {/* Active Services */}
             {activeServices > 0 && (

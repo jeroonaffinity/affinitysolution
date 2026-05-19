@@ -68,7 +68,7 @@ function EndpointHealthRow({ ep }) {
   );
 }
 
-export default function DiagnosticsOverview({ userEmail, onGoToEndpoints }) {
+export default function DiagnosticsOverview({ userEmail, onGoToEndpoints, onEndpointsLoaded }) {
   const [endpoints, setEndpoints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [noConfig, setNoConfig] = useState(false);
@@ -90,8 +90,10 @@ export default function DiagnosticsOverview({ userEmail, onGoToEndpoints }) {
         path: `/endpoints/managed/${myTeam.action1_org_id}?endpoint_group_id=${myTeam.action1_group_id}&fields=*`,
       });
 
-      setEndpoints(res.data?.data?.items || []);
+      const items = res.data?.data?.items || [];
+      setEndpoints(items);
       setLastUpdated(new Date());
+      if (onEndpointsLoaded) onEndpointsLoaded(items);
     } catch (err) {
       console.error("DiagnosticsOverview load error:", err);
       setNoConfig(true);

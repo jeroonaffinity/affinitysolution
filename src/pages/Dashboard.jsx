@@ -15,6 +15,7 @@ import DiagnosticsOverview from "@/components/dashboard/DiagnosticsOverview";
 import BiometricLockScreen from "@/components/BiometricLockScreen";
 import { useBiometricLock } from "@/hooks/useBiometricLock";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
+import KBSearchBar from "@/components/dashboard/KBSearchBar";
 
 const TABS = [
   { id: "overview",  label: "Overview"        },
@@ -209,12 +210,13 @@ export default function Dashboard() {
             <div className="hidden sm:block w-px h-4 bg-border/60" />
             <span className="hidden sm:block text-sm font-medium text-muted-foreground">Client Portal</span>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-2.5 text-sm">
+          <div className="flex items-center gap-3 flex-1 justify-end">
+            <KBSearchBar />
+            <div className="hidden sm:flex items-center gap-2.5 text-sm flex-shrink-0">
               <div className="w-7 h-7 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-xs font-bold text-primary">{initials}</div>
-              <span className="text-muted-foreground font-medium">{user?.full_name || user?.email}</span>
+              <span className="text-muted-foreground font-medium truncate max-w-[120px]">{user?.full_name || user?.email}</span>
             </div>
-            <button onClick={() => base44.auth.logout("/")} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border/50 text-xs text-muted-foreground hover:text-foreground hover:border-border transition-all">
+            <button onClick={() => base44.auth.logout("/")} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border/50 text-xs text-muted-foreground hover:text-foreground hover:border-border transition-all flex-shrink-0">
               <LogOut className="w-3.5 h-3.5" /> Logout
             </button>
           </div>

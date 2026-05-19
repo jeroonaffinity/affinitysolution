@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import {
   Loader2, Send, Paperclip, X, FileText, Image,
   ChevronRight, ChevronLeft, Sparkles, CheckCircle2,
-  Monitor, Wifi, Shield, Mail, HardDrive, HelpCircle, Zap, BookOpen
+  Monitor, Wifi, Shield, Mail, HardDrive, HelpCircle, Zap, BookOpen, ExternalLink
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -158,6 +158,10 @@ export default function TicketWizard({ userEmail, teamId, userName, onSuccess, o
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [aiSuggestion, setAiSuggestion] = useState(null);
+  const [kbSuggestions, setKbSuggestions] = useState([]);
+  const [kbLoading, setKbLoading] = useState(false);
+  const [kbExpanded, setKbExpanded] = useState(null);
+  const kbDebounceRef = useRef(null);
 
   const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
@@ -168,6 +172,26 @@ export default function TicketWizard({ userEmail, teamId, userName, onSuccess, o
     setUploading(false);
     e.target.value = "";
   };
+
+  // KB suggestions when subject changes
+  useEffect(() => {
+    if (form.subject.trim().length < 8) { setKbSuggestions([]); return; }
+    if (kbDebounceRef.current) clearTimeout(kbDebounceRef.current);
+    kbDebounceRef.current = setTimeout(async () => {
+      setKbLoading(true);
+      try {
+        const res = await base44.functions.invoke("kbSmartSuggest", {
+          action: "search",
+          query: form.subject.trim(),
+          category: form.category || undefined,
+          limit: 3,
+        });
+        setKbSuggestions(res.data?.articles || []);
+      } catch { /* silent */ }
+      finally { setKbLoading(false); }
+    }, 600);
+    return () => clearTimeout(kbDebounceRef.current);
+  }, [form.subject, form.category]);
 
   const handleAISuggestion = (suggestion) => {
     setAiSuggestion(suggestion);
@@ -296,6 +320,40 @@ export default function TicketWizard({ userEmail, teamId, userName, onSuccess, o
               description={form.description}
               onSuggestion={handleAISuggestion}
             />
+
+            {/* KB Suggestions */}
+            {(kbLoading || kbSuggestions.length > 0) && (
+              <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 overflow-hidden">
+                <div className="px-4 py-2.5 border-b border-amber-500/15 flex items-center gap-2">
+                  <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="text-xs font-semibold text-amber-300">Related Knowledge Base Articles</span>
+                  {kbLoading && <Loader2 className="w-3 h-3 animate-spin text-amber-400/60 ml-auto" />}
+                </div>
+                {!kbLoading && kbSuggestions.length > 0 && (
+                  <div className="divide-y divide-amber-500/10">
+                    {kbSuggestions.map(article => (
+                      <div key={article.id}>
+                        <button type="button"
+                          onClick={() => setKbExpanded(kbExpanded === article.id ? null : article.id)}
+                          className="w-full text-left px-4 py-2.5 flex items-start gap-2.5 hover:bg-amber-500/5 transition-colors">
+                          <BookOpen className="w-3.5 h-3.5 text-amber-400/60 mt-0.5 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium">{article.title}</div>
+                            {article.summary && <div className="text-xs text-muted-foreground mt-0.5">{article.summary}</div>}
+                          </div>
+                          <ExternalLink className="w-3 h-3 text-muted-foreground/40 flex-shrink-0 mt-0.5" />
+                        </button>
+                        {kbExpanded === article.id && (
+                          <div className="px-4 pb-3 text-xs text-foreground/80 leading-relaxed whitespace-pre-wrap bg-amber-500/3 border-t border-amber-500/10 pt-2">
+                            {article.content}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Attachments */}
             <div className="flex flex-col gap-2">

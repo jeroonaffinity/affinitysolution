@@ -32,6 +32,7 @@ function PriorityBadge({ priority }) {
 }
 
 function ThreadContent({ content }) {
+  if (!content) return null;
   const plain = content.replace(/<[^>]*>/g, "");
   const parts = plain.split(/(--- Attachments ---[\s\S]*)/);
   const bodyText = parts[0].trim();
@@ -115,20 +116,24 @@ function ThreadPanel({ ticket, onClose }) {
   const sendReply = async () => {
     if (!reply.trim() && !attachments.length) return;
     setSending(true);
-    const attachmentText = attachments.length
-      ? "\n\n--- Attachments ---\n" + attachments.map((url, i) => `[File ${i + 1}](${url})`).join("\n")
-      : "";
-    const user = await base44.auth.me();
-    await ticketService.addTicketMessage(ticket.id, {
-      author_email: user.email,
-      author_name: user.full_name || "Support Team",
-      content: reply + attachmentText,
-      is_public: true,
-    });
-    setReply("");
-    setAttachments([]);
-    setSending(false);
-    loadThreads();
+    try {
+      const attachmentText = attachments.length
+        ? "\n\n--- Attachments ---\n" + attachments.map((url, i) => `[File ${i + 1}](${url})`).join("\n")
+        : "";
+      const user = await base44.auth.me();
+      await ticketService.addTicketMessage(ticket.id, {
+        author_email: user.email,
+        author_name: user.full_name || "Support Team",
+        content: reply.trim() + attachmentText,
+        is_public: true,
+      });
+      setReply("");
+      setAttachments([]);
+    } catch (err) {
+      console.error("Failed to send reply:", err);
+    } finally {
+      setSending(false);
+    }
   };
 
   const generateAIReply = async () => {
@@ -153,6 +158,7 @@ function ThreadPanel({ ticket, onClose }) {
       assigned_to_name: adminUser?.full_name || assignedTo || null,
     });
     setUpdating(false);
+    onClose(); // close panel and reload list so data is fresh
   };
 
   return (
@@ -282,7 +288,7 @@ function ThreadPanel({ ticket, onClose }) {
                         isAdmin ? "bg-primary/20 text-foreground rounded-tr-sm" :
                         "bg-card border border-border/50 rounded-tl-sm"
                       }`}>
-                        {thread.content}
+                        <ThreadContent content={thread.content} />
                       </div>
                       {!thread.is_public && (
                         <span className="text-xs text-muted-foreground italic">(Internal note)</span>
@@ -385,12 +391,27 @@ export default function AdminTicketsBoard() {
 
   const loadTickets = useCallback(async () => {
     setLoading(true);
-    const t = await ticketService.listTickets();
-    setTickets(t || []);
-    setLoading(false);
+    try {
+      const t = await ticketService.listTickets();
+      setTickets(t || []);
+    } catch (err) {
+      console.error("Failed to load tickets:", err);
+      setTickets([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  useEffect(() => { loadTickets(); }, []);
+  useEffect(() => {
+    loadTickets();
+    // Real-time: keep list fresh when tickets change
+    const unsub = base44.entities.SupportTicket.subscribe((event) => {
+      if (event.type === "create") setTickets(prev => [event.data, ...prev]);
+      else if (event.type === "update") setTickets(prev => prev.map(t => t.id === event.id ? event.data : t));
+      else if (event.type === "delete") setTickets(prev => prev.filter(t => t.id !== event.id));
+    });
+    return () => unsub();
+  }, []);
 
   const filtered = tickets.filter(t => {
     const q = search.toLowerCase();

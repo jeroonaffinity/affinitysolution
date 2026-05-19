@@ -2,11 +2,12 @@ import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import {
   Loader2, Send, MessageSquare, Sparkles,
-  FileText, Image, Clock, ChevronDown, ChevronUp
+  FileText, Image, Clock
 } from "lucide-react";
 
 function ThreadContent({ content }) {
-  const plain = (content || "").replace(/<[^>]*>/g, "");
+  if (!content) return null;
+  const plain = content.replace(/<[^>]*>/g, "");
   const parts = plain.split(/(--- Attachments ---[\s\S]*)/);
   const bodyText = parts[0].trim();
   const attachSection = parts[1] || "";
@@ -39,19 +40,40 @@ export default function TicketThread({ ticket, userEmail, userName }) {
   const [aiLoading, setAiLoading] = useState(false);
   const bottomRef = useRef(null);
 
+  const isClosed = ["closed", "resolved"].includes(ticket.status);
+
   const loadThreads = async () => {
+    setLoading(true);
     const data = await base44.entities.TicketThread.filter({ ticket_id: ticket.id });
-    const sorted = data.sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
-    setThreads(sorted.filter(t => t.is_public !== false));
+    // Show only public messages to clients, sorted oldest-first
+    const sorted = (data || [])
+      .filter(t => t.is_public !== false)
+      .sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
+    setThreads(sorted);
     setLoading(false);
   };
 
   useEffect(() => {
     loadThreads();
     const unsub = base44.entities.TicketThread.subscribe((event) => {
-      if (event.data?.ticket_id !== ticket.id) return;
-      if (event.type === "create") setThreads(prev => [...prev, event.data].filter(t => t.is_public !== false));
-      if (event.type === "update") setThreads(prev => prev.map(t => t.id === event.id ? event.data : t));
+      if (!event.data || event.data.ticket_id !== ticket.id) return;
+      if (event.type === "create") {
+        // Only add if public
+        if (event.data.is_public !== false) {
+          setThreads(prev => {
+            // Avoid duplicates
+            if (prev.some(t => t.id === event.data.id)) return prev;
+            return [...prev, event.data].sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
+          });
+        }
+      } else if (event.type === "update") {
+        setThreads(prev =>
+          prev.map(t => t.id === event.id ? { ...t, ...event.data } : t)
+              .filter(t => t.is_public !== false)
+        );
+      } else if (event.type === "delete") {
+        setThreads(prev => prev.filter(t => t.id !== event.id));
+      }
     });
     return () => unsub();
   }, [ticket.id]);
@@ -61,13 +83,14 @@ export default function TicketThread({ ticket, userEmail, userName }) {
   }, [threads]);
 
   const sendReply = async () => {
-    if (!reply.trim()) return;
+    const text = reply.trim();
+    if (!text || sending) return;
     setSending(true);
     await base44.entities.TicketThread.create({
       ticket_id: ticket.id,
       author_email: userEmail,
       author_name: userName || userEmail,
-      content: reply.trim(),
+      content: text,
       is_public: true,
       is_ai_response: false,
     });
@@ -79,8 +102,18 @@ export default function TicketThread({ ticket, userEmail, userName }) {
     setAiLoading(true);
     try {
       await base44.functions.invoke("aiTicketResponse", { ticket_id: ticket.id });
-    } catch (e) { /* silent */ }
-    setAiLoading(false);
+    } catch {
+      // AI response failures are non-critical
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      sendReply();
+    }
   };
 
   if (loading) return (
@@ -102,10 +135,10 @@ export default function TicketThread({ ticket, userEmail, userName }) {
         </div>
       ) : (
         <div className="flex flex-col gap-2 max-h-80 overflow-y-auto pr-1">
-          {threads.map((t, i) => {
-            const isSupport = t.is_ai_response || t.author_email?.includes("affinitysolution");
+          {threads.map((t) => {
+            const isSupport = t.is_ai_response || (t.author_email && !t.author_email.endsWith(userEmail?.split("@")[1] || "__never__") && t.author_email !== userEmail);
             return (
-              <div key={i} className={`flex flex-col gap-1 ${isSupport ? "items-end" : "items-start"}`}>
+              <div key={t.id} className={`flex flex-col gap-1 ${isSupport ? "items-end" : "items-start"}`}>
                 <div className="text-xs text-muted-foreground px-1 flex items-center gap-1.5">
                   {t.is_ai_response && <Sparkles className="w-2.5 h-2.5 text-primary/60" />}
                   {t.author_name || t.author_email}
@@ -124,14 +157,15 @@ export default function TicketThread({ ticket, userEmail, userName }) {
         </div>
       )}
 
-      {/* Reply area — only if ticket not closed */}
-      {!["closed", "resolved"].includes(ticket.status) && (
+      {/* Reply area — hidden for closed/resolved tickets */}
+      {!isClosed && (
         <div className="flex flex-col gap-2 pt-2 border-t border-border/20">
-          <textarea rows={2}
-            placeholder="Add a reply or more information..."
+          <textarea
+            rows={2}
+            placeholder="Add a reply or more information… (Ctrl+Enter to send)"
             value={reply}
             onChange={e => setReply(e.target.value)}
-            onKeyDown={e => { if (e.key === "Enter" && e.ctrlKey) sendReply(); }}
+            onKeyDown={handleKeyDown}
             className="w-full px-3 py-2.5 rounded-xl border border-border/40 bg-background text-sm focus:outline-none focus:border-primary/50 resize-none transition-colors"
           />
           <div className="flex items-center justify-between gap-2">
@@ -146,6 +180,12 @@ export default function TicketThread({ ticket, userEmail, userName }) {
               Send
             </button>
           </div>
+        </div>
+      )}
+
+      {isClosed && (
+        <div className="text-xs text-muted-foreground text-center py-2 border-t border-border/20 mt-1">
+          This ticket is {ticket.status}. Replies are disabled.
         </div>
       )}
     </div>

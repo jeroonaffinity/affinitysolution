@@ -119,9 +119,14 @@ export default function TicketKanban({ tickets, onSelect, onStatusUpdate }) {
     if (ticket.status === newStatus) return;
 
     setUpdating(draggableId);
-    await base44.entities.SupportTicket.update(draggableId, { status: newStatus });
-    setUpdating(null);
-    onStatusUpdate();
+    try {
+      await base44.entities.SupportTicket.update(draggableId, { status: newStatus });
+      onStatusUpdate();
+    } catch (err) {
+      console.error("Failed to update ticket status:", err);
+    } finally {
+      setUpdating(null);
+    }
   }, [tickets, onStatusUpdate]);
 
   const grouped = KANBAN_STATUSES.reduce((acc, status) => {

@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const ADMIN_EMAIL = "info@affinitysolution.com";
-const ADMIN_SMS_EMAIL = "447947992054@eetexts.com"; // EE email-to-SMS
+const ADMIN_SMS_EMAIL = "07947992054@mms.ee.co.uk"; // EE email-to-SMS gateway
 const PORTAL_URL = "https://affinitysolution.base44.app/dashboard";
 const ADMIN_URL = "https://affinitysolution.base44.app/admin";
 

@@ -1,18 +1,21 @@
 {
-  "name": "ClientABRKey",
+  "name": "Team",
   "type": "object",
   "properties": {
-    "client_email": {
+    "name": {
       "type": "string",
-      "description": "Email of the client user this key belongs to"
+      "description": "Team / client name e.g. Acme Corp"
+    },
+    "member_emails": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of user emails that belong to this team"
     },
     "abr_api_key": {
       "type": "string",
-      "description": "Admin By Request API key for this client"
-    },
-    "label": {
-      "type": "string",
-      "description": "Optional label e.g. company name"
+      "description": "Admin By Request API key for this team"
     },
     "abr_datacenter": {
       "type": "string",
@@ -24,6 +27,18 @@
       "default": "dc3",
       "description": "ABR datacenter region"
     },
+    "action1_org_id": {
+      "type": "string",
+      "description": "Action1 organisation ID"
+    },
+    "action1_group_id": {
+      "type": "string",
+      "description": "Action1 endpoint group ID assigned to this team"
+    },
+    "action1_group_name": {
+      "type": "string",
+      "description": "Display name of the Action1 group (cached for display)"
+    },
     "description": {
       "type": "string",
       "description": "Optional extended description",
@@ -31,8 +46,7 @@
     }
   },
   "required": [
-    "client_email",
-    "abr_api_key"
+    "name"
   ],
   "rls": {
     "create": {
@@ -43,7 +57,9 @@
     "read": {
       "$or": [
         {
-          "data.client_email": "{{user.email}}"
+          "data.member_emails": {
+            "$contains": "{{user.email}}"
+          }
         },
         {
           "user_condition": {

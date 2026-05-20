@@ -1,0 +1,67 @@
+{
+  "name": "PortalAccessRequest",
+  "type": "object",
+  "properties": {
+    "full_name": {
+      "type": "string",
+      "description": "Full name of the person requesting access"
+    },
+    "email": {
+      "type": "string",
+      "description": "Email address for portal login"
+    },
+    "company": {
+      "type": "string",
+      "description": "Company name"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Phone number"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Why they need portal access"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "declined"
+      ],
+      "default": "pending",
+      "description": "Admin review status"
+    },
+    "admin_notes": {
+      "type": "string",
+      "description": "Internal notes from admin"
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional extended description",
+      "maxLength": 1000
+    }
+  },
+  "required": [
+    "full_name",
+    "email"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

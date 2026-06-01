@@ -62,6 +62,7 @@ async function pushToZoho({ title, description, priority, category, clientEmail,
     classification: category || "General",
     channel: "Web",
     status: "Open",
+    departmentId: "238671000000007061",
     ...(contactId ? { contactId } : { email: clientEmail }),
     cf: { cf_portal_ticket_id: ticketId },
   };

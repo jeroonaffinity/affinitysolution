@@ -141,13 +141,11 @@ allowBuilds:
   contentlayer: true
   contextify: true
   cordova.plugins.diagnostic: true
-  core-js: true
   couchbase: true
   cpu-features: true
   cwebp-bin: true
   cy2: true
   cypress: true
-
   dd-trace: true
   deasync: true
   detox: true

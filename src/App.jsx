@@ -13,7 +13,6 @@ import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
 import ForgotPassword from './pages/ForgotPassword.jsx';
 import ResetPassword from './pages/ResetPassword.jsx';
-import MyTickets from './pages/MyTickets.jsx';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -70,7 +69,7 @@ const AuthenticatedApp = () => {
         <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/admin" element={<LayoutWrapper currentPageName="Admin"><Admin /></LayoutWrapper>} />
-          <Route path="/MyTickets" element={<LayoutWrapper currentPageName="MyTickets"><MyTickets /></LayoutWrapper>} />
+          <Route path="/MyTickets" element={<Navigate to="/dashboard" replace />} />
         </Route>
 
         <Route path="*" element={<PageNotFound />} />

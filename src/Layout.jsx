@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Menu, X, ChevronLeft, ShieldCheck, Tag } from "lucide-react";
+import { Menu, X, ChevronLeft, ShieldCheck } from "lucide-react";
 import SupportChat from "./components/SupportChat";
 import MobileBottomTabs from "./components/MobileBottomTabs";
 
@@ -15,7 +15,7 @@ const navLinks = [
   title: "View our regulatory and security compliance standards (GDPR, Cyber Essentials)",
   icon: ShieldCheck
 },
-{ label: "Pricing", page: "Pricing", title: "See our transparent pricing and packages", badge: "Plans" }];
+{ label: "Pricing", page: "Pricing", title: "See our transparent pricing and packages" }];
 
 
 const dashboardPath = "/dashboard";
@@ -52,11 +52,6 @@ export default function Layout({ children, currentPageName }) {
               
                 
                 {link.label}
-                {link.badge &&
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary leading-none hidden">
-                    {link.badge}
-                  </span>
-              }
               </Link>
             )}
           </nav>
@@ -184,7 +179,6 @@ export default function Layout({ children, currentPageName }) {
               <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground/60 mb-4">Client Portal</h3>
               <ul className="flex flex-col gap-2.5">
                 <li><Link to={dashboardPath} className="text-xs text-muted-foreground hover:text-primary transition-colors">Dashboard</Link></li>
-                <li><Link to="/MyTickets" className="text-xs text-muted-foreground hover:text-primary transition-colors">My Tickets</Link></li>
               </ul>
             </div>
 

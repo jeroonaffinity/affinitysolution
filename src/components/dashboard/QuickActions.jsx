@@ -1,4 +1,4 @@
-import { Plus, BookOpen, Monitor, ShieldAlert, MessageSquare, ExternalLink } from "lucide-react";
+import { Plus, BookOpen, Monitor, ShieldAlert } from "lucide-react";
 
 export default function QuickActions({ onNewTicket, onGoTo }) {
   const actions = [

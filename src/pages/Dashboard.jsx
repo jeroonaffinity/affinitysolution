@@ -15,13 +15,10 @@ import DiagnosticsOverview from "@/components/dashboard/DiagnosticsOverview";
 import BiometricLockScreen from "@/components/BiometricLockScreen";
 import { useBiometricLock } from "@/hooks/useBiometricLock";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
-import KBSearchBar from "@/components/dashboard/KBSearchBar";
 import SecurityScoreRing from "@/components/dashboard/SecurityScoreRing";
-import ActivityFeed from "@/components/dashboard/ActivityFeed";
 import QuickActions from "@/components/dashboard/QuickActions";
-import TicketSparkline from "@/components/dashboard/TicketSparkline";
 import SLAWidget from "@/components/dashboard/SLAWidget";
-import UptimeSummary from "@/components/dashboard/UptimeSummary";
+import ActivityFeed from "@/components/dashboard/ActivityFeed";
 
 const TABS = [
   { id: "overview",  label: "Overview"        },
@@ -217,7 +214,6 @@ export default function Dashboard() {
             <span className="hidden sm:block text-sm font-medium text-muted-foreground">Client Portal</span>
           </div>
           <div className="flex items-center gap-3 flex-1 justify-end">
-            <KBSearchBar />
             <div className="hidden sm:flex items-center gap-2.5 text-sm flex-shrink-0">
               <div className="w-7 h-7 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-xs font-bold text-primary">{initials}</div>
               <span className="text-muted-foreground font-medium truncate max-w-[120px]">{user?.full_name || user?.email}</span>
@@ -287,17 +283,11 @@ export default function Dashboard() {
               <SecurityScoreRing tickets={tickets} endpoints={endpoints} />
             </div>
 
-            {/* Sparkline + Activity side by side on larger screens */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <TicketSparkline tickets={tickets} />
-              <ActivityFeed tickets={tickets} />
-            </div>
+            {/* Activity */}
+            <ActivityFeed tickets={tickets} />
 
             {/* SLA Status */}
             <SLAWidget tickets={tickets} onViewAll={() => setActiveTab("tickets")} />
-
-            {/* Uptime Summary */}
-            <UptimeSummary endpoints={endpoints} />
 
             {/* Endpoint Health */}
             <DiagnosticsOverview

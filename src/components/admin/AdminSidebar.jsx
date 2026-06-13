@@ -1,5 +1,5 @@
 import { base44 } from "@/api/base44Client";
-import { LayoutDashboard, Ticket, Server, MessageSquare, LogOut, AlertCircle, ShieldAlert, Monitor, Building2, Mail, BarChart2 } from "lucide-react";
+import { LayoutDashboard, Ticket, Server, MessageSquare, LogOut, AlertCircle, ShieldAlert, Building2, Mail, BarChart2 } from "lucide-react";
 
 const navItems = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -9,11 +9,6 @@ const navItems = [
   { id: "services", label: "Services", icon: Server },
   { id: "leads", label: "Leads", icon: MessageSquare },
   { id: "clients", label: "Clients & Users", icon: Building2 },
-];
-
-const endpointItems = [
-  { id: "abr", label: "ABR Requests", icon: ShieldAlert },
-  { id: "action1", label: "Action1", icon: Monitor },
 ];
 
 export default function AdminSidebar({ activeSection, setActiveSection, tickets, leads, user }) {
@@ -75,29 +70,7 @@ export default function AdminSidebar({ activeSection, setActiveSection, tickets,
           </button>
         ))}
 
-        {/* Endpoints group */}
-        <div className="mt-4 mb-1 px-3">
-          <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase text-muted-foreground/50">
-            <Monitor className="w-3 h-3" />
-            Endpoints
-          </div>
-        </div>
-        {endpointItems.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            onClick={() => setActiveSection(id)}
-            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-              activeSection === id
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground hover:bg-white/5"
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <Icon className="w-4 h-4" />
-              {label}
-            </div>
-          </button>
-        ))}
+
       </nav>
 
       {/* User + Logout */}

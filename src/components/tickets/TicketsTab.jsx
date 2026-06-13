@@ -2,7 +2,7 @@ import { useState } from "react";
 import { CheckCircle2, TicketCheck, Plus } from "lucide-react";
 import TicketWizard from "./TicketWizard";
 
-export default function TicketsTab({ userEmail, userName, teamId, endpoints = [] }) {
+export default function TicketsTab({ userEmail, userName, teamId }) {
   const [showWizard, setShowWizard] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
 

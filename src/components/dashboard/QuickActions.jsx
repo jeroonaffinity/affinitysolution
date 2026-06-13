@@ -1,4 +1,4 @@
-import { Plus, BookOpen, Monitor, ShieldAlert } from "lucide-react";
+import { Plus, BookOpen, ShieldAlert } from "lucide-react";
 
 export default function QuickActions({ onNewTicket, onGoTo }) {
   const actions = [
@@ -21,15 +21,6 @@ export default function QuickActions({ onNewTicket, onGoTo }) {
       onClick: () => onGoTo("docs"),
     },
     {
-      icon: Monitor,
-      label: "Endpoints",
-      desc: "View devices",
-      color: "text-emerald-400",
-      bg: "bg-emerald-500/10",
-      border: "border-emerald-500/20",
-      onClick: () => onGoTo("endpoints"),
-    },
-    {
       icon: ShieldAlert,
       label: "Admin Access",
       desc: "Elevation requests",
@@ -43,7 +34,7 @@ export default function QuickActions({ onNewTicket, onGoTo }) {
   return (
     <div className="flex flex-col gap-3">
       <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Quick Actions</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
         {actions.map(a => (
           <button key={a.label} onClick={a.onClick}
             className={`flex flex-col items-start gap-2 p-4 rounded-xl border ${a.border} ${a.bg} hover:scale-[1.02] active:scale-[0.98] transition-all text-left group`}>

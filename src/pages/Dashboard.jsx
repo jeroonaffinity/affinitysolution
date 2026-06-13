@@ -10,8 +10,6 @@ import TicketsTab from "@/components/tickets/TicketsTab";
 import BillingTab from "@/components/dashboard/BillingTab";
 import SupportDocsTab from "@/components/dashboard/SupportDocsTab";
 import ClientABRTab from "@/components/dashboard/ClientABRTab";
-import ClientEndpointsTab from "@/components/dashboard/ClientEndpointsTab";
-import DiagnosticsOverview from "@/components/dashboard/DiagnosticsOverview";
 import BiometricLockScreen from "@/components/BiometricLockScreen";
 import { useBiometricLock } from "@/hooks/useBiometricLock";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
@@ -26,7 +24,6 @@ const TABS = [
   { id: "billing",   label: "Billing"          },
   { id: "docs",      label: "Support Docs"     },
   { id: "abr",       label: "Admin Access"     },
-  { id: "endpoints", label: "Endpoints"        },
   { id: "settings",  label: "Account Settings" },
 ];
 
@@ -122,10 +119,9 @@ export default function Dashboard() {
   const [loadingPage, setLoadingPage] = useState(true);
   const [loadingTickets, setLoadingTickets] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
-  const [endpoints, setEndpoints] = useState([]);
 
   const biometric = useBiometricLock();
-  useRealtimeNotifications({ userEmail: user?.email, endpoints });
+  useRealtimeNotifications({ userEmail: user?.email });
 
   const reloadTickets = async (email) => {
     const targetEmail = email || user?.email;
@@ -280,7 +276,7 @@ export default function Dashboard() {
                   sub={`${activeServices} active service${activeServices !== 1 ? "s" : ""}`} accent
                   onClick={() => setActiveTab("billing")} />
               </div>
-              <SecurityScoreRing tickets={tickets} endpoints={endpoints} />
+              <SecurityScoreRing tickets={tickets} />
             </div>
 
             {/* Activity */}
@@ -288,13 +284,6 @@ export default function Dashboard() {
 
             {/* SLA Status */}
             <SLAWidget tickets={tickets} onViewAll={() => setActiveTab("tickets")} />
-
-            {/* Endpoint Health */}
-            <DiagnosticsOverview
-              userEmail={user?.email}
-              onGoToEndpoints={() => setActiveTab("endpoints")}
-              onEndpointsLoaded={(eps) => setEndpoints(eps)}
-            />
 
             {/* Active Services */}
             {activeServices > 0 && (
@@ -331,13 +320,11 @@ export default function Dashboard() {
             tickets={tickets}
             loadingTickets={loadingTickets}
             reloadTickets={() => reloadTickets(user.email)}
-            endpoints={endpoints}
           />
         )}
         {activeTab === "billing" && <BillingTab services={services} userName={user?.full_name || user?.email} />}
         {activeTab === "docs" && <SupportDocsTab />}
         {activeTab === "abr" && <ClientABRTab />}
-        {activeTab === "endpoints" && <ClientEndpointsTab userEmail={user?.email} />}
         {activeTab === "settings" && <AccountSettingsTab user={user} biometric={biometric} />}
       </div>
     </div>

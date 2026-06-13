@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 
@@ -12,12 +12,8 @@ const STATUS_LABELS = {
 /**
  * Subscribes to real-time SupportTicket updates for the given user email
  * and shows in-app toasts when their tickets change status.
- * Also alerts on high-priority endpoint disconnections if endpoints are provided.
  */
-export function useRealtimeNotifications({ userEmail, endpoints = [] }) {
-  const prevEndpointsRef = useRef({});
-
-  // ── Ticket status change notifications ──────────────────────────────────
+export function useRealtimeNotifications({ userEmail }) {
   useEffect(() => {
     if (!userEmail) return;
 
@@ -55,38 +51,4 @@ export function useRealtimeNotifications({ userEmail, endpoints = [] }) {
 
     return () => unsubscribe();
   }, [userEmail]);
-
-  // ── Endpoint health notifications ─────────────────────────────────────
-  useEffect(() => {
-    if (!endpoints.length) return;
-
-    endpoints.forEach((ep) => {
-      const prev = prevEndpointsRef.current[ep.id];
-      if (!prev) {
-        // First time seeing this endpoint — just record it
-        prevEndpointsRef.current[ep.id] = ep;
-        return;
-      }
-
-      // Went offline
-      if (prev.status === "Connected" && ep.status === "Disconnected") {
-        toast.error(`Endpoint offline: ${ep.name}`, {
-          description: "Device lost connection. Manual intervention may be required.",
-          duration: 12000,
-        });
-      }
-
-      // Critical updates appeared
-      const prevCritical = prev.missing_updates?.critical || 0;
-      const newCritical = ep.missing_updates?.critical || 0;
-      if (newCritical > prevCritical) {
-        toast.warning(`Critical updates on ${ep.name}`, {
-          description: `${newCritical} critical update(s) require attention.`,
-          duration: 10000,
-        });
-      }
-
-      prevEndpointsRef.current[ep.id] = ep;
-    });
-  }, [endpoints]);
 }

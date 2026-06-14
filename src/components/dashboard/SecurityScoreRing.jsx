@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ShieldCheck, ShieldAlert, Shield } from "lucide-react";
 
-function getScore({ tickets }) {
+function getScore({ tickets, endpoints = [] }) {
   let score = 100;
   const activeTickets = tickets.filter(t =>
     ["new", "open", "in_progress", "escalated"].includes(t.status)
@@ -10,6 +10,17 @@ function getScore({ tickets }) {
 
   score -= criticalTickets * 10;
   score -= activeTickets * 3;
+
+  // Endpoint health
+  if (endpoints.length > 0) {
+    const offline = endpoints.filter(e => e.status !== "Connected").length;
+    const needReboot = endpoints.filter(e => e.reboot_required === "Yes").length;
+    const criticalUpdates = endpoints.reduce((s, e) => s + (e.missing_updates?.critical || 0), 0);
+    score -= offline * 5;
+    score -= needReboot * 3;
+    score -= criticalUpdates * 2;
+  }
+
   return Math.max(0, Math.min(100, score));
 }
 
@@ -19,9 +30,9 @@ function getLabel(score) {
   return { label: "At Risk", color: "#f87171", text: "text-red-400" };
 }
 
-export default function SecurityScoreRing({ tickets = [] }) {
+export default function SecurityScoreRing({ tickets = [], endpoints = [] }) {
   const [displayScore, setDisplayScore] = useState(0);
-  const targetScore = getScore({ tickets });
+  const targetScore = getScore({ tickets, endpoints });
   const { label, color, text } = getLabel(targetScore);
 
   useEffect(() => {

@@ -1,5 +1,5 @@
 import { base44 } from "@/api/base44Client";
-import { LayoutDashboard, Ticket, Server, MessageSquare, LogOut, AlertCircle, ShieldAlert, Building2, Mail, BarChart2 } from "lucide-react";
+import { LayoutDashboard, Ticket, Server, MessageSquare, LogOut, AlertCircle, ShieldAlert, Building2, Mail, BarChart2, Monitor } from "lucide-react";
 
 const navItems = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -9,6 +9,8 @@ const navItems = [
   { id: "services", label: "Services", icon: Server },
   { id: "leads", label: "Leads", icon: MessageSquare },
   { id: "clients", label: "Clients & Users", icon: Building2 },
+  { id: "abr", label: "ABR Requests", icon: ShieldAlert },
+  { id: "action1", label: "Endpoints", icon: Monitor },
 ];
 
 export default function AdminSidebar({ activeSection, setActiveSection, tickets, leads, user }) {

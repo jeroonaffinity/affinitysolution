@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import {
   Ticket, CreditCard, Loader2, LogOut,
   Server, ArrowRight, Trash2, AlertTriangle,
-  Fingerprint, ShieldOff
+  Fingerprint, ShieldOff, Monitor
 } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import TicketsTab from "@/components/tickets/TicketsTab";
@@ -17,6 +17,7 @@ import SecurityScoreRing from "@/components/dashboard/SecurityScoreRing";
 import QuickActions from "@/components/dashboard/QuickActions";
 import SLAWidget from "@/components/dashboard/SLAWidget";
 import ActivityFeed from "@/components/dashboard/ActivityFeed";
+import DiagnosticsOverview from "@/components/dashboard/DiagnosticsOverview";
 
 const TABS = [
   { id: "overview",  label: "Overview"        },
@@ -24,6 +25,7 @@ const TABS = [
   { id: "billing",   label: "Billing"          },
   { id: "docs",      label: "Support Docs"     },
   { id: "abr",       label: "Admin Access"     },
+  { id: "endpoints", label: "Endpoints"        },
   { id: "settings",  label: "Account Settings" },
 ];
 
@@ -119,6 +121,7 @@ export default function Dashboard() {
   const [loadingPage, setLoadingPage] = useState(true);
   const [loadingTickets, setLoadingTickets] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const [endpoints, setEndpoints] = useState([]);
 
   const biometric = useBiometricLock();
   useRealtimeNotifications({ userEmail: user?.email });
@@ -276,11 +279,18 @@ export default function Dashboard() {
                   sub={`${activeServices} active service${activeServices !== 1 ? "s" : ""}`} accent
                   onClick={() => setActiveTab("billing")} />
               </div>
-              <SecurityScoreRing tickets={tickets} />
+              <SecurityScoreRing tickets={tickets} endpoints={endpoints} />
             </div>
 
             {/* Activity */}
             <ActivityFeed tickets={tickets} />
+
+            {/* Endpoint Health */}
+            <DiagnosticsOverview
+              userEmail={user?.email}
+              onGoToEndpoints={() => setActiveTab("endpoints")}
+              onEndpointsLoaded={setEndpoints}
+            />
 
             {/* SLA Status */}
             <SLAWidget tickets={tickets} onViewAll={() => setActiveTab("tickets")} />
@@ -325,6 +335,14 @@ export default function Dashboard() {
         {activeTab === "billing" && <BillingTab services={services} userName={user?.full_name || user?.email} />}
         {activeTab === "docs" && <SupportDocsTab />}
         {activeTab === "abr" && <ClientABRTab />}
+        {activeTab === "endpoints" && (
+          <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
+            <Monitor className="w-10 h-10 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground max-w-xs">
+              Endpoint diagnostics are available in the Overview tab, or contact your admin for full endpoint management.
+            </p>
+          </div>
+        )}
         {activeTab === "settings" && <AccountSettingsTab user={user} biometric={biometric} />}
       </div>
     </div>

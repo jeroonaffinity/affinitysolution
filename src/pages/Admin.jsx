@@ -11,6 +11,7 @@ import AdminABRPanel from "@/components/admin/AdminABRPanel";
 import AdminClientManagement from "@/components/admin/AdminClientManagement";
 import AdminEmailPanel from "@/components/admin/AdminEmailPanel";
 import AdminReporting from "@/components/admin/AdminReporting";
+import AdminAction1Panel from "@/components/admin/AdminAction1Panel";
 
 export default function Admin() {
   const [user, setUser] = useState(null);
@@ -97,6 +98,9 @@ export default function Admin() {
         )}
         {activeSection === "reporting" && (
           <AdminReporting tickets={tickets} users={users} />
+        )}
+        {activeSection === "action1" && (
+          <AdminAction1Panel />
         )}
         {activeSection === "email" && (
           <AdminEmailPanel users={users} teams={teams} />

@@ -60,6 +60,14 @@
         "other"
       ],
       "description": "Payment method used"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "Uploaded invoice PDF/file URL"
+    },
+    "file_name": {
+      "type": "string",
+      "description": "Original filename of the uploaded invoice"
     }
   },
   "required": [

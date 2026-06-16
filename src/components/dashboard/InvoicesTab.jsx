@@ -184,7 +184,16 @@ function InvoiceCard({ invoice, expanded, onToggle }) {
             {formatCurrency(invoice.amount)}
           </div>
         </div>
-        {expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {invoice.file_url && (
+            <a href={invoice.file_url} target="_blank" rel="noopener noreferrer"
+              className="p-1.5 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
+              title="Download invoice PDF">
+              <Download className="w-3.5 h-3.5" />
+            </a>
+          )}
+          {expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+        </div>
       </button>
 
       {expanded && (
@@ -194,6 +203,12 @@ function InvoiceCard({ invoice, expanded, onToggle }) {
               <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Description</div>
               <p className="text-sm whitespace-pre-wrap">{invoice.description}</p>
             </div>
+          )}
+          {invoice.file_url && (
+            <a href={invoice.file_url} target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-primary/20 bg-primary/5 text-primary text-sm font-medium hover:bg-primary/10 transition-all w-fit">
+              <Download className="w-4 h-4" /> Download Invoice PDF
+            </a>
           )}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
             <div>

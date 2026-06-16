@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import {
   Loader2, Plus, FileText, Search, Pencil, Trash2,
   CheckCircle2, Clock, AlertTriangle, XCircle, Send, RefreshCw,
-  Calendar, PoundSterling, ChevronDown, ChevronUp
+  Calendar, PoundSterling, ChevronDown, ChevronUp, UploadCloud, Download, Paperclip
 } from "lucide-react";
 
 const STATUS_STYLE = {
@@ -58,6 +58,24 @@ function InvoiceForm({ invoice, onSave, onCancel, teams }) {
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
+  const [file, setFile] = useState(null);
+
+  const handleFileChange = async (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setFile(f);
+    setUploading(true);
+    try {
+      const res = await base44.integrations.Core.UploadFile({ file: f });
+      setForm(prev => ({ ...prev, file_url: res.file_url, file_name: f.name }));
+    } catch (err) {
+      setError("Failed to upload file. Please try again.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -188,6 +206,37 @@ function InvoiceForm({ invoice, onSave, onCancel, teams }) {
               onChange={e => setForm({...form, description: e.target.value})}
               className="px-3 py-2 rounded-xl border border-border/50 bg-background text-sm focus:outline-none focus:border-primary/60 resize-none"
             />
+          </label>
+
+          <label className="flex flex-col gap-1">
+            <span className="text-xs text-muted-foreground">Invoice File (PDF)</span>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+            {form.file_url ? (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
+                <Paperclip className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                <span className="text-sm text-emerald-400 truncate flex-1">{form.file_name || "File uploaded"}</span>
+                <button type="button" onClick={() => setForm(prev => ({ ...prev, file_url: "", file_name: "" }))}
+                  className="text-xs text-muted-foreground hover:text-red-400 transition-colors">
+                  <XCircle className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-border/50 text-sm text-muted-foreground hover:text-foreground hover:border-border transition-all disabled:opacity-50"
+              >
+                {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
+                {uploading ? "Uploading..." : (invoice?.file_url ? "Replace file" : "Upload invoice PDF")}
+              </button>
+            )}
           </label>
 
           <div className="flex gap-3 pt-2">
@@ -378,6 +427,14 @@ function InvoiceRow({ invoice, onEdit, onDelete, onStatusChange }) {
         </div>
       </div>
       <div className="font-bold text-sm">{formatCurrency(invoice.amount)}</div>
+
+      {/* File download */}
+      {invoice.file_url && (
+        <a href={invoice.file_url} target="_blank" rel="noopener noreferrer" title="Download invoice"
+          className="p-1.5 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors flex-shrink-0">
+          <Download className="w-3.5 h-3.5" />
+        </a>
+      )}
 
       {/* Status quick actions */}
       <div className="flex items-center gap-1 flex-shrink-0">

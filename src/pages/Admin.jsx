@@ -12,6 +12,7 @@ import AdminClientManagement from "@/components/admin/AdminClientManagement";
 import AdminEmailPanel from "@/components/admin/AdminEmailPanel";
 import AdminReporting from "@/components/admin/AdminReporting";
 import AdminAction1Panel from "@/components/admin/AdminAction1Panel";
+import AdminInvoicesPanel from "@/components/admin/AdminInvoicesPanel";
 
 export default function Admin() {
   const [user, setUser] = useState(null);
@@ -98,6 +99,9 @@ export default function Admin() {
         )}
         {activeSection === "reporting" && (
           <AdminReporting tickets={tickets} users={users} />
+        )}
+        {activeSection === "invoices" && (
+          <AdminInvoicesPanel />
         )}
         {activeSection === "action1" && (
           <AdminAction1Panel />

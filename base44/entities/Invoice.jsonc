@@ -1,0 +1,112 @@
+{
+  "name": "Invoice",
+  "type": "object",
+  "properties": {
+    "invoice_number": {
+      "type": "string",
+      "description": "Unique invoice reference (e.g. INV-2025-001)"
+    },
+    "team_id": {
+      "type": "string",
+      "description": "ID of the Team this invoice belongs to"
+    },
+    "client_email": {
+      "type": "string",
+      "description": "Email of the client"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Invoice amount in GBP"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "sent",
+        "paid",
+        "overdue",
+        "cancelled"
+      ],
+      "default": "draft",
+      "description": "Current invoice status"
+    },
+    "issue_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the invoice was issued"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Payment due date"
+    },
+    "paid_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date payment was received"
+    },
+    "description": {
+      "type": "string",
+      "description": "Invoice line items / description",
+      "maxLength": 2000
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "bank_transfer",
+        "direct_debit",
+        "card",
+        "cheque",
+        "other"
+      ],
+      "description": "Payment method used"
+    }
+  },
+  "required": [
+    "invoice_number",
+    "amount",
+    "client_email"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.client_email": "{{user.email}}"
+        },
+        {
+          "data.team_id": {
+            "$in": {
+              "entity": "Team",
+              "field": "id",
+              "filter": {
+                "member_emails": {
+                  "$contains": "{{user.email}}"
+                }
+              }
+            }
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

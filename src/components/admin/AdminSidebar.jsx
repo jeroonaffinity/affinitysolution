@@ -1,5 +1,5 @@
 import { base44 } from "@/api/base44Client";
-import { LayoutDashboard, Ticket, Server, MessageSquare, LogOut, AlertCircle, ShieldAlert, Building2, Mail, BarChart2, Monitor } from "lucide-react";
+import { LayoutDashboard, Ticket, Server, MessageSquare, LogOut, AlertCircle, ShieldAlert, Building2, Mail, BarChart2, Monitor, FileText } from "lucide-react";
 
 const navItems = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -10,6 +10,7 @@ const navItems = [
   { id: "leads", label: "Leads", icon: MessageSquare },
   { id: "clients", label: "Clients & Users", icon: Building2 },
   { id: "abr", label: "ABR Requests", icon: ShieldAlert },
+  { id: "invoices", label: "Invoices", icon: FileText },
   { id: "action1", label: "Endpoints", icon: Monitor },
 ];
 

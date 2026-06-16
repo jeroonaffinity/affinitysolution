@@ -10,6 +10,7 @@ import TicketsTab from "@/components/tickets/TicketsTab";
 import BillingTab from "@/components/dashboard/BillingTab";
 import SupportDocsTab from "@/components/dashboard/SupportDocsTab";
 import ClientABRTab from "@/components/dashboard/ClientABRTab";
+import InvoicesTab from "@/components/dashboard/InvoicesTab";
 import BiometricLockScreen from "@/components/BiometricLockScreen";
 import { useBiometricLock } from "@/hooks/useBiometricLock";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
@@ -25,6 +26,7 @@ const TABS = [
   { id: "billing",   label: "Billing"          },
   { id: "docs",      label: "Support Docs"     },
   { id: "abr",       label: "Admin Access"     },
+  { id: "invoices",  label: "Invoices"         },
   { id: "endpoints", label: "Endpoints"        },
   { id: "settings",  label: "Account Settings" },
 ];
@@ -335,6 +337,9 @@ export default function Dashboard() {
         {activeTab === "billing" && <BillingTab services={services} userName={user?.full_name || user?.email} />}
         {activeTab === "docs" && <SupportDocsTab />}
         {activeTab === "abr" && <ClientABRTab />}
+        {activeTab === "invoices" && (
+          <InvoicesTab userEmail={user.email} teamId={team?.id} />
+        )}
         {activeTab === "endpoints" && (
           <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
             <Monitor className="w-10 h-10 text-muted-foreground" />

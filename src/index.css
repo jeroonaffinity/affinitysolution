@@ -4,33 +4,33 @@
 
 @layer base {
   :root {
-    --background: 0 0% 4%;
+    --background: 222 30% 9%;
     --foreground: 210 40% 96%;
 
-    --card: 230 20% 8%;
+    --card: 222 30% 12%;
     --card-foreground: 210 40% 96%;
 
-    --popover: 230 20% 8%;
+    --popover: 222 30% 12%;
     --popover-foreground: 210 40% 96%;
 
-    --primary: 241 54% 36%;
+    --primary: 241 54% 42%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 230 20% 12%;
+    --secondary: 222 30% 15%;
     --secondary-foreground: 210 40% 96%;
 
-    --muted: 230 20% 14%;
-    --muted-foreground: 215 20% 55%;
+    --muted: 222 25% 17%;
+    --muted-foreground: 215 20% 62%;
 
-    --accent: 248 60% 45%;
+    --accent: 248 60% 52%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 96%;
 
-    --border: 230 20% 16%;
-    --input: 230 20% 14%;
-    --ring: 241 54% 36%;
+    --border: 222 25% 22%;
+    --input: 222 25% 17%;
+    --ring: 241 54% 42%;
 
     --radius: 0.75rem;
   }
@@ -55,10 +55,10 @@
 
 @layer utilities {
   .glow-blue {
-    box-shadow: 0 0 40px rgba(30, 90, 200, 0.2);
+    box-shadow: 0 0 40px rgba(30, 90, 200, 0.25);
   }
   .glow-blue-strong {
-    box-shadow: 0 0 60px rgba(30, 90, 200, 0.35);
+    box-shadow: 0 0 60px rgba(30, 90, 200, 0.4);
   }
   .text-gradient {
     background: linear-gradient(135deg, #1e5ac8 0%, #2563eb 60%, #5b4fcf 100%);

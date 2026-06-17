@@ -29,7 +29,7 @@ export default function Layout({ children, currentPageName }) {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Navbar */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 backdrop-blur-xl bg-background/95">
+      <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 backdrop-blur-xl bg-black/95">
         <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
           <Link to={createPageUrl("Home")} className="flex items-center group">
             <img
@@ -142,7 +142,7 @@ export default function Layout({ children, currentPageName }) {
       <MobileBottomTabs />
 
       {/* Footer */}
-      <footer className="border-t border-white/10 bg-background/95 pt-14 pb-8">
+      <footer className="border-t border-white/10 bg-black/95 pt-14 pb-8">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
             {/* Brand */}

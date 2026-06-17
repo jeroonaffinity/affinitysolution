@@ -11,24 +11,55 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const text = body.text || "Weekly update from AffinitySolution — your trusted IT partner.";
+    const targetCompany = body.company || "AffinitySolution";
 
     // Get LinkedIn access token
     const { accessToken } = await base44.asServiceRole.connectors.getConnection("linkedin");
 
-    // Get the authenticated user's LinkedIn profile ID
-    const meRes = await fetch("https://api.linkedin.com/v2/me", {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
+    // Find organizations the user is an admin of
+    const orgsRes = await fetch(
+      "https://api.linkedin.com/v2/organizationAcls?q=roleAssignee&role=ADMINISTRATOR&state=APPROVED",
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
 
-    if (!meRes.ok) {
-      const errText = await meRes.text();
-      return Response.json({ error: `LinkedIn profile fetch failed: ${errText}` }, { status: 500 });
+    if (!orgsRes.ok) {
+      const errText = await orgsRes.text();
+      return Response.json({ error: `Organization lookup failed: ${errText}` }, { status: 500 });
     }
 
-    const meData = await meRes.json();
-    const personUrn = `urn:li:person:${meData.id}`;
+    const orgsData = await orgsRes.json();
+    const elements = orgsData.elements || [];
 
-    // Create post via UGC Posts API
+    if (elements.length === 0) {
+      return Response.json({ error: "No LinkedIn company pages found for your account." }, { status: 400 });
+    }
+
+    // Get each organization's details to find the target
+    let targetOrgUrn = null;
+    for (const element of elements) {
+      const orgUrn = element.organization;
+      const orgId = orgUrn.split(":").pop();
+
+      const detailRes = await fetch(`https://api.linkedin.com/v2/organizations/${orgId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (detailRes.ok) {
+        const detail = await detailRes.json();
+        const name = detail.localizedName || detail.name || "";
+        if (name.toLowerCase().includes(targetCompany.toLowerCase())) {
+          targetOrgUrn = orgUrn;
+          break;
+        }
+      }
+    }
+
+    if (!targetOrgUrn) {
+      // Fallback: use the first organization found
+      targetOrgUrn = elements[0].organization;
+    }
+
+    // Create post as the organization
     const postRes = await fetch("https://api.linkedin.com/v2/ugcPosts", {
       method: "POST",
       headers: {
@@ -37,7 +68,7 @@ Deno.serve(async (req) => {
         "X-Restli-Protocol-Version": "2.0.0",
       },
       body: JSON.stringify({
-        author: personUrn,
+        author: targetOrgUrn,
         lifecycleState: "PUBLISHED",
         specificContent: {
           "com.linkedin.ugc.ShareContent": {
@@ -57,7 +88,12 @@ Deno.serve(async (req) => {
     }
 
     const postData = await postRes.json();
-    return Response.json({ success: true, postId: postData.id, text });
+    return Response.json({
+      success: true,
+      postId: postData.id,
+      author: targetOrgUrn,
+      text,
+    });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
